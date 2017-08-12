@@ -3,30 +3,19 @@ from mecode import G
 SIZE_X = 20
 SIZE_Y = 10
 
-feedRate = 1000		# mm/min
-passDepth = 1.0		# mm
-spindleSpeed = 10000
-plungeRate = 300	# mm/min
-
-def initWood():
-	feedRate = 1000
-	passDepth = 0.5
-	spindleSpeed = 10000
-	plungeRate = 100
-
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
-initWood();
+param = initWood();
 
 g.write("(init)")
 g.relative()
-g.spindle("CW", spindleSpeed)
+g.spindle("CW", param.spindleSpeed)
 g.move(y=-SIZE_Y/2)
 
 for d in range(0, 6):
 	g.write("(pass {})".format(d))
-	g.feed(plungeRate)
+	g.feed(param.plungeRate)
 	g.move(z=1.0)
-	g.feed(feedRate)
+	g.feed(param.feedRate)
 	g.rect(x=SIZE_X, y=SIZE_Y)
 
 g.write("(teardown)")
