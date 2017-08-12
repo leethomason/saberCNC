@@ -33,17 +33,9 @@ h = math.sqrt(R**2 - (SIZE_Y/2)**2)
 z = h - R
 g.arc(y=(-SIZE_Y/2), z=z, direction='CCW', radius=R)
 
-#g.comment("initial pass");
-path(g, 0)
-
 steps = calcSteps(DEPTH, param['passDepth'])
+run3Stages(path, g, steps)
 
-for d in steps:
-    #g.comment('totalDepth={}'.format(totalDepth))
-    path(g, d)
-
-#g.comment('final pass')
-path(g, 0)
 g.move(z=-DEPTH)
 
 g.teardown()
