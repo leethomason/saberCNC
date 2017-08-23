@@ -15,7 +15,7 @@ def initAluminum():
 # for testing
 def initAir():             
     return { "feedRate":        1200,
-             "passDepth":       1.0,
+             "passDepth":       2.0,
              "spindleSpeed":    0,
              "plungeRate":      150 };
 

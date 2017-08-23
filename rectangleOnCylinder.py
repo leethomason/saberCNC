@@ -7,11 +7,14 @@ from material import *
 from utility import *
 
 # Remember to account for tool size!!
-SIZE_X = 20
-SIZE_Y = 8
-DEPTH  = 2
-DIAM   = 25.4
+SIZE_X = 8 - 3
+SIZE_Y = 14 - 3
+DEPTH  = 4
+DIAM   = 37.4
 R      = DIAM / 2
+
+param = initAluminum();
+#param = initAir();
 
 def path(g, plunge):
     g.move(x=SIZE_X, y=0, z=plunge)
@@ -20,8 +23,6 @@ def path(g, plunge):
     g.arc(y=-SIZE_Y, z=0, direction='CCW', radius=R)
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
-#param = initAluminum();
-param = initAir();
 
 g.write("(init)")
 g.relative()
@@ -29,13 +30,13 @@ g.spindle("CW", param['spindleSpeed'])
 g.feed(param['feedRate'])
 
 #move the head to the starting position
-h = math.sqrt(R**2 - (SIZE_Y/2)**2)
-z = h - R
+z = zOnCylinder(SIZE_Y/2, R)
 g.arc(y=(-SIZE_Y/2), z=z, direction='CCW', radius=R)
 
 steps = calcSteps(DEPTH, param['passDepth'])
 run3Stages(path, g, steps)
+#path(g, 0)
 
-g.move(z=-DEPTH)
-
+g.spindle()
+g.move(z=DEPTH)
 g.teardown()
