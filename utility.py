@@ -2,6 +2,8 @@
 import math
 import re
 
+CNC_TRAVEL_Z = 3.0;
+
 # All results are positive.
 def calcSteps(goal, step):
 	steps = [];

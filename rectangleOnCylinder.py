@@ -17,9 +17,9 @@ param = initAluminum();
 #param = initAir();
 
 def path(g, plunge):
-    g.move(x=SIZE_X, y=0, z=plunge)
+    g.move(x=SIZE_X, y=0, z=plunge/2)
     g.arc(y=SIZE_Y, z=0, direction='CW', radius=R)
-    g.move(x=-SIZE_X)
+    g.move(x=-SIZE_X, z=plunge/2)
     g.arc(y=-SIZE_Y, z=0, direction='CCW', radius=R)
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)

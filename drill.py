@@ -2,17 +2,12 @@
 # create the gcode for drilling directly from the drl file
 # assume start at (0,0,0) bit touching material
 # ABSOLUTE coordinates
-#
-# Usage: depth tool filename
-# drill -3.5 1.0 drill.nc
 
 import math
 import sys
 from mecode import G
 from material import *
 from utility import *
-
-TRAVEL_Z = 3.0
 
 if len(sys.argv) != 5:
     print('Usage:')
@@ -43,7 +38,7 @@ sortShortestPath(points);
 #print(points)
 
 for p in points:
-    g.move(z=TRAVEL_Z)
+    g.move(z=CNC_TRAVEL_Z)
 
     g.comment('drill hole at {},{}'.format(p['x'], p['y']))
     g.move(x=p['x'] - toolSize/2, y=p['y'] - toolSize/2)
@@ -65,9 +60,9 @@ for p in points:
 
     g.dwell(250)
 
-    g.move(z=TRAVEL_Z)
+    g.move(z=CNC_TRAVEL_Z)
     g.feed(param['feedRate'])
 
-g.comment('back to origin. z={}'.format(TRAVEL_Z))
+g.comment('back to origin. z={}'.format(CNC_TRAVEL_Z))
 g.spindle('off')
 g.move(x=0, y=0)
