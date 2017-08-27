@@ -1,5 +1,7 @@
 # Material setup that seems to work (with the Elkesmill)
 
+import sys
+
 # 1/8, 3mm
 def initWood():
     return { "feedRate":        1000,
@@ -27,4 +29,18 @@ def initAir():
              "passDepth":       2.0,
              "spindleSpeed":    0,
              "plungeRate":      150 };
+
+def initMaterial(name):
+    if name == 'wood':
+        return initWood()
+    elif name == 'aluminum':
+        return initAluminum()
+    elif name == 'fr1':
+        return initFR1()
+    elif name == 'air':
+        return initAir()
+    else:
+        print('material "{}" not defined'.format(name))
+        sys.exit(10)
+
 
