@@ -12,7 +12,7 @@ def initWood():
 # 1/8, 3mm
 def initAluminum():
     return { "feedRate":        150,
-             "passDepth":       0.05,   #woh. slow.
+             "passDepth":       0.05,   #woh. slow and easy for aluminum
              "spindleSpeed":    10000,
              "plungeRate":      12 };
 
@@ -23,6 +23,12 @@ def initFR1():
              "spindleSpeed":    10000,
              "plungeRate":      30 };
 
+# 3mm cutter. this looks a little aggressive - drop the feedRate?
+def initFR1Cut():
+    return { "feedRate":        360,
+             "passDepth":       0.30,
+             "spindleSpeed":    10000,
+             "plungeRate":      50 };
 # for testing
 def initAir():             
     return { "feedRate":        1200,
@@ -37,6 +43,8 @@ def initMaterial(name):
         return initAluminum()
     elif name == 'fr1':
         return initFR1()
+    elif name == 'fr1Cut':
+        return initFR1Cut()
     elif name == 'air':
         return initAir()
     else:

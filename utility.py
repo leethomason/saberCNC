@@ -4,18 +4,26 @@ import re
 
 CNC_TRAVEL_Z = 3.0;
 
-# All results are positive.
+# Calculates relative moves to get to a final goal.
+# A goal='5' and a step='2' generates: [2, 2, 1]
 def calcSteps(goal, step):
-	steps = [];
+    if goal * step < 0:
+        raise RuntimeError("Goal and step must be both positive or both negative.")
+    bias = 1
+    if goal < 0:
+        bias = -1
+        step = -step;
+        goal = -goal;
 
-	total = 0
-	while total + step < goal:
-		steps.append(step)
-		total += step
-	if total < goal:
-		steps.append(goal - total)
-
-	return steps
+    steps = [];
+    total = 0
+    while total + step < goal:
+        steps.append(step)
+        total += step
+        
+    if total < goal:
+        steps.append(goal - total)
+    return list(map(lambda x: x * bias, steps))
 
 def run3Stages(path, g, steps):
     g.comment("initial pass");
@@ -31,11 +39,11 @@ def run3Stages(path, g, steps):
 
 #returns a negative value or none 
 def zOnCylinder(dy, rad):
-	if (dy >= rad):
-		return None
-	h = math.sqrt(rad**2 - dy**2)
-	z = h - rad
-	return z
+    if (dy >= rad):
+        return None
+    h = math.sqrt(rad**2 - dy**2)
+    z = h - rad
+    return z
 
 def readDRL(fname):
     with open(fname) as f:

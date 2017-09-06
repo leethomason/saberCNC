@@ -6,21 +6,57 @@ from mecode import G
 from material import *
 from utility import *
 
-# Remember to account for tool size!!
-SIZE_X = 8 - 3
-SIZE_Y = 14 - 3
-DEPTH  = 4
-DIAM   = 37.4
-R      = DIAM / 2
+if len(sys.argv) != 7:
+    print('Usage:')
+    print('  rectangleOnCylinder material diameter depthOnCylinder toolSize dx dy')
+    print('Notes:')
+    print('  Runs in relative coordinates.')
+    print('  Origin is centered on top of cylinder, at left (x=0) edge of tool and left edge of cut.')
+    sys.exit(1)
 
-param = initAluminum();
-#param = initAir();
+param = initMaterial(sys.argv[1])
+diameter = float(sys.argv[2])
+cutDepth = float(sys.argv[3])
+toolSize = float(sys.argv[4])
+dx = float(sys.argv[5])
+dy = float(sys.argv[6])
+
+radius = diameter / 2
+halfTool = toolSize / 2
+
+toolDX = dx - toolSize;
+toolDY = dy - toolSize;
+
+if diameter <= 0:
+	print('Diameter out of range')
+	sys.exit(2)
+
+if (-cutDepth) > radius:
+	print('Cut depth greater than radius.')
+	sys.exit(2)
+
+if cutDepth >= 0:
+	print('Cut depth must be negative')
+	sys.exit(2)
+
+if toolSize <= 0:
+	print('Toolsize must be positive')
+	sys.exit(2)
+
+if dx <= 0 or dy <= 0:
+	print('dx and dy must be positive')
+	sys.exit(2)
+
 
 def path(g, plunge):
-    g.move(x=SIZE_X, y=0, z=plunge/2)
-    g.arc(y=SIZE_Y, z=0, direction='CW', radius=R)
-    g.move(x=-SIZE_X, z=plunge/2)
-    g.arc(y=-SIZE_Y, z=0, direction='CCW', radius=R)
+	# z=0 is non-obvious, reading again. Comes about because the y action motion
+	# is symmetric, so the z doesn't change when cutting the arc.
+	# Therefore plunge is distributed on the x axis, just to simplify concerns.
+
+    g.move(x=  toolDX, z=plunge/2)
+    g.arc( y=  toolDY, z=0, direction='CW', radius=radius)
+    g.move(x= -toolDX, z=plunge/2)
+    g.arc( y= -toolDY, z=0, direction='CCW', radius=radius)
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -30,13 +66,13 @@ g.spindle("CW", param['spindleSpeed'])
 g.feed(param['feedRate'])
 
 #move the head to the starting position
-z = zOnCylinder(SIZE_Y/2, R)
-g.arc(y=(-SIZE_Y/2), z=z, direction='CCW', radius=R)
+z = zOnCylinder(dy/2 - halfTool, radius)
+g.arc(y=-(dy/2 - halfTool), z=z, direction='CCW', radius=radius)
 
-steps = calcSteps(DEPTH, param['passDepth'])
+steps = calcSteps(-cutDepth, param['passDepth'])
 run3Stages(path, g, steps)
 #path(g, 0)
 
 g.spindle()
-g.move(z=DEPTH)
+g.move(z=-cutDepth + CNC_TRAVEL_Z)
 g.teardown()

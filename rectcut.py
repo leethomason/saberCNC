@@ -1,7 +1,7 @@
 # Cut a rectanagle at the given location.
 # Accounts for tool size.
-# ABSOLUTE coordinates
-#
+# RELATIVE coordinates
+# starting point at tool edge (not center)
 
 import math
 import sys
@@ -36,12 +36,14 @@ g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 halfTool = toolSize / 2
 
 g.write("(init)")
-g.absolute()
+g.relative()
 g.spindle(speed = param['spindleSpeed'])
 g.feed(param['feedRate'])
 
 g.move(z=CNC_TRAVEL_Z)
-g.move(x=cutX - halfTool, y=cutY - halfTool)
+g.move(x=cutX, y=cutY)
+g.spindle("CW")
+g.move(z=-CNC_TRAVEL_Z)
 
 def path(g, plunge):
     g.move(x=cutW + toolSize, z=plunge/2)
