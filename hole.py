@@ -1,6 +1,5 @@
-# drill holes
-# create the gcode for drilling directly from the drl file
-# assume start at (0,0,0) bit touching material
+# Cuts one hole: essentially a descending circular cut.
+# Accounds to the tool size.
 
 import math
 import sys

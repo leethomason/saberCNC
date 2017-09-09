@@ -1,6 +1,10 @@
-# drill holes
-# create the gcode for drilling directly from the drl file
-# assume start at (0,0,0) bit touching material
+# Drill a set of holes that are the size of the current
+# tool bit. Can be a set of points specified on the command 
+# line, or from a .drl file.
+#
+# If a .drl is used, tool change isn't supported, and it's all
+# done as one pass. (Tool change wolud be straightforward, I
+# just don't a machine that can do it reliably.)
 
 import math
 import sys
@@ -42,7 +46,7 @@ else:
 if cutDepth >= 0:
     raise RunTimeError('Cut depth must be less than zero.')
 
-g = G(outfile='drill.nc', aerotech_include=False, header=None, footer=None)
+g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
 g.comment("init ABSOLUTE:")
 g.comment("  material: " + param['name'])
@@ -82,6 +86,4 @@ for p in points:
     g.move(z=CNC_TRAVEL_Z)
     g.feed(param['feedRate'])
 
-#g.comment('back to origin. z={}'.format(CNC_TRAVEL_Z))
-g.spindle('off')
-#g.move(x=0, y=0)
+g.spindle()
