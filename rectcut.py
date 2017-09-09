@@ -23,14 +23,11 @@ cutW = float(sys.argv[6])
 cutH = float(sys.argv[7])
 
 if cutDepth >= 0:
-    print('Cut depth must be less than zero.')
-    sys.exit(2)
+    raise RunTimeError('Cut depth must be less than zero.')
 if toolSize <= 0:
-    print('tool size must be greater than zero')
-    sys.exit(3)
+    raise RunTimeError('tool size must be greater than zero')
 if cutW <= 0 or cutH <= 0:
-    print('w and h must be greater than zero')
-    sys.exit(4)
+    raise RunTimeError('w and h must be greater than zero')
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 halfTool = toolSize / 2

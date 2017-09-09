@@ -28,25 +28,19 @@ toolDX = dx - toolSize;
 toolDY = dy - toolSize;
 
 if diameter <= 0:
-	print('Diameter out of range')
-	sys.exit(2)
+	raise RunTimeError('Diameter out of range')
 
 if (-cutDepth) > radius:
-	print('Cut depth greater than radius.')
-	sys.exit(2)
+	raise RunTimeError('Cut depth greater than radius.')
 
 if cutDepth >= 0:
-	print('Cut depth must be negative')
-	sys.exit(2)
+	raise RunTimeError('Cut depth must be negative')
 
 if toolSize <= 0:
-	print('Toolsize must be positive')
-	sys.exit(2)
+	raise RunTimeError('Toolsize must be positive')
 
 if dx <= 0 or dy <= 0:
-	print('dx and dy must be positive')
-	sys.exit(2)
-
+	raise RunTimeError('dx and dy must be positive')
 
 def path(g, plunge):
 	# z=0 is non-obvious, reading again. Comes about because the y action motion
@@ -71,7 +65,6 @@ g.arc(y=-(dy/2 - halfTool), z=z, direction='CCW', radius=radius)
 
 steps = calcSteps(-cutDepth, param['passDepth'])
 run3Stages(path, g, steps)
-#path(g, 0)
 
 g.spindle()
 g.move(z=-cutDepth + CNC_TRAVEL_Z)

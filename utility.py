@@ -2,7 +2,7 @@
 import math
 import re
 
-CNC_TRAVEL_Z = 3.0;
+CNC_TRAVEL_Z = 3.0
 
 # Calculates relative moves to get to a final goal.
 # A goal='5' and a step='2' generates: [2, 2, 1]
@@ -12,10 +12,10 @@ def calcSteps(goal, step):
     bias = 1
     if goal < 0:
         bias = -1
-        step = -step;
-        goal = -goal;
+        step = -step
+        goal = -goal
 
-    steps = [];
+    steps = []
     total = 0
     while total + step < goal:
         steps.append(step)
@@ -26,7 +26,7 @@ def calcSteps(goal, step):
     return list(map(lambda x: x * bias, steps))
 
 def run3Stages(path, g, steps):
-    g.comment("initial pass");
+    g.comment("initial pass")
     path(g, 0)
 
     for d in steps:
@@ -50,7 +50,7 @@ def readDRL(fname):
         content = f.read()
         #print(content)
 
-        prog = re.compile('X[+-]?[0-9]+Y[+-]?[0-9]+');
+        prog = re.compile('X[+-]?[0-9]+Y[+-]?[0-9]+')
         points = prog.findall(content)
 
         #print('matches:', len(points))
@@ -66,7 +66,7 @@ def readDRL(fname):
 
 def indexOfClosestPoint(origin, points):
     index = 0
-    minError = 10000*10000
+    minError = 10000.0*10000.0
     x = origin['x']
     y = origin['y']
 
@@ -81,12 +81,10 @@ def indexOfClosestPoint(origin, points):
 
 def sortShortestPath(points):
     newPoints = []
-    cx = 0
-    cy = 0
+    c = {'x':0, 'y':0}
     while len(points) > 0:
-        i = indexOfClosestPoint({'x':cx, 'y':cy}, points)
-        cx = points[i]['x']
-        cy = points[i]['y']
+        i = indexOfClosestPoint(c, points)
+        c = points[i];
         newPoints.append(points.pop(i))
     for p in newPoints:
         points.append(p)

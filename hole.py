@@ -13,20 +13,22 @@ if len(sys.argv) != 5:
     print('  hole material depth toolSize radius')
     print('Notes:')
     print('  Runs in RELATIVE coordinates.')
-    print('  Assumes bit CENTERED')
+    print('  Assumes bit CENTERED at z=0')
     sys.exit(1)
 
 param = initMaterial(sys.argv[1])
 cutDepth = float(sys.argv[2])
 toolSize = float(sys.argv[3])
 radius = float(sys.argv[4])
+halfTool = toolSize / 2
+r = radius - toolSize / 2
 
+if r <= 0:
+    raise RunTimeError("Radius too small relative to tool size.")
 if cutDepth >= 0:
-    print('Cut depth must be less than zero.')
-    sys.exit(2)
+    raise RunTimeError('Cut depth must be less than zero.')
 if toolSize <= 0:
-    print('tool size must be greater than zero')
-    sys.exit(3)
+    raise RunTimeError('tool size must be greater than zero')
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 g.write("(init)")
@@ -34,16 +36,17 @@ g.relative()
 g.spindle(speed = param['spindleSpeed'])
 g.feed(param['feedRate'])
 
-'''
-Didn't work as well as expected. Plunge rate...need to understand better.
-# feedrate in mm/minute
-# compute the time (in minutes) for one circle
-time_one_circle = 3.14 * 2 * radius / param['feedRate']
-# plungeRate in mm/minute
-depth_per_circle = time_one_circle * param['plungeRate']
-print("time_one_circle sec", time_one_circle*60, "depth_per", depth_per_circle)
-'''
+g.move(x=r)
 
-#g.comment('back to origin. z={}'.format(CNC_TRAVEL_Z))
-g.spindle('off')
-#g.move(x=0, y=0)
+def path(g, plunge):
+    g.arc( x=-r, y=r,  direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
+    g.arc( x=-r, y=-r, direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
+    g.arc( x=r,  y=-r, direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
+    g.arc( x=r,  y=r,  direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
+
+steps = calcSteps(-cutDepth, param['passDepth'])
+run3Stages(path, g, steps)
+
+g.move(x=-r)            # back to center of the circle
+g.move(z=-cutDepth)     # up to the starting point
+g.spindle()
