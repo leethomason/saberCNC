@@ -76,12 +76,12 @@ for p in points:
     zStep = cutDepth / nPlunge;
     for i in range(0, nPlunge):
         g.move(z=zStep * (i+1))
-        g.dwell(250)
+        g.dwell(0.250)
         if i < (nPlunge-1):
             g.move(z=zStep * i)
-            g.dwell(250)
+            g.dwell(0.250)
 
-    g.dwell(250)
+    g.dwell(0.250)
 
     g.move(z=CNC_TRAVEL_Z)
     g.feed(param['feedRate'])
