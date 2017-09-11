@@ -8,7 +8,7 @@ from utility import *
 
 if len(sys.argv) != 6:
     print('Usage:')
-    print('rectcut material depth toolSize dx dy')
+    print('pla0.ne     material depth toolSize dx dy')
     sys.exit(1)
 
 param = initMaterial(sys.argv[1])
@@ -29,19 +29,19 @@ halfTool = toolSize / 2
 
 g.write("(init)")
 g.relative()
-g.spindle(speed = param['spindleSpeed'])
+g.spindle(mode='CW', speed = param['spindleSpeed'])
 g.feed(param['plungeRate'])
 g.move(z=cutDepth)
 
-totalX = 0;
-totalY = 0;
-while totalX < cutW/2 and totalY < cutH/2:
-    g.comment('offset= {}, {}'.format(totalX, totalY))
-    g.rect(cutW - totalX, cutH - totalY)
-    d = toolSize * 0.8
-    g.move(x=d, y=d)
-    totalX += d
-    totalY += d
+d = toolSize * 0.8
+i = 0
+
+while i*d < cutW/2 and i*d < cutH/2:
+    g.comment('offset= {}'.format(d*i))
+    g.rect(cutW - d*i*2, cutH - d*i*2)
+    g.move(x=d)
+    g.move(y=d)
+    i += 1
 
 g.move(z=-cutDepth)
 g.spindle()
