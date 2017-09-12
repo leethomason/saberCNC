@@ -12,7 +12,7 @@ from mecode import G
 from material import *
 from utility import *
 
-def drill(mat, cutDepth, filename, points):
+def drill(mat, cutDepth, points):
     nPlunge = 1 + math.floor(-cutDepth / (0.05 * mat['plungeRate']))
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
@@ -55,13 +55,15 @@ def drill(mat, cutDepth, filename, points):
 
         g.dwell(0.250)
 
-        g.move(z=CNC_TRAVEL_Z)
+        # switch back to feedrate *before* going up, so we don't see the bit 
+        # rise in slowwww motionnnn
         g.feed(mat['feedRate'])
+        g.move(z=CNC_TRAVEL_Z)
 
     g.spindle()
     g.move(x=0, y=0)
 
-def main(argv):
+def main():
     isNumberPairs = False
 
     try:
@@ -71,6 +73,7 @@ def main(argv):
         isNumberPairs = False
 
     if len(sys.argv) < 4:
+        print('Drill a set of holes.')
         print('Usage:')
         print('  drill material depth file')
         print('  drill material depth x0 y0 x1 y1 (etc)')
@@ -92,7 +95,7 @@ def main(argv):
         for i in range(3, len(sys.argv), 2):
             points.append({'x':float(sys.argv[i+0]), 'y':float(sys.argv[i+1])})
 
-    drill(param, cutDepth, filename, points)
+    drill(param, cutDepth, points)
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
