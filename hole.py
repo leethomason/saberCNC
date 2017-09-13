@@ -7,7 +7,7 @@ from mecode import G
 from material import *
 from utility import *
 
-def hole(param, cutDepth, toolSize, radius):
+def hole(g, param, cutDepth, toolSize, radius):
     halfTool = toolSize / 2
     r = radius - toolSize / 2
 
@@ -18,7 +18,8 @@ def hole(param, cutDepth, toolSize, radius):
     if toolSize <= 0:
         raise RunTimeError('tool size must be greater than zero')
 
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    if g is None:
+        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
     g.write("(init)")
     g.relative()
     g.spindle(speed = param['spindleSpeed'])
