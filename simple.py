@@ -2,6 +2,4 @@ from mecode import G
 
 g = G()
 g.relative()
-#g.abs_arc(x=0, y=10)
-#g.set_home()
-#g.laser("dynamic")
+g.arc2(x=1, z=1, i=1, k=0, direction='CCW', helix_dim='y', helix_len=0.5)

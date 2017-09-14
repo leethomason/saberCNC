@@ -28,12 +28,11 @@ def hole(g, param, cutDepth, toolSize, radius):
     g.move(x=r)
 
     def path(g, plunge):
-        g.arc( x=-r, y=r,  direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
-        g.arc( x=-r, y=-r, direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
-        g.arc( x=r,  y=-r, direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
-        g.arc( x=r,  y=r,  direction='CCW', radius=r, helix_dim='z', helix_len=plunge/4)
+        # 1 segment, 2, or 4? Go with a balance.
+        g.arc2( x=-2*r, y=0,  i=-r, j=0, direction='CCW', helix_dim='z', helix_len=plunge/2)
+        g.arc2( x= 2*r, y=0,  i=r,  j=0, direction='CCW', helix_dim='z', helix_len=plunge/2)
 
-    steps = calcSteps(-cutDepth, param['passDepth'])
+    steps = calcSteps(cutDepth, -param['passDepth'])
     run3Stages(path, g, steps)
 
     g.move(x=-r)            # back to center of the circle
@@ -53,7 +52,7 @@ def main():
     cutDepth = float(sys.argv[2])
     toolSize = float(sys.argv[3])
     radius = float(sys.argv[4])
-    hole(param, cutDepth, toolSize, radius)
+    hole(None, param, cutDepth, toolSize, radius)
 
 if __name__ == "__main__":
     main()

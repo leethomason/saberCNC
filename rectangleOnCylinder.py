@@ -63,7 +63,7 @@ g.feed(param['feedRate'])
 z = zOnCylinder(dy/2 - halfTool, radius)
 g.arc(y=-(dy/2 - halfTool), z=z, direction='CCW', radius=radius)
 
-steps = calcSteps(-cutDepth, param['passDepth'])
+steps = calcSteps(cutDepth, -param['passDepth'])
 run3Stages(path, g, steps)
 
 g.spindle()

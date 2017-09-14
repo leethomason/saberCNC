@@ -8,7 +8,7 @@ from utility import *
 
 if len(sys.argv) != 6:
     print('Usage:')
-    print('pla0.ne     material depth toolSize dx dy')
+    print('plane material depth toolSize dx dy')
     sys.exit(1)
 
 param = initMaterial(sys.argv[1])

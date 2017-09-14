@@ -33,7 +33,7 @@ def rectcut(param, cutDepth, cutW, cutH):
         g.move(x=-cutW, z=plunge * fractionW / 2)
         g.move(y=-cutH, z=plunge * fractionH / 2)
 
-    steps = calcSteps(-cutDepth, param['passDepth'])
+    steps = calcSteps(cutDepth, -param['passDepth'])
     run3Stages(path, g, steps)
 
     g.spindle()

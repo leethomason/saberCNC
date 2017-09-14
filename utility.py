@@ -23,6 +23,7 @@ def calcSteps(goal, step):
         
     if total < goal:
         steps.append(goal - total)
+
     return list(map(lambda x: x * bias, steps))
 
 def run3Stages(path, g, steps):
@@ -30,8 +31,10 @@ def run3Stages(path, g, steps):
     path(g, 0)
 
     for d in steps:
+        if d > 0:
+            raise RuntimeError("Positive value for step: " + str(d))
         g.comment('pass: depth={}'.format(d))
-        path(g, -d)
+        path(g, d)
 
     g.comment('final pass')
     path(g, 0)
