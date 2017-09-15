@@ -3,6 +3,8 @@
 
 import math
 import sys
+import argparse
+
 from mecode import G
 from material import *
 from utility import *
@@ -12,11 +14,11 @@ def hole(g, param, cutDepth, toolSize, radius):
     r = radius - toolSize / 2
 
     if r <= 0:
-        raise RunTimeError("Radius too small relative to tool size.")
+        raise RuntimeError("Radius too small relative to tool size.")
     if cutDepth >= 0:
-        raise RunTimeError('Cut depth must be less than zero.')
+        raise RuntimeError('Cut depth must be less than zero.')
     if toolSize <= 0:
-        raise RunTimeError('tool size must be greater than zero')
+        raise RuntimeError('Tool size must be greater than zero.')
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -40,19 +42,19 @@ def hole(g, param, cutDepth, toolSize, radius):
     g.spindle()
 
 def main():
-    if len(sys.argv) != 5:
-        print('Usage:')
-        print('  hole material depth toolSize radius')
-        print('Notes:')
-        print('  Runs in RELATIVE coordinates.')
-        print('  Assumes bit CENTERED at z=0')
+    parser = argparse.ArgumentParser(description='Cut a hole at given radius and depth. (Implemented with helical arcs.)')
+    parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
+    parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
+    parser.add_argument('toolSize', help='diameter of the tool; the radius will be adjusted to account for the tool size.', type=float)
+    parser.add_argument('radius', help='radius of the hole', type=float)
+    try:
+        parser.parse_args()
+    except:
+        parser.print_help()
         sys.exit(1)
 
-    param = initMaterial(sys.argv[1])
-    cutDepth = float(sys.argv[2])
-    toolSize = float(sys.argv[3])
-    radius = float(sys.argv[4])
-    hole(None, param, cutDepth, toolSize, radius)
+    mat = initMaterial(parser.material)
+    hole(None, mat, parser.cutDepth, parser.toolSize, parser.radius)
 
 if __name__ == "__main__":
     main()
