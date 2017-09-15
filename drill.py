@@ -12,12 +12,13 @@ from mecode import G
 from material import *
 from utility import *
 
-def drill(mat, cutDepth, points):
+def drill(g, mat, cutDepth, points):
     nPlunge = 1 + math.floor(-cutDepth / (0.05 * mat['plungeRate']))
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
 
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    if g is None:
+        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     g.comment("init ABSOLUTE:")
     g.comment("  material: " + mat['name'])
@@ -95,7 +96,7 @@ def main():
         for i in range(3, len(sys.argv), 2):
             points.append({'x':float(sys.argv[i+0]), 'y':float(sys.argv[i+1])})
 
-    drill(param, cutDepth, points)
+    drill(None, param, cutDepth, points)
 
 if __name__ == "__main__":
     main()
