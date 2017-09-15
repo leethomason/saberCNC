@@ -20,10 +20,11 @@ def hole(g, param, cutDepth, toolSize, radius):
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+
     g.write("(init)")
     g.relative()
-    g.spindle(speed = param['spindleSpeed'])
     g.feed(param['feedRate'])
+    g.spindle(speed = param['spindleSpeed'])
 
     g.move(x=r)
 

@@ -29,7 +29,7 @@ halfTool = toolSize / 2
 
 g.write("(init)")
 g.relative()
-g.spindle(mode='CW', speed = param['spindleSpeed'])
+g.spindle(speed = param['spindleSpeed'])
 g.feed(param['plungeRate'])
 g.move(z=cutDepth)
 
