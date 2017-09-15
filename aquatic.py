@@ -10,18 +10,18 @@ from material import *
 # all measurements from the hole center,
 # origin at hole center
 
-TOOLSIZE        = 3.12
-CYLINDER_DIAMETER = 37
+TOOLSIZE            = CNC_STD_TOOL
+CYLINDER_DIAMETER   = 37
 
-HOLE_DIAMETER   = 16
-HOLE_DEPTH      = -8
+HOLE_DIAMETER       = 16
+HOLE_DEPTH          = -8
 
-BODY_DEPTH      = -5
-NECK_W          = 11
-DISPLAY_W       = 15
-DISPLAY_X0      = 15
-DISPLAY_X1      = 35
-FILLET          = 1
+BODY_DEPTH          = -5
+NECK_W              = 11
+DISPLAY_W           = 15
+DISPLAY_X0          = 15
+DISPLAY_X1          = 35
+FILLET              = 1
 
 mat = initMaterial("wood")
 
@@ -57,7 +57,7 @@ def path(g, plunge):
 
     g.move(y=dy0, z=zNeck)
     g.move(x=dx0, z=plunge/2)
-    g.arc(x=FILLET, y=FILLET, direction='CCW', radius=FILLET)
+    g.arc(x=FILLET, y=FILLET, direction='CCW', radius=FILLET) #technically there should be a z change here, but close enough.
     g.move(y=dy1, z=zDisplay - zNeck)
     g.move(x=dx1)
 
@@ -74,4 +74,4 @@ run3Stages(path, g, steps)
 
 g.move(z=-BODY_DEPTH)     # up to the starting point
 g.spindle()
-
+g.abs_move(0, 0, 0)

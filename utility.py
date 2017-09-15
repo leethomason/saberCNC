@@ -3,6 +3,7 @@ import math
 import re
 
 CNC_TRAVEL_Z = 3.0
+CNC_STD_TOOL = 3.175    #   1/8 inch bit
 
 # Calculates relative moves to get to a final goal.
 # A goal='5' and a step='2' generates: [2, 2, 1]
