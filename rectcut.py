@@ -18,7 +18,7 @@ def rectcut(param, cutDepth, cutW, cutH):
 
     g.write("(init)")
     g.relative()
-    g.spindle(speed = param['spindleSpeed'])
+    g.spindle('CW', param['spindleSpeed'])
     g.feed(param['feedRate'])
 
     # Spread the plunge out over all 4 sides of the motion.

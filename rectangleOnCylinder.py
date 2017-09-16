@@ -56,7 +56,7 @@ g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
 g.write("(init)")
 g.relative()
-g.spindle(param['spindleSpeed'])
+g.spindle('CW', param['spindleSpeed'])
 g.feed(param['feedRate'])
 
 #move the head to the starting position

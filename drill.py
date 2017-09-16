@@ -32,7 +32,7 @@ def drill(g, mat, cutDepth, points):
     g.comment("  num points: " + str(len(points)))
 
     g.move(z=CNC_TRAVEL_Z)
-    g.spindle(speed = mat['spindleSpeed'])
+    g.spindle('CW', mat['spindleSpeed'])
 
     for p in points:
         g.comment('drill hole at {},{}'.format(p['x'], p['y']))

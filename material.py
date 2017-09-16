@@ -18,10 +18,16 @@ def initAluminum():
              "spindleSpeed":    10000,
              "plungeRate":      12 };
 
-# 1mm
-def initFR1():
-    return { "name":            "fr1",
-             "feedRate":        360,
+def initFR07():
+    return { "name":            "fr07",
+             "feedRate":        250,
+             "passDepth":       0.15,
+             "spindleSpeed":    10000,
+             "plungeRate":      30 };
+
+def initFR10():
+    return { "name":            "fr10",
+             "feedRate":        280,
              "passDepth":       0.15,
              "spindleSpeed":    10000,
              "plungeRate":      30 };
@@ -39,8 +45,10 @@ def initMaterial(name):
         return initWood()
     elif name == 'aluminum':
         return initAluminum()
-    elif name == 'fr1':
-        return initFR1()
+    elif name == 'fr10':
+        return initFR10()
+    elif name == 'fr07':
+        return initFR07()
     elif name == 'air':
         return initAir()
     else:

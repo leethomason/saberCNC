@@ -8,7 +8,7 @@ param = initWood();
 
 g.write("(init)")
 g.relative()
-g.spindle(param.spindleSpeed)
+g.spindle('CW', param.spindleSpeed)
 g.move(y=-SIZE_Y/2)
 
 for d in range(0, 6):

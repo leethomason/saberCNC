@@ -26,7 +26,7 @@ def hole(g, param, cutDepth, toolSize, radius):
     g.write("(init)")
     g.relative()
     g.feed(param['feedRate'])
-    g.spindle(speed = param['spindleSpeed'])
+    g.spindle('CW', param['spindleSpeed'])
 
     g.move(x=r)
 
