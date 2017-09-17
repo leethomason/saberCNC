@@ -70,19 +70,21 @@ nRows  = len(asciiPCB) + PAD*2
 pcb   = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
 drillPts = []
 
-for y in range(len(asciiPCB)):
-    str = asciiPCB[y]
-    for x in range(len(str)):
-         c = str[x]
+for j in range(len(asciiPCB)):
+    str = asciiPCB[j]
+    for i in range(len(str)):
+         c = str[i]
+         x = i + PAD
+         y = j + PAD
          if c != ' ':
-            pcb[y+PAD][x+PAD] = COPPER
+            pcb[y][x] = COPPER
             for dx in range(-1, 2, 1):
                 for dy in range(-1, 2, 1):
-                    if pcb[y+PAD+dy][x+PAD+dx] == NOT_INIT:
-                        pcb[y+PAD+dy][x+PAD+dx] = ISOLATE
+                    if pcb[y+dy][x+dx] == NOT_INIT:
+                        pcb[y+dy][x+dx] = ISOLATE
 
             if c != '-' and c != '|' and c != '+':
-                drillPts.append({'x':(x+PAD)*SCALE, 'y':(y+PAD)*SCALE})
+                drillPts.append({'x':x*SCALE, 'y':(nRows - 1 - y)*SCALE})
 '''
 for y in range(nRows):
     str = ""
