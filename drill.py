@@ -14,7 +14,7 @@ from material import *
 from utility import *
 
 def drill(g, mat, cutDepth, points):
-    nPlunge = 1 + math.floor(-cutDepth / (0.05 * mat['plungeRate']))
+    nPlunge = 1 + int(-cutDepth / (0.05 * mat['plungeRate']))
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
 

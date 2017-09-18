@@ -60,8 +60,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, cut, infoMode):
 
     while len(asciiPCB) > 0 and len(asciiPCB[0]) == 0:
         asciiPCB.pop(0)
-    while len(asciiPCB) > 0 and len(asciiPCB[len(asciiPCB) - 1]) == 0:
-        asciiPCB.pop(len(asciiPCB) - 1)
+    while len(asciiPCB) > 0 and len(asciiPCB[-1]) == 0:
+        asciiPCB.pop(-1)
 
     for line in asciiPCB:
         maxCharW = max(len(line), maxCharW)
@@ -194,7 +194,7 @@ def main():
     parser.add_argument(
         '-c', '--cut', help='cut out the final pcb', type=bool, default=False)
     parser.add_argument(
-        '-i', '--info', help='display info and exit', type=bool, default=False)
+        '-i', '--info', help='display info about the board and exit', type=bool, default=False)
     try:
         args = parser.parse_args()
     except:
