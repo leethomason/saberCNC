@@ -49,13 +49,13 @@ def main():
     parser.add_argument('toolSize', help='diameter of the tool; the radius will be adjusted to account for the tool size.', type=float)
     parser.add_argument('radius', help='radius of the hole', type=float)
     try:
-        parser.parse_args()
+        args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(1)
 
-    mat = initMaterial(parser.material)
-    hole(None, mat, parser.cutDepth, parser.toolSize, parser.radius)
+    mat = initMaterial(args.material)
+    hole(None, mat, args.cutDepth, args.toolSize, args.radius)
 
 if __name__ == "__main__":
     main()

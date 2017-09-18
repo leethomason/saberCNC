@@ -5,6 +5,7 @@
 # If a .drl is used, tool change isn't supported, and it's all
 # done as one pass. (Tool change wolud be straightforward, I
 # just don't a machine that can do it reliably.)
+#
 
 import math
 import sys
@@ -61,6 +62,7 @@ def drill(g, mat, cutDepth, points):
         g.move(z=CNC_TRAVEL_Z)
 
     g.spindle()
+    # Leaves the head at (0, 0, CNC_TRAVEL_Z)
     g.move(x=0, y=0)
 
 def main():

@@ -7,7 +7,10 @@ from mecode import G
 from material import *
 from utility import *
 
-def rectcut(param, cutDepth, cutW, cutH):
+def rectcut(g, param, cutDepth, cutW, cutH):
+
+    if g is None:
+        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
@@ -53,7 +56,7 @@ def main():
     cutW = float(sys.argv[3])
     cutH = float(sys.argv[4])
     
-    rectcut(param, cutDepth, cutW, cutH)   
+    rectcut(None, param, cutDepth, cutW, cutH)   
 
 if __name__ == "__main__":
     main()
