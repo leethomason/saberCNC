@@ -9,17 +9,17 @@ from utility import *
 
 def rectcut(g, param, cutDepth, cutW, cutH):
 
+    needTeardown = False
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+        needTeardown = True
 
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
     if cutW <= 0 or cutH <= 0:
         raise RunTimeError('w and h must be greater than zero')
 
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
-
-    g.write("(init)")
+    g.comment("init rectangle cut")
     g.relative()
     g.spindle('CW', param['spindleSpeed'])
     g.feed(param['feedRate'])
@@ -40,7 +40,8 @@ def rectcut(g, param, cutDepth, cutW, cutH):
 
     g.spindle()
     g.move(z=CNC_TRAVEL_Z - cutDepth)
-    g.teardown()
+    if needTeardown:
+        g.teardown()
 
 def main():
     if len(sys.argv) != 5   :
