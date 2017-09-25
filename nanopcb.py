@@ -113,6 +113,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
     # pcb[y][x]
     pcb = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
     drillPts = []
+    drillAscii = []
 
     for j in range(len(asciiPCB)):
         str = asciiPCB[j]
@@ -135,6 +136,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
                                 pcb[yPrime][xPrime] = ISOLATE
 
                 if c != '-' and c != '|' and c != '+':
+                    drillAscii.append(
+                        {'x':x, 'y':y})
                     drillPts.append(
                         {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
 
@@ -145,7 +148,12 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
             str = ""
             for x in range(nCols):
                 c = pcb[y][x]
-                if c == ISOLATE:
+                p = {'x':x, 'y':y}
+                if x == 0 or y == 0 or x == nCols -1 or y == nRows - 1:
+                    str = str + '%'
+                elif p in drillAscii:
+                    str = str + 'o'
+                elif c == ISOLATE:
                     str = str + '.'
                 elif c == NOT_INIT:
                     str = str + ' '
@@ -247,7 +255,7 @@ def main():
 
     mat = initMaterial(args.material)
 
-    print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
+    #print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
     nanopcb(None, args.filename, mat, args.pcbDepth,
            args.drillDepth, args.nocut==False, args.info, args.nodrill==False)
 
