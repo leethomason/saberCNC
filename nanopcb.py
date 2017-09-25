@@ -66,7 +66,8 @@ def scan(vec):
     return result
 
 
-def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrilling):
+def nanopcb(g, filename, mat, pcbDepth, drillDepth, 
+            doCutting=True, infoMode=False, doDrilling=True, size=None):
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -143,6 +144,21 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
 
     cutW = (nCols - 1) * SCALE
     cutH = (nRows - 1) * SCALE
+    originalCutW = cutW
+    originalCutH = cutH
+    offsetX = 0
+    offsetY = 0
+
+    if size is not None:
+        if size[0] < cutW:
+            raise RuntimeError("Size in x less than required width.")
+        if size[1] < cutH:
+            raise RuntimeError("Size in y less than required height.")
+        offsetX = (size[0] - cutW) / 2
+        offsetY = (size[1] - cutH) / 2
+        cutW = size[0]
+        cutH = size[1]
+
     if infoMode is True:
         for y in range(nRows):
             str = ""
@@ -163,7 +179,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
 
         print('nDrill points = {}'.format(len(drillPts)))
         print('rows/cols = {},{}'.format(nCols, nRows))
-        print('size on tool center = {},{}'.format(cutW, cutH))
+        print('computed size (on tool center) = {},{}'.format(originalCutW, originalCutH))
+        print('size (on tool center) = {},{}'.format(cutW, cutH))
         sys.exit(0)
 
     cuts = []
@@ -189,6 +206,16 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrill
 
             c = PtPair(x*SCALE, (nRows - 1 - y0)*SCALE, x*SCALE, (nRows - y1)*SCALE)
             cuts.append(c)
+
+    # Patch the cutout size as a post-processing step.
+    # Prior to the actual cutting it can live as an offset,
+    # and keep the code simpler.
+    for c in cuts:
+        c['x'] += offsetX
+        c['y'] += offsetY
+    for d in drillPts:
+        d['x'] += offsetX
+        d['y'] += offsetY
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -246,6 +273,8 @@ def main():
         '-i', '--info', help='display info and exit', action='store_true')
     parser.add_argument(
         '-d', '--nodrill', help='disable drill holes in the pcb', action='store_true')
+    parser.add_argument(
+        '-s', '--size', help='specifiy a size to cut the pcb', type=float, nargs=2)
 
     try:
         args = parser.parse_args()
@@ -255,9 +284,12 @@ def main():
 
     mat = initMaterial(args.material)
 
+    # if args.size is not None:
+    #   print(args.size)
+
     #print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
     nanopcb(None, args.filename, mat, args.pcbDepth,
-           args.drillDepth, args.nocut==False, args.info, args.nodrill==False)
+           args.drillDepth, args.nocut==False, args.info, args.nodrill==False, args.size)
 
 if __name__ == "__main__":
     main()
