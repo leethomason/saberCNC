@@ -1,0 +1,18 @@
+# RF24 holder circuit.
+
+[                   ]
+     o o   o-o-o     
+     | |       |
+     o o o o o o
+       | | | | |
+     o o m s c g
+     | |
+     o o i m c v
+       |   | | |
+     o o   o o o
+     | |       |
+     o o   o-o-o     
+[                   ]
+
+# Left row bus
+# Next row vbat bus
