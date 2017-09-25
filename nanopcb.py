@@ -15,6 +15,38 @@ NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
 
+class PtPair:
+    def __init__(self, x0, y0, x1, y1):
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
+
+    def swappt(self):
+        self.x0, self.x1 = self.x1, self.x0
+        self.y0, self.y1 = self.y1, self.y0
+
+def popClosestPtPair(x, y, arr):
+    error = 1000.0 * 1000.0
+    index = 0
+
+    for i in range(0, len(arr)):
+        p = arr[i]
+        err = (p.x0 - x)**2 + (p.y0 - y)**2
+        if (err == 0):
+            return arr.pop(i)
+        if err < error:
+            index = i
+            error = err
+        err = (p.x1 - x)**2 + (p.y1 - y)**2
+        if err == 0:
+            p.swappt()
+            return arr.pop(i)
+        if err < error:
+            p.swappt()
+            index = i
+            error = err
+    return arr.pop(index)
 
 def scan(vec):
     result = []
@@ -34,7 +66,7 @@ def scan(vec):
     return result
 
 
-def nanopcb(g, filename, mat, pcbDepth, drillDepth, cut, infoMode):
+def nanopcb(g, filename, mat, pcbDepth, drillDepth, doCutting, infoMode, doDrilling):
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -134,8 +166,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, cut, infoMode):
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
-            c = {'x0': (x0) * SCALE,     'y0': (nRows - 1 - y) * SCALE,
-                 'x1': (x1 - 1) * SCALE, 'y1': (nRows - 1 - y) * SCALE}
+            c = PtPair(x0*SCALE, (nRows - 1 - y) * SCALE, (x1-1)*SCALE, (nRows - 1 - y) * SCALE)
             cuts.append(c)
 
     for x in range(nCols):
@@ -148,8 +179,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, cut, infoMode):
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
-            c = {'x0': (x) * SCALE, 'y0': (nRows - 1 - y0) * SCALE,
-                 'x1': (x) * SCALE, 'y1': (nRows - y1) * SCALE}
+            c = PtPair(x*SCALE, (nRows - 1 - y0)*SCALE, x*SCALE, (nRows - y1)*SCALE)
             cuts.append(c)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -162,24 +192,35 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth, cut, infoMode):
     g.move(z=CNC_TRAVEL_Z)
     g.spindle('CW', mat['spindleSpeed'])
 
-    for cut in cuts:
+    # impossible starting value to force moving to
+    # the cut depth on the first point.
+    x = -0.1
+    y = -0.1
+
+    while len(cuts) > 0:
+        cut = popClosestPtPair(x, y, cuts)
+
         g.comment(
-            '{},{} -> {},{}'.format(cut['x0'], cut['y0'], cut['x1'], cut['y1']))
-        g.move(x=cut['x0'], y=cut['y0'])
-        g.move(z=pcbDepth)
-        g.move(x=cut['x1'], y=cut['y1'])
-        g.move(z=CNC_TRAVEL_Z)
+            '{},{} -> {},{}'.format(cut.x0, cut.y0, cut.x1, cut.y1))
 
-    drill(g, mat, drillDepth, drillPts)
+        if cut.x0 != x or cut.y0 != y:
+            g.move(z=CNC_TRAVEL_Z)
+            g.move(x=cut.x0, y=cut.y0)
+            g.move(z=pcbDepth)
+        g.move(x=cut.x1, y=cut.y1)
+        x = cut.x1
+        y = cut.y1
 
-    if (cut):
+    if doDrilling:
+        drill(g, mat, drillDepth, drillPts)
+
+    if (doCutting):
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
         rectcut(g, mat, drillDepth, cutW, cutH)
 
     g.spindle()
     g.teardown()
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -188,13 +229,16 @@ def main():
     parser.add_argument(
         'material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument(
-        'pcbDepth', help='depth of the cut. must be negative. generally small (-0.1 to -0.2 mm)', type=float)
+        'pcbDepth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument(
-        'drillDepth', help='depth of the drilling and pcb cutting. generally about -0.5 to -2.0mm.', type=float)
+        'drillDepth', help='depth of the drilling and pcb cutting. must be negative.', type=float)
     parser.add_argument(
-        '-c', '--cut', help='cut out the final pcb', type=bool, default=False)
+        '-c', '--nocut', help='disable cut out the final pcb', action='store_true')
     parser.add_argument(
-        '-i', '--info', help='display info about the board and exit', type=bool, default=False)
+        '-i', '--info', help='display info and exit', action='store_true')
+    parser.add_argument(
+        '-d', '--nodrill', help='disable drill holes in the pcb', action='store_true')
+
     try:
         args = parser.parse_args()
     except:
@@ -202,8 +246,10 @@ def main():
         sys.exit(1)
 
     mat = initMaterial(args.material)
+
+    print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
     nanopcb(None, args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.cut, args.info)
+           args.drillDepth, args.nocut==False, args.info, args.nodrill==False)
 
 if __name__ == "__main__":
     main()
