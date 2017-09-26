@@ -26,6 +26,12 @@ class PtPair:
         self.x0, self.x1 = self.x1, self.x0
         self.y0, self.y1 = self.y1, self.y0
 
+    def add(self, x, y):
+        self.x0 += x
+        self.y0 += y
+        self.x1 += x
+        self.y1 += y
+
 def popClosestPtPair(x, y, arr):
     error = 1000.0 * 1000.0
     index = 0
@@ -211,14 +217,14 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     # Prior to the actual cutting it can live as an offset,
     # and keep the code simpler.
     for c in cuts:
-        c['x'] += offsetX
-        c['y'] += offsetY
+        c.add(offsetX, offsetY)
     for d in drillPts:
         d['x'] += offsetX
         d['y'] += offsetY
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
+    g.comment("NanoPCB")
     g.comment("size col x row = {} x {}".format(nCols, nRows))
     g.comment("num drill points = {}".format(len(drillPts)))
 

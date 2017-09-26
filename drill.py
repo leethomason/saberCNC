@@ -21,6 +21,7 @@ def drill(g, mat, cutDepth, points):
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
+    g.comment("Drill")
     g.comment("init ABSOLUTE:")
     g.comment("  material: " + mat['name'])
     g.comment("  depth: " + str(cutDepth))

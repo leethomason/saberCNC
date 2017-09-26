@@ -19,7 +19,7 @@ def rectcut(g, param, cutDepth, cutW, cutH):
     if cutW <= 0 or cutH <= 0:
         raise RunTimeError('w and h must be greater than zero')
 
-    g.comment("init rectangle cut")
+    g.comment("Rectangular cut")
     g.relative()
     g.spindle('CW', param['spindleSpeed'])
     g.feed(param['feedRate'])
