@@ -16,6 +16,7 @@ COPPER = 1
 ISOLATE = -1
 
 class PtPair:
+
     def __init__(self, x0, y0, x1, y1):
         self.x0 = x0
         self.y0 = y0
@@ -31,6 +32,7 @@ class PtPair:
         self.y0 += y
         self.x1 += x
         self.y1 += y
+
 
 def popClosestPtPair(x, y, arr):
     error = 1000.0 * 1000.0
@@ -54,6 +56,7 @@ def popClosestPtPair(x, y, arr):
             error = err
     return arr.pop(index)
 
+
 def scan(vec):
     result = []
 
@@ -72,7 +75,7 @@ def scan(vec):
     return result
 
 
-def nanopcb(g, filename, mat, pcbDepth, drillDepth, 
+def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             doCutting=True, infoMode=False, doDrilling=True, size=None):
 
     if g is None:
@@ -144,7 +147,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
                 if c != '-' and c != '|' and c != '+':
                     drillAscii.append(
-                        {'x':x, 'y':y})
+                        {'x': x, 'y': y})
                     drillPts.append(
                         {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
 
@@ -170,9 +173,12 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             str = ""
             for x in range(nCols):
                 c = pcb[y][x]
-                p = {'x':x, 'y':y}
-                if x == 0 or y == 0 or x == nCols -1 or y == nRows - 1:
-                    str = str + '%'
+                p = {'x': x, 'y': y}
+                if x == 0 or y == 0 or x == nCols - 1 or y == nRows - 1:
+                    if c == ISOLATE:
+                        str = str + '$'
+                    else:
+                        str = str + '%'
                 elif p in drillAscii:
                     str = str + 'o'
                 elif c == ISOLATE:
@@ -185,7 +191,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
         print('nDrill points = {}'.format(len(drillPts)))
         print('rows/cols = {},{}'.format(nCols, nRows))
-        print('computed size (on tool center) = {},{}'.format(originalCutW, originalCutH))
+        print('computed size (on tool center) = {},{}'.format(
+            originalCutW, originalCutH))
         print('size (on tool center) = {},{}'.format(cutW, cutH))
         sys.exit(0)
 
@@ -197,7 +204,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
-            c = PtPair(x0*SCALE, (nRows - 1 - y) * SCALE, (x1-1)*SCALE, (nRows - 1 - y) * SCALE)
+            c = PtPair(x0 * SCALE, (nRows - 1 - y) * SCALE,
+                       (x1 - 1) * SCALE, (nRows - 1 - y) * SCALE)
             cuts.append(c)
 
     for x in range(nCols):
@@ -210,7 +218,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
-            c = PtPair(x*SCALE, (nRows - 1 - y0)*SCALE, x*SCALE, (nRows - y1)*SCALE)
+            c = PtPair(x * SCALE, (nRows - 1 - y0) * SCALE,
+                       x * SCALE, (nRows - y1) * SCALE)
             cuts.append(c)
 
     # Patch the cutout size as a post-processing step.
@@ -263,6 +272,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     g.spindle()
     g.teardown()
 
+
 def main():
     parser = argparse.ArgumentParser(
         description='Cut a printed circuit board from a text file.')
@@ -295,7 +305,7 @@ def main():
 
     #print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
     nanopcb(None, args.filename, mat, args.pcbDepth,
-           args.drillDepth, args.nocut==False, args.info, args.nodrill==False, args.size)
+            args.drillDepth, args.nocut == False, args.info, args.nodrill == False, args.size)
 
 if __name__ == "__main__":
     main()
