@@ -300,10 +300,6 @@ def main():
 
     mat = initMaterial(args.material)
 
-    # if args.size is not None:
-    #   print(args.size)
-
-    #print("fname", args.filename, "drillDepth", args.drillDepth, "cut", args.nocut==False, "info", args.info, "drill", args.nodrill==False)
     nanopcb(None, args.filename, mat, args.pcbDepth,
             args.drillDepth, args.nocut == False, args.info, args.nodrill == False, args.size)
 
