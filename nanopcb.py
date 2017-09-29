@@ -1,7 +1,5 @@
-# turn ascii art into a pcb. for reals.
+# turn ascii art into a pcb. for real.
 
-import sys
-import math
 import argparse
 
 from mecode import G
@@ -15,13 +13,14 @@ NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
 
+
 class Point:
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
-class PtPair:
 
+class PtPair:
     def __init__(self, x0, y0, x1, y1):
         self.x0 = x0
         self.y0 = y0
@@ -52,6 +51,7 @@ def findDir(mark, pcb, exclude):
             return Point(c[0], c[1])
     return None
 
+
 def marksToPath(startMark, pcb):
     if startMark is None:
         return None
@@ -60,14 +60,14 @@ def marksToPath(startMark, pcb):
     cutPath.append(startMark)
     dir = findDir(startMark, pcb, None)
     if dir is None:
-        raise RuntimeError("Could not find path direction at {},{}".format(mark.x, mark.y))
+        raise RuntimeError("Could not find path direction at {},{}".format(startMark.x, startMark.y))
 
     print("dir {},{} at {},{}".format(dir.x, dir.y, startMark.x, startMark.y))
 
     p = Point(startMark.x, startMark.y)
     p.x += dir.x
     p.y += dir.y
-    while p.x != startMark.x and p.y != startMark.y:
+    while p.x != startMark.x or p.y != startMark.y:
         if pcb[p.y][p.x] == 1:
             ex = Point(-dir.x, -dir.y)
             newDir = findDir(p, pcb, ex)
@@ -78,19 +78,20 @@ def marksToPath(startMark, pcb):
         p.x += dir.x
         p.y += dir.y
 
+
 def popClosestPtPair(x, y, arr):
     error = 1000.0 * 1000.0
     index = 0
 
     for i in range(0, len(arr)):
         p = arr[i]
-        err = (p.x0 - x)**2 + (p.y0 - y)**2
+        err = (p.x0 - x) ** 2 + (p.y0 - y) ** 2
         if (err == 0):
             return arr.pop(i)
         if err < error:
             index = i
             error = err
-        err = (p.x1 - x)**2 + (p.y1 - y)**2
+        err = (p.x1 - x) ** 2 + (p.y1 - y) ** 2
         if err == 0:
             p.swappt()
             return arr.pop(i)
@@ -121,7 +122,6 @@ def scan(vec):
 
 def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             doCutting=True, infoMode=False, doDrilling=True, size=None):
-
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -158,7 +158,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
     # use the C notation
     # pcb[y][x]
-    pcb    = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
+    pcb = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
     cutMap = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
 
     drillPts = []
@@ -316,7 +316,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     if doDrilling:
         drill(g, mat, drillDepth, drillPts)
 
-    if (doCutting):
+    if doCutting:
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
         rectcut(g, mat, drillDepth, cutW, cutH)
@@ -354,6 +354,7 @@ def main():
 
     nanopcb(None, args.filename, mat, args.pcbDepth,
             args.drillDepth, args.nocut == False, args.info, args.nodrill == False, args.size)
+
 
 if __name__ == "__main__":
     main()
