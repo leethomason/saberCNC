@@ -15,6 +15,11 @@ NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
 
+class Point:
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
 class PtPair:
 
     def __init__(self, x0, y0, x1, y1):
@@ -33,6 +38,25 @@ class PtPair:
         self.x1 += x
         self.y1 += y
 
+def marksToPath(leftBoundMarks, rightBoundMarks):
+    if len(leftBoundMarks) < 2 or len(rightBoundMarks) < 2:
+        return None
+
+    # origin in lower left
+    path = []
+    p = leftBoundMarks.pop(-1)
+    p.x -= 1
+    p.y += 1
+
+    cutPath.append(p)
+    while len(leftBoundMarks) > 0:
+        np = leftBoundMarks.pop(-1)
+        np.x -= 1
+        if np.x < p.x:
+            np.y -= 1
+        cutPath.append(Point(p.x, np.y))
+        cutPath.append(Point(np.x, np.y))
+        p = np
 
 def popClosestPtPair(x, y, arr):
     error = 1000.0 * 1000.0
@@ -108,13 +132,6 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     for line in asciiPCB:
         maxCharW = max(len(line), maxCharW)
 
-    '''
-    print("nLines=" + str(len(asciiPCB)))
-    print("width=" + str(maxCharW))
-    for s in asciiPCB:
-        print(s)
-    '''
-
     PAD = 1
     nCols = maxCharW + PAD * 2
     nRows = len(asciiPCB) + PAD * 2
@@ -124,6 +141,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     pcb = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
     drillPts = []
     drillAscii = []
+    leftBoundMarks = []
+    rightBoundMarks = []
 
     for j in range(len(asciiPCB)):
         str = asciiPCB[j]
@@ -132,8 +151,12 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             x = i + PAD
             y = j + PAD
             if c != ' ':
-                if c == '[' or c == ']':
-                    # these define bounds.
+                if c == '[': or c == ']':
+                    point = Point(x, y)
+                    if c == '[':
+                        leftBoundMarks.append(point)
+                    else:
+                        rightBoundMarks.append(point)
                     continue
 
                 pcb[y][x] = COPPER
@@ -150,6 +173,8 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                         {'x': x, 'y': y})
                     drillPts.append(
                         {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
+
+    cutPath = marksToPath(leftBoundMarks, rightBoundMarks)
 
     cutW = (nCols - 1) * SCALE
     cutH = (nRows - 1) * SCALE
