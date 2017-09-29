@@ -15,6 +15,7 @@ ISOLATE = -1
 
 
 class Point:
+
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
@@ -27,6 +28,7 @@ class Point:
 
 
 class PtPair:
+
     def __init__(self, x0, y0, x1, y1):
         self.x0 = x0
         self.y0 = y0
@@ -43,6 +45,7 @@ class PtPair:
         self.x1 += x
         self.y1 += y
 
+
 def sign(x):
     if x > 0:
         return 1
@@ -50,9 +53,11 @@ def sign(x):
         return -1
     return 0
 
+
 def findDir(mark, pcb, exclude):
     if pcb[mark.y][mark.x] != 1:
-        raise RuntimeError("should be on cut line at {},{}".format(mark.x, mark.y))
+        raise RuntimeError(
+            "should be on cut line at {},{}".format(mark.x, mark.y))
 
     check = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
@@ -72,9 +77,10 @@ def marksToPath(startMark, pcb):
     cutPath.append(startMark)
     direction = findDir(startMark, pcb, None)
     if direction is None:
-        raise RuntimeError("Could not find path direction at {},{}".format(startMark.x, startMark.y))
+        raise RuntimeError("Could not find path direction at {},{}".format(
+            startMark.x, startMark.y))
 
-    print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
+    #print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
 
     p = Point(startMark.x, startMark.y)
     p.x += direction.x
@@ -210,9 +216,27 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                         {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
 
     cutPath = marksToPath(startMark, cutMap)
+    cutPathIsSimple = False
 
-    cutW = (nCols - 1) * SCALE
-    cutH = (nRows - 1) * SCALE
+    # Create a cutPath, if not specified, to simplify the code from here on
+    # out:
+    if cutPath is None:
+        cutPath = []
+        cutPathIsSimple = True
+        cutPath.append(Point(0, 0))
+        cutPath.append(Point(nCols - 1, 0))
+        cutPath.append(Point(nCols - 1, nRows - 1))
+        cutPath.append(Point(0, nRows - 1))
+
+    cutMinDim = Point(1000, 1000)
+    cutMaxDim = Point(0, 0)
+    for c in cutPath:
+        x = c.x * SCALE
+        y = (nRows - 1 - c.y) * SCALE
+        cutMinDim.x = min(cutMinDim.x, x)
+        cutMinDim.y = min(cutMinDim.y, y)
+        cutMaxDim.x = max(cutMaxDim.x, x)
+        cutMaxDim.y = max(cutMaxDim.y, y)
 
     if infoMode is True:
         output_rows = []
@@ -221,12 +245,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             for x in range(nCols):
                 c = pcb[y][x]
                 p = {'x': x, 'y': y}
-                if (cutPath is None) and (x == 0 or y == 0 or x == nCols - 1 or y == nRows - 1):
-                    if c == ISOLATE:
-                        out = out + '$'
-                    else:
-                        out = out + '%'
-                elif p in drillAscii:
+                if p in drillAscii:
                     out = out + 'o'
                 elif c == ISOLATE:
                     out = out + '.'
@@ -236,24 +255,28 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                     out = out + '+'
             output_rows.append(out)
 
-        if cutPath is not None:
-            for i in range(0, len(cutPath)):
-                n = (i+1) % len(cutPath)
-                step = Point(sign(cutPath[n].x - cutPath[i].x), sign(cutPath[n].y - cutPath[i].y))
-                p = Point(cutPath[i].x, cutPath[i].y)
-                while True:
-                    output_rows[p.y] = output_rows[p.y][0:p.x] + '%' + output_rows[p.y][p.x+1:]
-                    if p == cutPath[n]:
-                        break
-                    p.x += step.x
-                    p.y += step.y
+        for i in range(0, len(cutPath)):
+            n = (i + 1) % len(cutPath)
+            step = Point(sign(cutPath[n].x - cutPath[i].x),
+                         sign(cutPath[n].y - cutPath[i].y))
+            p = Point(cutPath[i].x, cutPath[i].y)
+            while True:
+                output_rows[p.y] = output_rows[p.y][
+                    0:p.x] + '%' + output_rows[p.y][p.x + 1:]
+                if p == cutPath[n]:
+                    break
+                p.x += step.x
+                p.y += step.y
 
         for r in output_rows:
             print(r)
 
         print('nDrill points = {}'.format(len(drillPts)))
         print('rows/cols = {},{}'.format(nCols, nRows))
-        print('size (on tool center) = {},{}'.format(cutW, cutH))
+        print('cut bounds = {},{} -> {},{}'.format(cutMinDim.x,
+                                                   cutMinDim.y, cutMaxDim.x, cutMaxDim.y))
+        print('size (on tool center) = {},{}'.format(
+            cutMaxDim.x - cutMinDim.x, cutMaxDim.y - cutMinDim.y))
 
         '''
         if cutPath:
