@@ -1,0 +1,23 @@
+# Resister connector
+# # # # # # # #
+
+%%   %%%%%%   %%
+%              %
+  oo        oo  
+
+  oo        oo
+
+% oo        oo %
+%              %
+%%%%%%     %%%%%
+     %     %
+
+       o-o 
+
+     %     %
+     %%%%%%%
+
+# Red
+# Green
+# Blue
+# power

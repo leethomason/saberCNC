@@ -38,25 +38,45 @@ class PtPair:
         self.x1 += x
         self.y1 += y
 
-def marksToPath(leftBoundMarks, rightBoundMarks):
-    if len(leftBoundMarks) < 2 or len(rightBoundMarks) < 2:
+
+def findDir(mark, pcb, exclude):
+    if pcb[mark.y][mark.x] != 1:
+        raise RuntimeError("should be on cut line at {},{}".format(mark.x, mark.y))
+
+    check = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+
+    for c in check:
+        if (exclude is not None) and (c[0] == exclude.x) and (c[1] == exclude.y):
+            continue
+        if pcb[c[1] + mark.y][c[0] + mark.x] == 1:
+            return Point(c[0], c[1])
+    return None
+
+def marksToPath(startMark, pcb):
+    if startMark is None:
         return None
 
-    # origin in lower left
-    path = []
-    p = leftBoundMarks.pop(-1)
-    p.x -= 1
-    p.y += 1
+    cutPath = []
+    cutPath.append(startMark)
+    dir = findDir(startMark, pcb, None)
+    if dir is None:
+        raise RuntimeError("Could not find path direction at {},{}".format(mark.x, mark.y))
 
-    cutPath.append(p)
-    while len(leftBoundMarks) > 0:
-        np = leftBoundMarks.pop(-1)
-        np.x -= 1
-        if np.x < p.x:
-            np.y -= 1
-        cutPath.append(Point(p.x, np.y))
-        cutPath.append(Point(np.x, np.y))
-        p = np
+    print("dir {},{} at {},{}".format(dir.x, dir.y, startMark.x, startMark.y))
+
+    p = Point(startMark.x, startMark.y)
+    p.x += dir.x
+    p.y += dir.y
+    while p.x != startMark.x and p.y != startMark.y:
+        if pcb[p.y][p.x] == 1:
+            ex = Point(-dir.x, -dir.y)
+            newDir = findDir(p, pcb, ex)
+            if newDir != None and newDir != dir:
+                print("dir {},{} at {},{}".format(newDir.x, newDir.y, p.x, p.y))
+                cutPath.append(p)
+                dir = newDir
+        p.x += dir.x
+        p.y += dir.y
 
 def popClosestPtPair(x, y, arr):
     error = 1000.0 * 1000.0
@@ -138,11 +158,12 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
     # use the C notation
     # pcb[y][x]
-    pcb = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
+    pcb    = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
+    cutMap = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
+
     drillPts = []
     drillAscii = []
-    leftBoundMarks = []
-    rightBoundMarks = []
+    startMark = None
 
     for j in range(len(asciiPCB)):
         str = asciiPCB[j]
@@ -151,12 +172,13 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             x = i + PAD
             y = j + PAD
             if c != ' ':
-                if c == '[': or c == ']':
-                    point = Point(x, y)
-                    if c == '[':
-                        leftBoundMarks.append(point)
-                    else:
-                        rightBoundMarks.append(point)
+                if c == '[' or c == ']':
+                    continue
+
+                if c == '%':
+                    if startMark is None:
+                        startMark = Point(x, y)
+                    cutMap[y][x] = 1
                     continue
 
                 pcb[y][x] = COPPER
@@ -174,7 +196,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                     drillPts.append(
                         {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
 
-    cutPath = marksToPath(leftBoundMarks, rightBoundMarks)
+    cutPath = marksToPath(startMark, cutMap)
 
     cutW = (nCols - 1) * SCALE
     cutH = (nRows - 1) * SCALE
@@ -219,6 +241,11 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
         print('computed size (on tool center) = {},{}'.format(
             originalCutW, originalCutH))
         print('size (on tool center) = {},{}'.format(cutW, cutH))
+
+        if cutPath:
+            for c in cutPath:
+                print("{},{}".format(c.x, c.y))
+
         sys.exit(0)
 
     cuts = []
