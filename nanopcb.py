@@ -19,6 +19,12 @@ class Point:
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self, other):
+        return self.x != other.x or self.y != other.y
+
 
 class PtPair:
     def __init__(self, x0, y0, x1, y1):
@@ -37,6 +43,12 @@ class PtPair:
         self.x1 += x
         self.y1 += y
 
+def sign(x):
+    if x > 0:
+        return 1
+    if x < 0:
+        return -1
+    return 0
 
 def findDir(mark, pcb, exclude):
     if pcb[mark.y][mark.x] != 1:
@@ -58,25 +70,26 @@ def marksToPath(startMark, pcb):
 
     cutPath = []
     cutPath.append(startMark)
-    dir = findDir(startMark, pcb, None)
-    if dir is None:
+    direction = findDir(startMark, pcb, None)
+    if direction is None:
         raise RuntimeError("Could not find path direction at {},{}".format(startMark.x, startMark.y))
 
-    print("dir {},{} at {},{}".format(dir.x, dir.y, startMark.x, startMark.y))
+    print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
 
     p = Point(startMark.x, startMark.y)
-    p.x += dir.x
-    p.y += dir.y
+    p.x += direction.x
+    p.y += direction.y
     while p.x != startMark.x or p.y != startMark.y:
         if pcb[p.y][p.x] == 1:
-            ex = Point(-dir.x, -dir.y)
+            ex = Point(-direction.x, -direction.y)
             newDir = findDir(p, pcb, ex)
-            if newDir != None and newDir != dir:
-                print("dir {},{} at {},{}".format(newDir.x, newDir.y, p.x, p.y))
-                cutPath.append(p)
-                dir = newDir
-        p.x += dir.x
-        p.y += dir.y
+            if (newDir is not None) and (newDir != direction):
+                #print("dir {},{} at {},{}. dir {},{}".format(newDir.x, newDir.y, p.x, p.y, direction.x, direction.y))
+                cutPath.append(Point(p.x, p.y))
+                direction = newDir
+        p.x += direction.x
+        p.y += direction.y
+    return cutPath
 
 
 def popClosestPtPair(x, y, arr):
@@ -121,7 +134,7 @@ def scan(vec):
 
 
 def nanopcb(g, filename, mat, pcbDepth, drillDepth,
-            doCutting=True, infoMode=False, doDrilling=True, size=None):
+            doCutting=True, infoMode=False, doDrilling=True):
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -166,9 +179,9 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     startMark = None
 
     for j in range(len(asciiPCB)):
-        str = asciiPCB[j]
-        for i in range(len(str)):
-            c = str[i]
+        out = asciiPCB[j]
+        for i in range(len(out)):
+            c = out[i]
             x = i + PAD
             y = j + PAD
             if c != ' ':
@@ -186,7 +199,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                     for dy in range(-1, 2, 1):
                         xPrime = x + dx
                         yPrime = y + dy
-                        if xPrime >= 0 and xPrime < nCols and yPrime >= 0 and yPrime < nRows:
+                        if xPrime in range(0, nCols) and yPrime in range(0, nRows):
                             if pcb[yPrime][xPrime] == NOT_INIT:
                                 pcb[yPrime][xPrime] = ISOLATE
 
@@ -200,51 +213,53 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
     cutW = (nCols - 1) * SCALE
     cutH = (nRows - 1) * SCALE
-    originalCutW = cutW
-    originalCutH = cutH
-    offsetX = 0
-    offsetY = 0
-
-    if size is not None:
-        if size[0] < cutW:
-            raise RuntimeError("Size in x less than required width.")
-        if size[1] < cutH:
-            raise RuntimeError("Size in y less than required height.")
-        offsetX = (size[0] - cutW) / 2
-        offsetY = (size[1] - cutH) / 2
-        cutW = size[0]
-        cutH = size[1]
 
     if infoMode is True:
+        output_rows = []
         for y in range(nRows):
-            str = ""
+            out = ""
             for x in range(nCols):
                 c = pcb[y][x]
                 p = {'x': x, 'y': y}
-                if x == 0 or y == 0 or x == nCols - 1 or y == nRows - 1:
+                if (cutPath is None) and (x == 0 or y == 0 or x == nCols - 1 or y == nRows - 1):
                     if c == ISOLATE:
-                        str = str + '$'
+                        out = out + '$'
                     else:
-                        str = str + '%'
+                        out = out + '%'
                 elif p in drillAscii:
-                    str = str + 'o'
+                    out = out + 'o'
                 elif c == ISOLATE:
-                    str = str + '.'
+                    out = out + '.'
                 elif c == NOT_INIT:
-                    str = str + ' '
+                    out = out + ' '
                 elif c == COPPER:
-                    str = str + '+'
-            print(str)
+                    out = out + '+'
+            output_rows.append(out)
+
+        if cutPath is not None:
+            for i in range(0, len(cutPath)):
+                n = (i+1) % len(cutPath)
+                step = Point(sign(cutPath[n].x - cutPath[i].x), sign(cutPath[n].y - cutPath[i].y))
+                p = Point(cutPath[i].x, cutPath[i].y)
+                while True:
+                    output_rows[p.y] = output_rows[p.y][0:p.x] + '%' + output_rows[p.y][p.x+1:]
+                    if p == cutPath[n]:
+                        break
+                    p.x += step.x
+                    p.y += step.y
+
+        for r in output_rows:
+            print(r)
 
         print('nDrill points = {}'.format(len(drillPts)))
         print('rows/cols = {},{}'.format(nCols, nRows))
-        print('computed size (on tool center) = {},{}'.format(
-            originalCutW, originalCutH))
         print('size (on tool center) = {},{}'.format(cutW, cutH))
 
+        '''
         if cutPath:
             for c in cutPath:
                 print("{},{}".format(c.x, c.y))
+        '''
 
         sys.exit(0)
 
@@ -273,15 +288,6 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             c = PtPair(x * SCALE, (nRows - 1 - y0) * SCALE,
                        x * SCALE, (nRows - y1) * SCALE)
             cuts.append(c)
-
-    # Patch the cutout size as a post-processing step.
-    # Prior to the actual cutting it can live as an offset,
-    # and keep the code simpler.
-    for c in cuts:
-        c.add(offsetX, offsetY)
-    for d in drillPts:
-        d['x'] += offsetX
-        d['y'] += offsetY
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -341,8 +347,6 @@ def main():
         '-i', '--info', help='display info and exit', action='store_true')
     parser.add_argument(
         '-d', '--nodrill', help='disable drill holes in the pcb', action='store_true')
-    parser.add_argument(
-        '-s', '--size', help='specifiy a size to cut the pcb', type=float, nargs=2)
 
     try:
         args = parser.parse_args()
@@ -353,7 +357,7 @@ def main():
     mat = initMaterial(args.material)
 
     nanopcb(None, args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.nocut == False, args.info, args.nodrill == False, args.size)
+            args.drillDepth, args.nocut == False, args.info, args.nodrill == False)
 
 
 if __name__ == "__main__":
