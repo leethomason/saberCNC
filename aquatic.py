@@ -42,7 +42,7 @@ def path(g, plunge):
     if plunge > 0:
         raise RuntimeError("positive plunge:" + str(plunge))
 
-    # Really tricky in relataive. Had to sketch it all out, and
+    # Really tricky in relative. Had to sketch it all out, and
     # even then hard to be sure everything added correctly.
     # Much easier in absolute. Although still needed to sketch it out.
     # ...of course the plunge logic won't work if absolute. Grr. And

@@ -54,6 +54,10 @@ def sign(x):
     return 0
 
 
+def distance(p0, p1):
+    return math.sqrt((p0.x - p1.x)**2 + (p0.y - p1.y)**2)
+
+
 def findDir(mark, pcb, exclude):
     if pcb[mark.y][mark.x] != 1:
         raise RuntimeError(
@@ -346,13 +350,31 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
         drill(g, mat, drillDepth, drillPts)
 
     if doCutting:
+        total_len = 0
+        for i in range(0, len(cutPath)):
+            n = (i + 1) % len(cutPath)
+            total_len += distance(cutPath[i], cutPath[n])
+
+        def path(g, basePlunge, deltaPlunge):
+            z = basePlunge
+            for i in range(0, len(cutPath)):
+                n = (i+1) % len(cutPath)
+                section_len = distance(cutPath[i], cutPath[n])
+                z += deltaPlunge * section_len / total_len
+                g.move(x=cutPath[n].x, y=cutPath[n].y, z=z)
+
+        g.move(z=CNC_TRAVEL_Z)
+        g.move(x=cutPath[0].x, y=cutPath[0].y)
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
-        rectcut(g, mat, drillDepth, cutW, cutH)
 
+        steps = calcSteps(drillDepth, -mat['passDepth'])
+        run3Stages(path, g, steps, absolute=True)
+
+    g.move(z=CNC_TRAVEL_Z)
     g.spindle()
+    g.move(x=0, y=0)
     g.teardown()
-
 
 def main():
     parser = argparse.ArgumentParser(
