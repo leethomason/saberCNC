@@ -6,7 +6,6 @@ from mecode import G
 from material import *
 from utility import *
 from drill import drill
-from rectcut import rectcut
 
 SCALE = 2.54 / 2
 NOT_INIT = 0
@@ -58,7 +57,7 @@ def distance(p0, p1):
     return math.sqrt((p0.x - p1.x)**2 + (p0.y - p1.y)**2)
 
 
-def findDir(mark, pcb, exclude):
+def find_dir(mark, pcb, exclude):
     if pcb[mark.y][mark.x] != 1:
         raise RuntimeError(
             "should be on cut line at {},{}".format(mark.x, mark.y))
@@ -73,43 +72,42 @@ def findDir(mark, pcb, exclude):
     return None
 
 
-def marksToPath(startMark, pcb):
-    if startMark is None:
+def marks_to_path(start_mark, pcb):
+    if start_mark is None:
         return None
 
-    cutPath = []
-    cutPath.append(startMark)
-    direction = findDir(startMark, pcb, None)
+    cut_path = [start_mark]
+    direction = find_dir(start_mark, pcb, Point(0, 0))
     if direction is None:
         raise RuntimeError("Could not find path direction at {},{}".format(
-            startMark.x, startMark.y))
+            start_mark.x, start_mark.y))
 
-    #print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
+    # print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
 
-    p = Point(startMark.x, startMark.y)
+    p = Point(start_mark.x, start_mark.y)
     p.x += direction.x
     p.y += direction.y
-    while p.x != startMark.x or p.y != startMark.y:
+    while p.x != start_mark.x or p.y != start_mark.y:
         if pcb[p.y][p.x] == 1:
             ex = Point(-direction.x, -direction.y)
-            newDir = findDir(p, pcb, ex)
-            if (newDir is not None) and (newDir != direction):
-                #print("dir {},{} at {},{}. dir {},{}".format(newDir.x, newDir.y, p.x, p.y, direction.x, direction.y))
-                cutPath.append(Point(p.x, p.y))
-                direction = newDir
+            new_dir = find_dir(p, pcb, ex)
+            if (new_dir is not None) and (new_dir != direction):
+                # print("dir {},{} at {},{}. dir {},{}".format(newDir.x, newDir.y, p.x, p.y, direction.x, direction.y))
+                cut_path.append(Point(p.x, p.y))
+                direction = new_dir
         p.x += direction.x
         p.y += direction.y
-    return cutPath
+    return cut_path
 
 
-def popClosestPtPair(x, y, arr):
+def pop_closest_pt_pair(x, y, arr):
     error = 1000.0 * 1000.0
     index = 0
 
     for i in range(0, len(arr)):
         p = arr[i]
         err = (p.x0 - x) ** 2 + (p.y0 - y) ** 2
-        if (err == 0):
+        if err == 0:
             return arr.pop(i)
         if err < error:
             index = i
@@ -143,19 +141,17 @@ def scan(vec):
     return result
 
 
-def nanopcb(g, filename, mat, pcbDepth, drillDepth,
-            doCutting=True, infoMode=False, doDrilling=True):
-    if g is None:
-        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+def nanopcb(g, filename, mat, pcb_depth, drill_depth,
+            do_cutting=True, info_mode=False, do_drilling=True):
 
-    if pcbDepth > 0:
+    if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
-    if drillDepth > 0:
+    if drill_depth > 0:
         raise RuntimeError("drill depth must be less than zero")
 
     # first get the list of strings that are the lines of the file.
-    asciiPCB = []
-    maxCharW = 0
+    ascii_pcb = []
+    max_char_w = 0
 
     with open(filename, "r") as ins:
         for line in ins:
@@ -163,33 +159,33 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             line = line.replace('\t', '    ')
             line = line.rstrip(' ')
             index = line.find('#')
-            if (index >= 0):
+            if index >= 0:
                 line = line[0:index]
-            asciiPCB.append(line)
+            ascii_pcb.append(line)
 
-    while len(asciiPCB) > 0 and len(asciiPCB[0]) == 0:
-        asciiPCB.pop(0)
-    while len(asciiPCB) > 0 and len(asciiPCB[-1]) == 0:
-        asciiPCB.pop(-1)
+    while len(ascii_pcb) > 0 and len(ascii_pcb[0]) == 0:
+        ascii_pcb.pop(0)
+    while len(ascii_pcb) > 0 and len(ascii_pcb[-1]) == 0:
+        ascii_pcb.pop(-1)
 
-    for line in asciiPCB:
-        maxCharW = max(len(line), maxCharW)
+    for line in ascii_pcb:
+        max_char_w = max(len(line), max_char_w)
 
     PAD = 1
-    nCols = maxCharW + PAD * 2
-    nRows = len(asciiPCB) + PAD * 2
+    n_cols = max_char_w + PAD * 2
+    n_rows = len(ascii_pcb) + PAD * 2
 
     # use the C notation
     # pcb[y][x]
-    pcb = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
-    cutMap = [[NOT_INIT for x in range(nCols)] for y in range(nRows)]
+    pcb = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
+    cut_map = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
 
-    drillPts = []
-    drillAscii = []
-    startMark = None
+    drill_pts = []
+    drill_ascii = []
+    start_mark = None
 
-    for j in range(len(asciiPCB)):
-        out = asciiPCB[j]
+    for j in range(len(ascii_pcb)):
+        out = ascii_pcb[j]
         for i in range(len(out)):
             c = out[i]
             x = i + PAD
@@ -199,57 +195,55 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                     continue
 
                 if c == '%':
-                    if startMark is None:
-                        startMark = Point(x, y)
-                    cutMap[y][x] = 1
+                    if start_mark is None:
+                        start_mark = Point(x, y)
+                    cut_map[y][x] = 1
                     continue
 
                 pcb[y][x] = COPPER
                 for dx in range(-1, 2, 1):
                     for dy in range(-1, 2, 1):
-                        xPrime = x + dx
-                        yPrime = y + dy
-                        if xPrime in range(0, nCols) and yPrime in range(0, nRows):
-                            if pcb[yPrime][xPrime] == NOT_INIT:
-                                pcb[yPrime][xPrime] = ISOLATE
+                        x_prime = x + dx
+                        y_prime = y + dy
+                        if x_prime in range(0, n_cols) and y_prime in range(0, n_rows):
+                            if pcb[y_prime][x_prime] == NOT_INIT:
+                                pcb[y_prime][x_prime] = ISOLATE
 
                 if c != '-' and c != '|' and c != '+':
-                    drillAscii.append(
+                    drill_ascii.append(
                         {'x': x, 'y': y})
-                    drillPts.append(
-                        {'x': (x) * SCALE, 'y': (nRows - 1 - y) * SCALE})
+                    drill_pts.append(
+                        {'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
 
-    cutPath = marksToPath(startMark, cutMap)
-    cutPathIsSimple = False
+    cut_path = marks_to_path(start_mark, cut_map)
 
-    # Create a cutPath, if not specified, to simplify the code from here on
+    # Create a cut_path, if not specified, to simplify the code from here on
     # out:
-    if cutPath is None:
-        cutPath = []
-        cutPathIsSimple = True
-        cutPath.append(Point(0, 0))
-        cutPath.append(Point(nCols - 1, 0))
-        cutPath.append(Point(nCols - 1, nRows - 1))
-        cutPath.append(Point(0, nRows - 1))
+    if cut_path is None:
+        cut_path = []
+        cut_path.append(Point(0, 0))
+        cut_path.append(Point(n_cols - 1, 0))
+        cut_path.append(Point(n_cols - 1, n_rows - 1))
+        cut_path.append(Point(0, n_rows - 1))
 
-    cutMinDim = Point(1000, 1000)
-    cutMaxDim = Point(0, 0)
-    for c in cutPath:
+    cut_min_dim = Point(1000, 1000)
+    cut_max_dim = Point(0, 0)
+    for c in cut_path:
         x = c.x * SCALE
-        y = (nRows - 1 - c.y) * SCALE
-        cutMinDim.x = min(cutMinDim.x, x)
-        cutMinDim.y = min(cutMinDim.y, y)
-        cutMaxDim.x = max(cutMaxDim.x, x)
-        cutMaxDim.y = max(cutMaxDim.y, y)
+        y = (n_rows - 1 - c.y) * SCALE
+        cut_min_dim.x = min(cut_min_dim.x, x)
+        cut_min_dim.y = min(cut_min_dim.y, y)
+        cut_max_dim.x = max(cut_max_dim.x, x)
+        cut_max_dim.y = max(cut_max_dim.y, y)
 
-    if infoMode is True:
+    if info_mode is True:
         output_rows = []
-        for y in range(nRows):
+        for y in range(n_rows):
             out = ""
-            for x in range(nCols):
+            for x in range(n_cols):
                 c = pcb[y][x]
                 p = {'x': x, 'y': y}
-                if p in drillAscii:
+                if p in drill_ascii:
                     out = out + 'o'
                 elif c == ISOLATE:
                     out = out + '.'
@@ -259,15 +253,15 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
                     out = out + '+'
             output_rows.append(out)
 
-        for i in range(0, len(cutPath)):
-            n = (i + 1) % len(cutPath)
-            step = Point(sign(cutPath[n].x - cutPath[i].x),
-                         sign(cutPath[n].y - cutPath[i].y))
-            p = Point(cutPath[i].x, cutPath[i].y)
+        for i in range(0, len(cut_path)):
+            n = (i + 1) % len(cut_path)
+            step = Point(sign(cut_path[n].x - cut_path[i].x),
+                         sign(cut_path[n].y - cut_path[i].y))
+            p = Point(cut_path[i].x, cut_path[i].y)
             while True:
                 output_rows[p.y] = output_rows[p.y][
                     0:p.x] + '%' + output_rows[p.y][p.x + 1:]
-                if p == cutPath[n]:
+                if p == cut_path[n]:
                     break
                 p.x += step.x
                 p.y += step.y
@@ -275,16 +269,16 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
         for r in output_rows:
             print(r)
 
-        print('nDrill points = {}'.format(len(drillPts)))
-        print('rows/cols = {},{}'.format(nCols, nRows))
-        print('cut bounds = {},{} -> {},{}'.format(cutMinDim.x,
-                                                   cutMinDim.y, cutMaxDim.x, cutMaxDim.y))
+        print('nDrill points = {}'.format(len(drill_pts)))
+        print('rows/cols = {},{}'.format(n_cols, n_rows))
+        # print('cut bounds = {},{} -> {},{}'.format(cut_min_dim.x,
+        #                                           cut_min_dim.y, cut_max_dim.x, cut_max_dim.y))
         print('size (on tool center) = {},{}'.format(
-            cutMaxDim.x - cutMinDim.x, cutMaxDim.y - cutMinDim.y))
+            cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y))
 
         '''
-        if cutPath:
-            for c in cutPath:
+        if cut_path:
+            for c in cut_path:
                 print("{},{}".format(c.x, c.y))
         '''
 
@@ -292,19 +286,19 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
 
     cuts = []
 
-    for y in range(nRows):
+    for y in range(n_rows):
         pairs = scan(pcb[y])
         while len(pairs) > 0:
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
-            c = PtPair(x0 * SCALE, (nRows - 1 - y) * SCALE,
-                       (x1 - 1) * SCALE, (nRows - 1 - y) * SCALE)
+            c = PtPair(x0 * SCALE, (n_rows - 1 - y) * SCALE,
+                       (x1 - 1) * SCALE, (n_rows - 1 - y) * SCALE)
             cuts.append(c)
 
-    for x in range(nCols):
+    for x in range(n_cols):
         vec = []
-        for y in range(nRows):
+        for y in range(n_rows):
             vec.append(pcb[y][x])
 
         pairs = scan(vec)
@@ -312,15 +306,15 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
-            c = PtPair(x * SCALE, (nRows - 1 - y0) * SCALE,
-                       x * SCALE, (nRows - y1) * SCALE)
+            c = PtPair(x * SCALE, (n_rows - 1 - y0) * SCALE,
+                       x * SCALE, (n_rows - y1) * SCALE)
             cuts.append(c)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     g.comment("NanoPCB")
-    g.comment("size col x row = {} x {}".format(nCols, nRows))
-    g.comment("num drill points = {}".format(len(drillPts)))
+    g.comment("size col x row = {} x {}".format(n_cols, n_rows))
+    g.comment("num drill points = {}".format(len(drill_pts)))
 
     g.absolute()
     g.feed(mat['feedRate'])
@@ -333,7 +327,7 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
     y = -0.1
 
     while len(cuts) > 0:
-        cut = popClosestPtPair(x, y, cuts)
+        cut = pop_closest_pt_pair(x, y, cuts)
 
         g.comment(
             '{},{} -> {},{}'.format(cut.x0, cut.y0, cut.x1, cut.y1))
@@ -341,40 +335,41 @@ def nanopcb(g, filename, mat, pcbDepth, drillDepth,
         if cut.x0 != x or cut.y0 != y:
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=cut.x0, y=cut.y0)
-            g.move(z=pcbDepth)
+            g.move(z=pcb_depth)
         g.move(x=cut.x1, y=cut.y1)
         x = cut.x1
         y = cut.y1
 
-    if doDrilling:
-        drill(g, mat, drillDepth, drillPts)
+    if do_drilling:
+        drill(g, mat, drill_depth, drill_pts)
 
-    if doCutting:
+    if do_cutting:
         total_len = 0
-        for i in range(0, len(cutPath)):
-            n = (i + 1) % len(cutPath)
-            total_len += distance(cutPath[i], cutPath[n])
+        for i in range(0, len(cut_path)):
+            n = (i + 1) % len(cut_path)
+            total_len += distance(cut_path[i], cut_path[n])
 
-        def path(g, basePlunge, deltaPlunge):
-            z = basePlunge
-            for i in range(0, len(cutPath)):
-                n = (i+1) % len(cutPath)
-                section_len = distance(cutPath[i], cutPath[n])
-                z += deltaPlunge * section_len / total_len
-                g.move(x=cutPath[n].x, y=cutPath[n].y, z=z)
+        def path(g, base_plunge, delta_plunge):
+            z = base_plunge
+            for i in range(0, len(cut_path)):
+                n = (i+1) % len(cut_path)
+                section_len = distance(cut_path[i], cut_path[n])
+                z += delta_plunge * section_len / total_len
+                g.move(x=cut_path[n].x, y=cut_path[n].y, z=z)
 
         g.move(z=CNC_TRAVEL_Z)
-        g.move(x=cutPath[0].x, y=cutPath[0].y)
+        g.move(x=cut_path[0].x, y=cut_path[0].y)
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
 
-        steps = calcSteps(drillDepth, -mat['passDepth'])
+        steps = calcSteps(drill_depth, -mat['passDepth'])
         run3Stages(path, g, steps, absolute=True)
 
     g.move(z=CNC_TRAVEL_Z)
     g.spindle()
     g.move(x=0, y=0)
     g.teardown()
+
 
 def main():
     parser = argparse.ArgumentParser(
