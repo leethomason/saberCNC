@@ -141,7 +141,7 @@ def scan(vec):
     return result
 
 
-def nanopcb(g, filename, mat, pcb_depth, drill_depth,
+def nanopcb(filename, mat, pcb_depth, drill_depth,
             do_cutting=True, info_mode=False, do_drilling=True):
 
     if pcb_depth > 0:
@@ -276,12 +276,6 @@ def nanopcb(g, filename, mat, pcb_depth, drill_depth,
         print('size (on tool center) = {},{}'.format(
             cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y))
 
-        '''
-        if cut_path:
-            for c in cut_path:
-                print("{},{}".format(c.x, c.y))
-        '''
-
         sys.exit(0)
 
     cuts = []
@@ -396,7 +390,7 @@ def main():
 
     mat = initMaterial(args.material)
 
-    nanopcb(None, args.filename, mat, args.pcbDepth,
+    nanopcb(args.filename, mat, args.pcbDepth,
             args.drillDepth, args.nocut == False, args.info, args.nodrill == False)
 
 
