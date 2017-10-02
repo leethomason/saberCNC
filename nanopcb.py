@@ -317,22 +317,24 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
     # impossible starting value to force moving to
     # the cut depth on the first point.
-    x = -0.1
-    y = -0.1
+    c_x = -0.1
+    c_y = -0.1
 
     while len(cuts) > 0:
-        cut = pop_closest_pt_pair(x, y, cuts)
+        cut = pop_closest_pt_pair(c_x, c_y, cuts)
 
         g.comment(
             '{},{} -> {},{}'.format(cut.x0, cut.y0, cut.x1, cut.y1))
 
-        if cut.x0 != x or cut.y0 != y:
+        if cut.x0 != c_x or cut.y0 != c_y:
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=cut.x0, y=cut.y0)
             g.move(z=pcb_depth)
         g.move(x=cut.x1, y=cut.y1)
-        x = cut.x1
-        y = cut.y1
+        c_x = cut.x1
+        c_y = cut.y1
+
+    g.move(z=CNC_TRAVEL_Z)
 
     if do_drilling:
         drill(g, mat, drill_depth, drill_pts)
@@ -348,10 +350,14 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             for i in range(0, len(cut_path)):
                 n = (i+1) % len(cut_path)
                 section_len = distance(cut_path[i], cut_path[n])
+                x = cut_path[n].x * SCALE
+                y = (n_rows - 1 - cut_path[n].y) * SCALE
                 z += delta_plunge * section_len / total_len
-                g.move(x=cut_path[n].x, y=cut_path[n].y, z=z)
+                g.move(x=x, y=y, z=z)
 
         g.move(z=CNC_TRAVEL_Z)
+        x = cut_path[0].x * SCALE
+        y = (n_rows - 1 - cut_path[0].y) * SCALE
         g.move(x=cut_path[0].x, y=cut_path[0].y)
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
