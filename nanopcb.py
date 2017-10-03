@@ -57,17 +57,21 @@ def distance(p0, p1):
     return math.sqrt((p0.x - p1.x)**2 + (p0.y - p1.y)**2)
 
 
-def find_dir(mark, pcb, exclude):
+def find_dir(mark, pcb, current_dir):
     if pcb[mark.y][mark.x] != 1:
         raise RuntimeError(
             "should be on cut line at {},{}".format(mark.x, mark.y))
 
-    check = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    check = [[1, 0], [-1, 0], [0, 1], [0, -1],
+             [1, 1], [-1, 1], [1, -1], [-1, -1]]
 
     for c in check:
-        if (exclude is not None) and (c[0] == exclude.x) and (c[1] == exclude.y):
-            continue
-        if pcb[c[1] + mark.y][c[0] + mark.x] == 1:
+        d = Point(c[0], c[1])
+        if current_dir is not None:
+            dot = current_dir.x * d.x + current_dir.y * d.y
+            if dot < 0:
+                continue
+        if pcb[d.y + mark.y][d.x + mark.x] == 1:
             return Point(c[0], c[1])
     return None
 
@@ -89,8 +93,7 @@ def marks_to_path(start_mark, pcb):
     p.y += direction.y
     while p.x != start_mark.x or p.y != start_mark.y:
         if pcb[p.y][p.x] == 1:
-            ex = Point(-direction.x, -direction.y)
-            new_dir = find_dir(p, pcb, ex)
+            new_dir = find_dir(p, pcb, direction)
             if (new_dir is not None) and (new_dir != direction):
                 # print("dir {},{} at {},{}. dir {},{}".format(newDir.x, newDir.y, p.x, p.y, direction.x, direction.y))
                 cut_path.append(Point(p.x, p.y))
@@ -100,7 +103,7 @@ def marks_to_path(start_mark, pcb):
     return cut_path
 
 
-def pop_closest_pt_pair(x, y, arr):
+def pop_closest_pt_pair(x: PtPair, y:PtPair, arr):
     error = 1000.0 * 1000.0
     index = 0
 
@@ -382,11 +385,11 @@ def main():
     parser.add_argument(
         'drillDepth', help='depth of the drilling and pcb cutting. must be negative.', type=float)
     parser.add_argument(
-        '-c', '--nocut', help='disable cut out the final pcb', action='store_true')
+        '-c', '--no-cut', help='disable cut out the final pcb', action='store_true')
     parser.add_argument(
         '-i', '--info', help='display info and exit', action='store_true')
     parser.add_argument(
-        '-d', '--nodrill', help='disable drill holes in the pcb', action='store_true')
+        '-d', '--no-drill', help='disable drill holes in the pcb', action='store_true')
 
     try:
         args = parser.parse_args()
@@ -397,7 +400,7 @@ def main():
     mat = initMaterial(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.nocut == False, args.info, args.nodrill == False)
+            args.drillDepth, args.no_cut == False, args.info, args.no_drill == False)
 
 
 if __name__ == "__main__":
