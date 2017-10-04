@@ -86,8 +86,6 @@ def marks_to_path(start_mark, pcb):
         raise RuntimeError("Could not find path direction at {},{}".format(
             start_mark.x, start_mark.y))
 
-    # print("dir {},{} at {},{}".format(direction.x, direction.y, startMark.x, startMark.y))
-
     p = Point(start_mark.x, start_mark.y)
     p.x += direction.x
     p.y += direction.y
@@ -95,7 +93,6 @@ def marks_to_path(start_mark, pcb):
         if pcb[p.y][p.x] == 1:
             new_dir = find_dir(p, pcb, direction)
             if (new_dir is not None) and (new_dir != direction):
-                # print("dir {},{} at {},{}. dir {},{}".format(newDir.x, newDir.y, p.x, p.y, direction.x, direction.y))
                 cut_path.append(Point(p.x, p.y))
                 direction = new_dir
         p.x += direction.x
