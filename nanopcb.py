@@ -123,7 +123,7 @@ def pop_closest_pt_pair(x: PtPair, y:PtPair, arr):
     return arr.pop(index)
 
 
-def scan(vec):
+def scan_for_cut_segments(vec):
     result = []
 
     x0 = 0
@@ -141,14 +141,7 @@ def scan(vec):
     return result
 
 
-def nanopcb(filename, mat, pcb_depth, drill_depth,
-            do_cutting=True, info_mode=False, do_drilling=True):
-
-    if pcb_depth > 0:
-        raise RuntimeError("cut depth must be less than zero.")
-    if drill_depth > 0:
-        raise RuntimeError("drill depth must be less than zero")
-
+def scan_file(filename: str):
     # first get the list of strings that are the lines of the file.
     ascii_pcb = []
     max_char_w = 0
@@ -171,6 +164,18 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     for line in ascii_pcb:
         max_char_w = max(len(line), max_char_w)
 
+    return ascii_pcb, max_char_w
+
+
+def nanopcb(filename, mat, pcb_depth, drill_depth,
+            do_cutting=True, info_mode=False, do_drilling=True):
+
+    if pcb_depth > 0:
+        raise RuntimeError("cut depth must be less than zero.")
+    if drill_depth > 0:
+        raise RuntimeError("drill depth must be less than zero")
+
+    ascii_pcb, max_char_w = scan_file(filename)
     PAD = 1
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
@@ -217,8 +222,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
     cut_path = marks_to_path(start_mark, cut_map)
 
-    # Create a cut_path, if not specified, to simplify the code from here on
-    # out:
+    # Create a cut_path, if not specified, to simplify the code from here on:
     if cut_path is None:
         cut_path = []
         cut_path.append(Point(0, 0))
@@ -271,8 +275,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
         print('nDrill points = {}'.format(len(drill_pts)))
         print('rows/cols = {},{}'.format(n_cols, n_rows))
-        # print('cut bounds = {},{} -> {},{}'.format(cut_min_dim.x,
-        #                                           cut_min_dim.y, cut_max_dim.x, cut_max_dim.y))
         print('size (on tool center) = {},{}'.format(
             cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y))
 
@@ -281,7 +283,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     cuts = []
 
     for y in range(n_rows):
-        pairs = scan(pcb[y])
+        pairs = scan_for_cut_segments(pcb[y])
         while len(pairs) > 0:
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
@@ -295,7 +297,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         for y in range(n_rows):
             vec.append(pcb[y][x])
 
-        pairs = scan(vec)
+        pairs = scan_for_cut_segments(vec)
         while len(pairs) > 0:
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
