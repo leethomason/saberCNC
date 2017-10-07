@@ -14,7 +14,6 @@ ISOLATE = -1
 
 
 class Point:
-
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
@@ -27,7 +26,6 @@ class Point:
 
 
 class PtPair:
-
     def __init__(self, x0, y0, x1, y1):
         self.x0 = x0
         self.y0 = y0
@@ -58,7 +56,7 @@ def sign(x):
 
 
 def distance(p0, p1):
-    return math.sqrt((p0.x - p1.x)**2 + (p0.y - p1.y)**2)
+    return math.sqrt((p0.x - p1.x) ** 2 + (p0.y - p1.y) ** 2)
 
 
 def find_dir(mark, pcb, current_dir):
@@ -104,7 +102,7 @@ def marks_to_path(start_mark, pcb):
     return cut_path
 
 
-def pop_closest_pt_pair(x: PtPair, y:PtPair, arr):
+def pop_closest_pt_pair(x: PtPair, y: PtPair, arr):
     error = 1000.0 * 1000.0
     index = 0
 
@@ -181,8 +179,7 @@ def scan_file(filename: str, cut_pass: str):
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
-            do_cutting, info_mode, do_drilling  , cut_pass):
-
+            do_cutting, info_mode, do_drilling, cut_pass):
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
     if drill_depth > 0:
@@ -292,7 +289,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             p = Point(cut_path[i].x, cut_path[i].y)
             while True:
                 output_rows[p.y] = output_rows[p.y][
-                    0:p.x] + '%' + output_rows[p.y][p.x + 1:]
+                                   0:p.x] + '%' + output_rows[p.y][p.x + 1:]
                 if p == cut_path[n]:
                     break
                 p.x += step.x
@@ -353,7 +350,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.absolute()
     g.feed(mat['feedRate'])
     g.move(z=CNC_TRAVEL_Z)
-    if (cut_pass == 'back'):
+    if cut_pass == 'back':
         g.move(x=-SCALE, y=-SCALE)
         g.write('G92 X0 Y0')
 
@@ -392,7 +389,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         def path(g, base_plunge, delta_plunge):
             z = base_plunge
             for i in range(0, len(cut_path)):
-                n = (i+1) % len(cut_path)
+                n = (i + 1) % len(cut_path)
                 section_len = distance(cut_path[i], cut_path[n])
                 x = cut_path[n].x * SCALE
                 y = (n_rows - 1 - cut_path[n].y) * SCALE
@@ -414,7 +411,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.move(x=0, y=0)
 
     # Restore it to the origin hole.
-    if (cut_pass == 'back'):
+    if cut_pass == 'back':
         g.move(x=SCALE, y=SCALE)
         g.write('G92 X0 Y0')
 
