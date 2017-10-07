@@ -44,6 +44,10 @@ class PtPair:
         self.x1 += x
         self.y1 += y
 
+    def flip(self, w):
+        self.x0 = w - self.x0
+        self.x1 = w - self.x1
+
 
 def sign(x):
     if x > 0:
@@ -123,7 +127,7 @@ def pop_closest_pt_pair(x: PtPair, y:PtPair, arr):
     return arr.pop(index)
 
 
-def scan_for_cut_segments(vec):
+def scan_isolation(vec):
     result = []
 
     x0 = 0
@@ -141,10 +145,11 @@ def scan_for_cut_segments(vec):
     return result
 
 
-def scan_file(filename: str):
+def scan_file(filename: str, cut_pass: str):
     # first get the list of strings that are the lines of the file.
     ascii_pcb = []
     max_char_w = 0
+    back_found = False
 
     with open(filename, "r") as ins:
         for line in ins:
@@ -153,8 +158,16 @@ def scan_file(filename: str):
             line = line.rstrip(' ')
             index = line.find('#')
             if index >= 0:
+                line = line.replace(' ', '')
+                if line.lower() == '#back':
+                    back_found = True
                 line = line[0:index]
-            ascii_pcb.append(line)
+            if cut_pass is None:
+                ascii_pcb.append(line)
+            elif cut_pass == 'front' and not back_found:
+                ascii_pcb.append(line)
+            elif cut_pass == 'back' and back_found:
+                ascii_pcb.append(line)
 
     while len(ascii_pcb) > 0 and len(ascii_pcb[0]) == 0:
         ascii_pcb.pop(0)
@@ -168,14 +181,21 @@ def scan_file(filename: str):
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
-            do_cutting=True, info_mode=False, do_drilling=True):
+            do_cutting, info_mode, do_drilling  , cut_pass):
 
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
     if drill_depth > 0:
         raise RuntimeError("drill depth must be less than zero")
 
-    ascii_pcb, max_char_w = scan_file(filename)
+    if cut_pass is None:
+        cut_pass = 'single'
+    if cut_pass == 'front':
+        do_cutting = False
+    if cut_pass == 'back':
+        do_drilling = False
+
+    ascii_pcb, max_char_w = scan_file(filename, cut_pass)
     PAD = 1
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
@@ -197,6 +217,12 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             y = j + PAD
             if c != ' ':
                 if c == '[' or c == ']':
+                    if cut_pass == 'front':
+                        # Add the drill points but don't do isolation routing.
+                        drill_ascii.append(
+                            {'x': x, 'y': y})
+                        drill_pts.append(
+                            {'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
                     continue
 
                 if c == '%':
@@ -240,6 +266,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         cut_max_dim.x = max(cut_max_dim.x, x)
         cut_max_dim.y = max(cut_max_dim.y, y)
 
+    cut_size = Point(cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y)
+
     if info_mode is True:
         output_rows = []
         for y in range(n_rows):
@@ -275,36 +303,46 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
         print('nDrill points = {}'.format(len(drill_pts)))
         print('rows/cols = {},{}'.format(n_cols, n_rows))
-        print('size (on tool center) = {},{}'.format(
-            cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y))
+        print('size (on tool center) = {},{}'.format(cut_size.x, cut_size.y))
 
         sys.exit(0)
 
-    cuts = []
+    isolation_pairs = []
 
     for y in range(n_rows):
-        pairs = scan_for_cut_segments(pcb[y])
+        pairs = scan_isolation(pcb[y])
         while len(pairs) > 0:
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
             c = PtPair(x0 * SCALE, (n_rows - 1 - y) * SCALE,
                        (x1 - 1) * SCALE, (n_rows - 1 - y) * SCALE)
-            cuts.append(c)
+            isolation_pairs.append(c)
 
     for x in range(n_cols):
         vec = []
         for y in range(n_rows):
             vec.append(pcb[y][x])
 
-        pairs = scan_for_cut_segments(vec)
+        pairs = scan_isolation(vec)
         while len(pairs) > 0:
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
             c = PtPair(x * SCALE, (n_rows - 1 - y0) * SCALE,
                        x * SCALE, (n_rows - y1) * SCALE)
-            cuts.append(c)
+            isolation_pairs.append(c)
+
+    # Front pass is from 0,0 in absolute coordinates. During the
+    #   front pass [ ] are drilled.
+    # Back pass starts with the drill at the front's lower right
+    #   bracket drill hole. The drill is moved back to 0,0 using
+    #   a coordinate system reset, then restored at the end.
+    if cut_pass == 'back':
+        for pair in isolation_pairs:
+            pair.flip(cut_size.x)
+        for c in cut_path:
+            c.x = cut_size.x - c.x
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
@@ -315,6 +353,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.absolute()
     g.feed(mat['feedRate'])
     g.move(z=CNC_TRAVEL_Z)
+    if (cut_pass == 'back'):
+        g.move(x=-SCALE, y=-SCALE)
+        g.write('G92 X0 Y0')
+
     g.spindle('CW', mat['spindleSpeed'])
 
     # impossible starting value to force moving to
@@ -322,8 +364,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     c_x = -0.1
     c_y = -0.1
 
-    while len(cuts) > 0:
-        cut = pop_closest_pt_pair(c_x, c_y, cuts)
+    while len(isolation_pairs) > 0:
+        cut = pop_closest_pt_pair(c_x, c_y, isolation_pairs)
 
         g.comment(
             '{},{} -> {},{}'.format(cut.x0, cut.y0, cut.x1, cut.y1))
@@ -370,6 +412,12 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.move(z=CNC_TRAVEL_Z)
     g.spindle()
     g.move(x=0, y=0)
+
+    # Restore it to the origin hole.
+    if (cut_pass == 'back'):
+        g.move(x=SCALE, y=SCALE)
+        g.write('G92 X0 Y0')
+
     g.teardown()
 
 
@@ -389,6 +437,10 @@ def main():
         '-i', '--info', help='display info and exit', action='store_true')
     parser.add_argument(
         '-d', '--no-drill', help='disable drill holes in the pcb', action='store_true')
+    parser.add_argument(
+        '-f', '--front', help='first pass of dual sided board (isolate, drill)', action='store_true')
+    parser.add_argument(
+        '-b', '--back', help='second pass of dual sided board (isolate, cut)', action='store_true')
 
     try:
         args = parser.parse_args()
@@ -396,10 +448,19 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    if args.front is True and args.back is True:
+        raise RuntimeError("Can't specify both first and second pass.")
+
+    cut_pass = None
+    if args.front is True:
+        cut_pass = 'front'
+    if args.back is True:
+        cut_pass = 'back'
+
     mat = initMaterial(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut == False, args.info, args.no_drill == False)
+            args.drillDepth, args.no_cut == False, args.info, args.no_drill == False, cut_pass)
 
 
 if __name__ == "__main__":
