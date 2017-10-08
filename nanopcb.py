@@ -59,6 +59,17 @@ def distance(p0, p1):
     return math.sqrt((p0.x - p1.x) ** 2 + (p0.y - p1.y) ** 2)
 
 
+def bounds_of_points(arr):
+    pmin = Point(arr[0].x, arr[0].y)
+    pmax = Point(arr[0].x, arr[0].y)
+    for p in arr:
+        pmin.x = min(pmin.x, p.x)
+        pmin.y = min(pmin.y, p.y)
+        pmax.x = max(pmax.x, p.x)
+        pmax.y = max(pmax.y, p.y)
+    return pmin, pmax
+
+
 def find_dir(mark, pcb, current_dir):
     if pcb[mark.y][mark.x] != 1:
         raise RuntimeError(
@@ -160,7 +171,7 @@ def scan_file(filename: str, cut_pass: str):
                 if line.lower() == '#back':
                     back_found = True
                 line = line[0:index]
-            if cut_pass is None:
+            if cut_pass is None or cut_pass == 'single':
                 ascii_pcb.append(line)
             elif cut_pass == 'front' and not back_found:
                 ascii_pcb.append(line)
@@ -247,22 +258,9 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
     # Create a cut_path, if not specified, to simplify the code from here on:
     if cut_path is None:
-        cut_path = []
-        cut_path.append(Point(0, 0))
-        cut_path.append(Point(n_cols - 1, 0))
-        cut_path.append(Point(n_cols - 1, n_rows - 1))
-        cut_path.append(Point(0, n_rows - 1))
+        cut_path = [Point(0, 0), Point(n_cols - 1, 0), Point(n_cols - 1, n_rows - 1), Point(0, n_rows - 1)]
 
-    cut_min_dim = Point(1000, 1000)
-    cut_max_dim = Point(0, 0)
-    for c in cut_path:
-        x = c.x * SCALE
-        y = (n_rows - 1 - c.y) * SCALE
-        cut_min_dim.x = min(cut_min_dim.x, x)
-        cut_min_dim.y = min(cut_min_dim.y, y)
-        cut_max_dim.x = max(cut_max_dim.x, x)
-        cut_max_dim.y = max(cut_max_dim.y, y)
-
+    cut_min_dim, cut_max_dim = bounds_of_points(cut_path)
     cut_size = Point(cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y)
 
     if info_mode is True:
