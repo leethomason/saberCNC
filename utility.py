@@ -29,7 +29,10 @@ def calcSteps(goal, step):
 
 def run3Stages(path, g, steps, absolute=False):
     g.comment("initial pass")
-    path(g, 0, 0)
+    if absolute is True:
+       path(g, 0, 0)
+    else:
+        path(g, 0)
     baseZ = 0
 
     for d in steps:
@@ -43,7 +46,10 @@ def run3Stages(path, g, steps, absolute=False):
         baseZ += d
 
     g.comment('final pass')
-    path(g, baseZ, 0)
+    if absolute is True:
+       path(g, baseZ, 0)
+    else:
+        path(g, 0)
     g.comment('complete')
 
 #returns a negative value or none 
