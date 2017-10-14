@@ -6,6 +6,7 @@ from mecode import G
 from material import *
 from utility import *
 
+
 def capsule(g, mat, cut_depth, tool_size, x, y, d):
     half_tool = tool_size / 2
 
@@ -17,18 +18,18 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
     # r: radius
     # d: deflection
     # y: width in y direction
-    
+
     # The edge of the tool is kept at x0, so
     # the deflection doesn't need to account for tool size.
 
     yo = y - tool_size
     r = 0
     if d is not None:
-        r = (d / 2.0) + yo**2 / (8.0 * d)
+        r = (d / 2.0) + yo ** 2 / (8.0 * d)
     if r == 0:
-        r = (y-tool_size)/2
+        r = (y - tool_size) / 2
 
-    #print("r", r, "d", d, "yo", yo, "y", y)
+    # print("r", r, "d", d, "yo", yo, "y", y)
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -40,26 +41,27 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
     g.spindle('CW', mat['spindleSpeed'])
 
     def path(g, plunge):
-        g.move(y = y/2 - half_tool)
-        g.arc(x=0, y=(y-tool_size), radius=r, direction='CCW')
+        g.move(y=y / 2 - half_tool)
+        g.arc(x=0, y=(y - tool_size), radius=r, direction='CCW')
 
-        g.move(x=(x-tool_size), z=plunge/2)
-        g.arc(x=0, y=-(y-tool_size),  radius=r, direction='CCW')
+        g.move(x=(x - tool_size), z=plunge / 2)
+        g.arc(x=0, y=-(y - tool_size), radius=r, direction='CCW')
 
-        g.move(x=-(x-tool_size), z=plunge/2)
+        g.move(x=-(x - tool_size), z=plunge / 2)
 
     g.move(x=half_tool)
     steps = calcSteps(cut_depth, -mat['passDepth'])
     run3Stages(path, g, steps)
     g.move(x=-half_tool)
 
-    g.move(y=-(y/2-half_tool))  # back to center of the circle
-    g.move(z=-cut_depth)         # up to the starting point
+    g.move(y=-(y / 2 - half_tool))  # back to center of the circle
+    g.move(z=-cut_depth)  # up to the starting point
     g.spindle()
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Cut a capsule of rectangle width ard swing-radius. Origin is at the left center of the rectangle.')
+    parser = argparse.ArgumentParser(
+        description='Cut a capsule of rectangle width ard swing-radius. Origin is at the left center of the rectangle.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('tool', help='diameter of the tool.', type=float)
@@ -74,6 +76,7 @@ def main():
 
     mat = initMaterial(args.material)
     capsule(None, mat, args.depth, args.tool, args.x, args.y, args.deflection)
+
 
 if __name__ == "__main__":
     main()
