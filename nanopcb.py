@@ -401,8 +401,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
 
-        steps = calcSteps(drill_depth, -mat['passDepth'])
-        run3Stages(path, g, steps, absolute=True)
+        steps = calc_steps(drill_depth, -mat['passDepth'])
+        run_3_stages(path, g, steps, absolute=True)
 
     g.move(z=CNC_TRAVEL_Z)
     g.spindle()

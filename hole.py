@@ -32,8 +32,8 @@ def hole(g, param, cut_depth, tool_size, radius):
         g.arc2(x=-2 * r, y=0, i=-r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
         g.arc2(x=2 * r, y=0, i=r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
-    steps = calcSteps(cut_depth, -param['passDepth'])
-    run3Stages(path, g, steps)
+    steps = calc_steps(cut_depth, -param['passDepth'])
+    run_3_stages(path, g, steps)
 
     g.move(x=-r)  # back to center of the circle
     g.move(z=-cut_depth)  # up to the starting point

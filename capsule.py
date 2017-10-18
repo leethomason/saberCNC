@@ -50,8 +50,8 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
 
     g.move(x=half_tool)
     g.move(y=y / 2 - half_tool)
-    steps = calcSteps(cut_depth, -mat['passDepth'])
-    run3Stages(path, g, steps)
+    steps = calc_steps(cut_depth, -mat['passDepth'])
+    run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth)  # up to the starting point
     g.move(y=-(y / 2 - half_tool))

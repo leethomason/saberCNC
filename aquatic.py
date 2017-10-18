@@ -47,8 +47,8 @@ def path(g, plunge):
     # Much easier in absolute. Although still needed to sketch it out.
     # ...of course the plunge logic won't work if absolute. Grr. And
     # absolute turns out to be tricky as well.
-    zNeck    = zOnCylinder(NECK_W/2 - halfTool, crad)
-    zDisplay = zOnCylinder(DISPLAY_W/2 - halfTool, crad)
+    zNeck    = z_on_cylinder(NECK_W / 2 - halfTool, crad)
+    zDisplay = z_on_cylinder(DISPLAY_W / 2 - halfTool, crad)
 
     dy0 = NECK_W/2 - halfTool
     dx0 = DISPLAY_X0 - FILLET
@@ -69,8 +69,8 @@ def path(g, plunge):
     g.move(x=-dx0, z=plunge/2)
     g.move(y=dy0, z=-zNeck)
 
-steps = calcSteps(BODY_DEPTH, -mat['passDepth'])
-run3Stages(path, g, steps)
+steps = calc_steps(BODY_DEPTH, -mat['passDepth'])
+run_3_stages(path, g, steps)
 
 g.move(z=-BODY_DEPTH)     # up to the starting point
 g.spindle()

@@ -30,7 +30,7 @@ def drill(g, mat, cutDepth, points):
     g.absolute()
     g.feed(mat['feedRate'])
 
-    sortShortestPath(points);
+    sort_shortest_path(points);
     g.comment("  num points: " + str(len(points)))
 
     g.move(z=CNC_TRAVEL_Z)
@@ -93,7 +93,7 @@ def main():
 
     if not isNumberPairs:
         filename = sys.argv[3]
-        points = readDRL(filename)
+        points = read_DRL(filename)
     else:
         for i in range(3, len(sys.argv), 2):
             points.append({'x':float(sys.argv[i+0]), 'y':float(sys.argv[i+1])})

@@ -60,11 +60,11 @@ g.spindle('CW', param['spindleSpeed'])
 g.feed(param['feedRate'])
 
 #move the head to the starting position
-z = zOnCylinder(dy/2 - halfTool, radius)
+z = z_on_cylinder(dy / 2 - halfTool, radius)
 g.arc(y=-(dy/2 - halfTool), z=z, direction='CCW', radius=radius)
 
-steps = calcSteps(cutDepth, -param['passDepth'])
-run3Stages(path, g, steps)
+steps = calc_steps(cutDepth, -param['passDepth'])
+run_3_stages(path, g, steps)
 
 g.spindle()
 g.move(z=-cutDepth + CNC_TRAVEL_Z)

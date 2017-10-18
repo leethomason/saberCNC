@@ -31,8 +31,8 @@ def line(g, mat, cut_depth, x0, y0, x1, y1):
         g.move(x=dx, y=dy, z=plunge/2)
         g.move(x=-dx, y=-dy, z=plunge/2)
 
-    steps = calcSteps(cut_depth, -mat['passDepth'])
-    run3Stages(path, g, steps)
+    steps = calc_steps(cut_depth, -mat['passDepth'])
+    run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth + CNC_TRAVEL_Z)
     g.spindle()
