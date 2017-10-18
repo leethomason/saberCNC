@@ -41,27 +41,28 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
     g.spindle('CW', mat['spindleSpeed'])
 
     def path(g, plunge):
-        g.move(y=y / 2 - half_tool)
-        g.arc(x=0, y=(y - tool_size), radius=r, direction='CCW')
+        g.arc(x=0, y=-(y - tool_size), radius=r, direction='CCW')
 
         g.move(x=(x - tool_size), z=plunge / 2)
-        g.arc(x=0, y=-(y - tool_size), radius=r, direction='CCW')
+        g.arc(x=0, y=(y - tool_size), radius=r, direction='CCW')
 
         g.move(x=-(x - tool_size), z=plunge / 2)
 
     g.move(x=half_tool)
+    g.move(y=y / 2 - half_tool)
     steps = calcSteps(cut_depth, -mat['passDepth'])
     run3Stages(path, g, steps)
+
+    g.move(z=-cut_depth)  # up to the starting point
+    g.move(y=-(y / 2 - half_tool))
     g.move(x=-half_tool)
 
-    g.move(y=-(y / 2 - half_tool))  # back to center of the circle
-    g.move(z=-cut_depth)  # up to the starting point
     g.spindle()
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Cut a capsule of rectangle width ard swing-radius. Origin is at the left center of the rectangle.')
+        description='Cut a capsule of rectangle width ard swing-radius. Origin is at the left center of the rectangle, on the center line of the bit.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('tool', help='diameter of the tool.', type=float)

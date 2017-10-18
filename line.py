@@ -37,15 +37,16 @@ def line(g, mat, cut_depth, x0, y0, x1, y1):
     g.move(z=-cut_depth + CNC_TRAVEL_Z)
     g.spindle()
     g.move(x=-x0, y=-y0)
+    
 
 def main():
-    parser = argparse.ArgumentParser(description='Cut a line to depth.')
+    parser = argparse.ArgumentParser(description='Cut a line to depth. Relative.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
-    parser.add_argument('x0', help='size of rectangle for x cut', type=float)
-    parser.add_argument('y0', help='size of rectangle for y cut', type=float)
-    parser.add_argument('x1', help='size of rectangle for x cut', type=float)
-    parser.add_argument('y1', help='size of rectangle for y cut', type=float)
+    parser.add_argument('x0', help='x0 coordinate of line', type=float)
+    parser.add_argument('y0', help='y0 coordinate of line', type=float)
+    parser.add_argument('x1', help='x1 coordinate of line', type=float)
+    parser.add_argument('y1', help='y1 coordinate of line', type=float)
 
     try:
         args = parser.parse_args()

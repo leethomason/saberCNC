@@ -9,13 +9,13 @@ from mecode import G
 from material import *
 from utility import *
 
-def hole(g, param, cutDepth, toolSize, radius):
+def hole(g, param, cut_depth, toolSize, radius):
     halfTool = toolSize / 2
     r = radius - toolSize / 2
 
     if r <= 0:
         raise RuntimeError("Radius too small relative to tool size.")
-    if cutDepth >= 0:
+    if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if toolSize <= 0:
         raise RuntimeError('Tool size must be greater than zero.')
@@ -35,11 +35,11 @@ def hole(g, param, cutDepth, toolSize, radius):
         g.arc2( x=-2*r, y=0,  i=-r, j=0, direction='CCW', helix_dim='z', helix_len=plunge/2)
         g.arc2( x= 2*r, y=0,  i=r,  j=0, direction='CCW', helix_dim='z', helix_len=plunge/2)
 
-    steps = calcSteps(cutDepth, -param['passDepth'])
+    steps = calcSteps(cut_depth, -param['passDepth'])
     run3Stages(path, g, steps)
 
     g.move(x=-r)            # back to center of the circle
-    g.move(z=-cutDepth)     # up to the starting point
+    g.move(z=-cut_depth)     # up to the starting point
     g.spindle()
 
 def main():
@@ -55,7 +55,7 @@ def main():
         sys.exit(1)
 
     mat = initMaterial(args.material)
-    hole(None, mat, args.cutDepth, args.toolSize, args.radius)
+    hole(None, mat, args.depth, args.toolSize, args.radius)
 
 if __name__ == "__main__":
     main()
