@@ -1,7 +1,5 @@
 # Material setup that seems to work (with the Elkesmill)
 
-import sys
-
 materials = [
      # 1/8, 3mm
      { "name":  "wood",

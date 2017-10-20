@@ -14,8 +14,8 @@ def hole(g, param, cut_depth, tool_size, radius):
         raise RuntimeError("Radius too small relative to tool size.")
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
-    if tool_size <= 0:
-        raise RuntimeError('Tool size must be greater than zero.')
+    if tool_size < 0:
+        raise RuntimeError('Tool size must be zero or greater.')
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -46,7 +46,7 @@ def main():
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('toolSize',
-                        help='diameter of the tool; the cut will account for the tool size.',
+                        help='diameter of the tool; the cut will account for the tool size. May be zero.',
                         type=float)
     parser.add_argument('radius', help='radius of the hole', type=float)
     try:
