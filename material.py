@@ -24,7 +24,7 @@ materials = [
                 "spindleSpeed":    10000,
                 "plungeRate":      30 },
 
-    # 0.7mm pcb
+    # 0.8mm pcb
     { "name":   "fr08",
                 "feedRate":        160,
                 "passDepth":       0.15,
@@ -33,7 +33,7 @@ materials = [
 
     # 1.0mm pcb
     { "name":   "fr10",
-                "feedRate":        280,
+                "feedRate":        200, # was: 280 felt a little fast?
                 "passDepth":       0.15,
                 "spindleSpeed":    10000,
                 "plungeRate":      30 },

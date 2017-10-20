@@ -1,63 +1,60 @@
 # Cut a rectanagle at the given location.
 # Cut a rectangle to the given depth.
 
-import math
-import sys
+import argparse
 from mecode import G
 from material import *
 from utility import *
 
-def rectcut(g, param, cutDepth, cutW, cutH):
+def rectcut(g, mat, cut_depth, dx, dy):
 
-    needTeardown = False
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
         needTeardown = True
 
-    if cutDepth >= 0:
-        raise RunTimeError('Cut depth must be less than zero.')
-    if cutW <= 0 or cutH <= 0:
-        raise RunTimeError('w and h must be greater than zero')
+    if cut_depth >= 0:
+        raise RuntimeError('Cut depth must be less than zero.')
+    if dx <= 0 or dy <= 0:
+        raise RuntimeError('dx and dy must be greater than zero')
 
     g.comment("Rectangular cut")
     g.relative()
-    g.spindle('CW', param['spindleSpeed'])
-    g.feed(param['feedRate'])
+    g.spindle('CW', mat['spindleSpeed'])
+    g.feed(mat['feedRate'])
 
     # Spread the plunge out over all 4 sides of the motion.
-    # Remember the last pass has no z motion.
-    fractionW = cutW / (cutW + cutH)
+    fractionW = dx / (dx + dy)
     fractionH = 1 - fractionW
 
     def path(g, plunge):
-        g.move(x=cutW,  z=plunge * fractionW / 2)
-        g.move(y=cutH,  z=plunge * fractionH / 2)
-        g.move(x=-cutW, z=plunge * fractionW / 2)
-        g.move(y=-cutH, z=plunge * fractionH / 2)
+        g.move(x=dx,  z=plunge * fractionW / 2)
+        g.move(y=dy,  z=plunge * fractionH / 2)
+        g.move(x=-dx, z=plunge * fractionW / 2)
+        g.move(y=-dy, z=plunge * fractionH / 2)
 
-    steps = calc_steps(cutDepth, -param['passDepth'])
+    steps = calc_steps(cut_depth, -mat['passDepth'])
     run_3_stages(path, g, steps)
 
     g.spindle()
-    g.move(z=CNC_TRAVEL_Z - cutDepth)
-    if needTeardown:
-        g.teardown()
+    g.move(z=CNC_TRAVEL_Z - cut_depth)
 
 def main():
-    if len(sys.argv) != 5   :
-        print('Cuts a rectangle to a given depth.')
-        print('Usage:')
-        print('  rectcut material depth dx dy')
-        print('Notes')
-        print('  Runs in RELATIVE coordinates.')
+    parser = argparse.ArgumentParser(
+        description='Cut a rectangle.')
+    parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
+    parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
+    parser.add_argument('dx', help='x width of the cut. (tool size is not accounted for.)', type=float)
+    parser.add_argument('dy', help='y width of the cut.', type=float)
+
+    try:
+        args = parser.parse_args()
+    except:
+        parser.print_help()
         sys.exit(1)
 
-    param = initMaterial(sys.argv[1])
-    cutDepth = float(sys.argv[2])
-    cutW = float(sys.argv[3])
-    cutH = float(sys.argv[4])
-    
-    rectcut(None, param, cutDepth, cutW, cutH)   
+    mat = initMaterial(args.material)
+
+    rectcut(None, mat, args.depth, args.dx, args.dy)
 
 if __name__ == "__main__":
     main()
