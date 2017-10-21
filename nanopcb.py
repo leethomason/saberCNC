@@ -1,6 +1,7 @@
 # turn ascii art into a pcb. for real.
 
 import argparse
+import sys
 
 from mecode import G
 from material import *
@@ -14,7 +15,7 @@ ISOLATE = -1
 
 
 class Point:
-    def __init__(self, x=0, y=0):
+    def __init__(self, x: float=0, y: float=0):
         self.x = x
         self.y = y
 
@@ -261,7 +262,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         cut_path = [Point(0, 0), Point(n_cols - 1, 0), Point(n_cols - 1, n_rows - 1), Point(0, n_rows - 1)]
 
     cut_min_dim, cut_max_dim = bounds_of_points(cut_path)
-    cut_size = Point(cut_max_dim.x - cut_min_dim.x, cut_max_dim.y - cut_min_dim.y)
+    cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE, (cut_max_dim.y - cut_min_dim.y)*SCALE)
 
     if info_mode is True:
         output_rows = []
@@ -286,8 +287,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                          sign(cut_path[n].y - cut_path[i].y))
             p = Point(cut_path[i].x, cut_path[i].y)
             while True:
-                output_rows[p.y] = output_rows[p.y][
-                                   0:p.x] + '%' + output_rows[p.y][p.x + 1:]
+                output_rows[int(p.y)] = output_rows[int(p.y)][0:int(p.x)] + '%' + output_rows[int(p.y)][int(p.x + 1):]
                 if p == cut_path[n]:
                     break
                 p.x += step.x
