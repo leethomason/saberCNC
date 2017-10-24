@@ -394,9 +394,9 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 z += delta_plunge * section_len / total_len
                 g.move(x=x, y=y, z=z)
 
+        g.absolute()
         g.move(z=CNC_TRAVEL_Z)
-        x = cut_path[0].x * SCALE
-        y = (n_rows - 1 - cut_path[0].y) * SCALE
+        g.spindle()
         g.move(x=cut_path[0].x, y=cut_path[0].y)
         g.spindle('CW', mat['spindleSpeed'])
         g.move(z=0)
