@@ -1,71 +1,105 @@
-# rectangle in cylinder (x axis)
-
-# 0,0 is the left center of the cut.
-import math
+import sys
+import argparse
 from mecode import G
 from material import *
 from utility import *
 
-if len(sys.argv) != 7:
-    print('Usage:')
-    print('  rectangleOnCylinder material diameter depthOnCylinder toolSize dx dy')
-    print('Notes:')
-    print('  Runs in relative coordinates.')
-    print('  Origin is centered on top of cylinder, at left (x=0) edge of tool and left edge of cut.')
-    sys.exit(1)
 
-param = initMaterial(sys.argv[1])
-diameter = float(sys.argv[2])
-cutDepth = float(sys.argv[3])
-toolSize = float(sys.argv[4])
-dx = float(sys.argv[5])
-dy = float(sys.argv[6])
+def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy, delta, cutoff):
+    half_tool = tool_size / 2
+    tool_dx = dx - tool_size
+    tool_dy = dy - tool_size
 
-radius = diameter / 2
-halfTool = toolSize / 2
+    if depth >= 0:
+        raise RuntimeError('Cut depth must be negative')
 
-toolDX = dx - toolSize;
-toolDY = dy - toolSize;
+    if tool_size < 0:
+        raise RuntimeError('Tool size must be 0 or positive')
 
-if diameter <= 0:
-	raise RunTimeError('Diameter out of range')
+    if tool_dx <= 0 or tool_dy <= 0:
+        raise RuntimeError('dx or dy too small')
 
-if (-cutDepth) > radius:
-	raise RunTimeError('Cut depth greater than radius.')
+    if radius <= 0:
+        raise RuntimeError("radius must be positive")
 
-if cutDepth >= 0:
-	raise RunTimeError('Cut depth must be negative')
+    if delta < 0:
+        raise RuntimeError("delta must be 0 or positive")
 
-if toolSize <= 0:
-	raise RunTimeError('Toolsize must be positive')
+    def path(g, plunge, data):
+        # z=0 is non-obvious, reading again. Comes about because the y action motion
+        # is symmetric, so the z doesn't change when cutting the arc.
+        # Therefore plunge is distributed on the x axis, just to simplify concerns.
 
-if dx <= 0 or dy <= 0:
-	raise RunTimeError('dx and dy must be positive')
+        if delta > 0 and data['cutoff'] > 0:
+            dz = -plunge
+            g.move(x=delta * dz, y=delta * dz)
+            data['tool_dx'] -= delta * dz * 2
+            data['tool_dy'] -= delta * dz * 2
+            data['cutoff'] -= dz
 
-def path(g, plunge):
-	# z=0 is non-obvious, reading again. Comes about because the y action motion
-	# is symmetric, so the z doesn't change when cutting the arc.
-	# Therefore plunge is distributed on the x axis, just to simplify concerns.
+        g.move(x=data['tool_dx'], z=plunge / 2)
+        g.arc(y=data['tool_dy'], z=0, direction='CW', radius=radius)
+        g.move(x=-data['tool_dx'], z=plunge / 2)
+        g.arc(y=-data['tool_dy'], z=0, direction='CCW', radius=radius)
 
-    g.move(x=  toolDX, z=plunge/2)
-    g.arc( y=  toolDY, z=0, direction='CW', radius=radius)
-    g.move(x= -toolDX, z=plunge/2)
-    g.arc( y= -toolDY, z=0, direction='CCW', radius=radius)
+    if g is None:
+        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
-g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    g.write("(init)")
+    g.relative()
+    g.spindle('CW', mat['spindleSpeed'])
+    g.feed(mat['feedRate'])
 
-g.write("(init)")
-g.relative()
-g.spindle('CW', param['spindleSpeed'])
-g.feed(param['feedRate'])
+    # move the head to the starting position
+    z = z_on_cylinder(dy / 2 - half_tool, radius)
 
-#move the head to the starting position
-z = z_on_cylinder(dy / 2 - halfTool, radius)
-g.arc(y=-(dy/2 - halfTool), z=z, direction='CCW', radius=radius)
+    g.move(x=half_tool)
+    g.move(y=-(dy / 2 - half_tool))
+    g.move(z=z)
 
-steps = calc_steps(cutDepth, -param['passDepth'])
-run_3_stages(path, g, steps)
+    steps = calc_steps(depth, -mat['passDepth'])
+    data = {
+        "tool_dx": tool_dx,
+        "tool_dy": tool_dy,
+        "cutoff": cutoff
+    }
+    run_3_stages(path, g, steps, False, data)
 
-g.spindle()
-g.move(z=-cutDepth + CNC_TRAVEL_Z)
-g.teardown()
+    g.spindle()
+    g.move(z=-depth + CNC_TRAVEL_Z - z)
+    g.move(x=-half_tool)
+    g.move(y=(dy / 2 - half_tool))
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Cut a rectangle following the curve of a cylinder. The origin is the y-center of the' +
+                    ' cylinder. With the left edge at the left edge of the cut at the center of the tool.')
+    parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
+    parser.add_argument('diameter', help='diameter of the cylinder', type=float)
+    parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
+    parser.add_argument('toolSize',
+                        help='diameter of the tool; the cut will account for the tool size. May be zero.',
+                        type=float)
+    parser.add_argument('dx', help='size of cut in x', type=float)
+    parser.add_argument('dy', help='size of cut in y', type=float)
+
+    parser.add_argument('-d', '--delta', help='step in x and y for every step in z', type=float, default=0.0)
+    parser.add_argument('-c', '--cutoff', help='depth at which to stop applying delta', type=float, default=0.0)
+
+    try:
+        args = parser.parse_args()
+    except:
+        parser.print_help()
+        sys.exit(1)
+
+    mat = initMaterial(args.material)
+    cutoff = args.depth
+    if args.cutoff > 0:
+        cutoff = args.cutoff
+
+    rectangle_on_cylinder(None, mat, args.diameter / 2, args.depth, args.toolSize, args.dx, args.dy, args.delta, cutoff)
+
+
+if __name__ == "__main__":
+    main()
