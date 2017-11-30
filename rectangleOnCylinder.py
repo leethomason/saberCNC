@@ -5,7 +5,7 @@ from material import *
 from utility import *
 
 
-def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy, delta, cutoff):
+def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy):
     half_tool = tool_size / 2
     tool_dx = dx - tool_size
     tool_dy = dy - tool_size
@@ -22,25 +22,25 @@ def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy, delta, cutof
     if radius <= 0:
         raise RuntimeError("radius must be positive")
 
-    if delta < 0:
-        raise RuntimeError("delta must be 0 or positive")
+    #if delta < 0:
+    #    raise RuntimeError("delta must be 0 or positive")
 
-    def path(g, plunge, data):
+    def path(g, plunge):
         # z=0 is non-obvious, reading again. Comes about because the y action motion
         # is symmetric, so the z doesn't change when cutting the arc.
         # Therefore plunge is distributed on the x axis, just to simplify concerns.
 
-        if delta > 0 and data['cutoff'] > 0:
-            dz = -plunge
-            g.move(x=delta * dz, y=delta * dz)
-            data['tool_dx'] -= delta * dz * 2
-            data['tool_dy'] -= delta * dz * 2
-            data['cutoff'] -= dz
+        #if delta > 0 and data['cutoff'] > 0:
+        #    dz = -plunge
+        #    g.move(x=delta * dz, y=delta * dz)
+        #    data['tool_dx'] -= delta * dz * 2
+        #    data['tool_dy'] -= delta * dz * 2
+        #    data['cutoff'] -= dz
 
-        g.move(x=data['tool_dx'], z=plunge / 2)
-        g.arc(y=data['tool_dy'], z=0, direction='CW', radius=radius)
-        g.move(x=-data['tool_dx'], z=plunge / 2)
-        g.arc(y=-data['tool_dy'], z=0, direction='CCW', radius=radius)
+        g.move(x=tool_dx, z=plunge / 2)
+        g.arc(y=tool_dy, z=0, direction='CW', radius=radius)
+        g.move(x=-tool_dx, z=plunge / 2)
+        g.arc(y=-tool_dy, z=0, direction='CCW', radius=radius)
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -58,12 +58,7 @@ def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy, delta, cutof
     g.move(z=z)
 
     steps = calc_steps(depth, -mat['passDepth'])
-    data = {
-        "tool_dx": tool_dx,
-        "tool_dy": tool_dy,
-        "cutoff": cutoff
-    }
-    run_3_stages(path, g, steps, False, data)
+    run_3_stages(path, g, steps, False)
 
     g.spindle()
     g.move(z=-depth + CNC_TRAVEL_Z - z)
@@ -84,8 +79,11 @@ def main():
     parser.add_argument('dx', help='size of cut in x', type=float)
     parser.add_argument('dy', help='size of cut in y', type=float)
 
-    parser.add_argument('-d', '--delta', help='step in x and y for every step in z', type=float, default=0.0)
-    parser.add_argument('-c', '--cutoff', help='depth at which to stop applying delta', type=float, default=0.0)
+    # Disabling: this is not a correct implementation.
+    # as the bit moves tto the inner cut, it chops at the material above it and rattles.
+    # need to "plane out" the area above
+    #parser.add_argument('-d', '--delta', help='step in x and y for every step in z', type=float, default=0.0)
+    #parser.add_argument('-c', '--cutoff', help='depth at which to stop applying delta', type=float, default=0.0)
 
     try:
         args = parser.parse_args()
@@ -94,11 +92,11 @@ def main():
         sys.exit(1)
 
     mat = initMaterial(args.material)
-    cutoff = args.depth
-    if args.cutoff > 0:
-        cutoff = args.cutoff
+    #cutoff = args.depth
+    #if args.cutoff > 0:
+    #    cutoff = args.cutoff
 
-    rectangle_on_cylinder(None, mat, args.diameter / 2, args.depth, args.toolSize, args.dx, args.dy, args.delta, cutoff)
+    rectangle_on_cylinder(None, mat, args.diameter / 2, args.depth, args.toolSize, args.dx, args.dy)
 
 
 if __name__ == "__main__":
