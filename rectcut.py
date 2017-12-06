@@ -1,6 +1,7 @@
 # Cut a rectangle to the given depth.
 
 import argparse
+import sys
 from mecode import G
 from material import *
 from utility import *
@@ -25,7 +26,7 @@ def rectcut(g, mat, cut_depth, tool_size, dx, dy):
 
     dx = dx - tool_size
     dy = dy - tool_size
-    g.move(x=tool_size / 2, y=tool_size/2)
+    g.move(x=tool_size / 2, y=-dy/2)
 
     # Spread the plunge out over all 4 sides of the motion.
     fractionW = dx / (dx + dy)
@@ -42,7 +43,7 @@ def rectcut(g, mat, cut_depth, tool_size, dx, dy):
 
     g.spindle()
     g.move(z=-cut_depth)
-    g.move(x=-tool_size / 2, y=-tool_size/2)
+    g.move(x=-tool_size / 2, y=dy/2)
 
 def main():
     parser = argparse.ArgumentParser(
