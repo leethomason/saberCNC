@@ -40,6 +40,9 @@ def run_3_stages(path, g, steps, absolute=False):
     for d in steps:
         if d > 0:
             raise RuntimeError("Positive value for step: " + str(d))
+        if d > -0.0000001:
+            d = 0
+
         g.comment('pass: depth={}'.format(d))
         if absolute is True:
             path(g, base_z, d)

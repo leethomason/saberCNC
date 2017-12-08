@@ -25,7 +25,9 @@ def hole(g, param, cut_depth, tool_size, radius):
     g.feed(param['feedRate'])
     g.spindle('CW', param['spindleSpeed'])
 
+    g.move(z=CNC_TRAVEL_Z)
     g.move(x=r)
+    g.move(z=-CNC_TRAVEL_Z)
 
     def path(g, plunge):
         # 1 segment, 2, or 4? Go with a balance.
@@ -35,8 +37,10 @@ def hole(g, param, cut_depth, tool_size, radius):
     steps = calc_steps(cut_depth, -param['passDepth'])
     run_3_stages(path, g, steps)
 
-    g.move(x=-r)  # back to center of the circle
     g.move(z=-cut_depth)  # up to the starting point
+    g.move(z=CNC_TRAVEL_Z)
+    g.move(x=-r)  # back to center of the circle
+    g.move(z=-CNC_TRAVEL_Z)
     g.spindle()
 
 

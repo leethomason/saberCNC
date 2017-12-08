@@ -6,11 +6,11 @@ from mecode import G
 from material import *
 from utility import *
 
+
 def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
-        needTeardown = True
 
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
@@ -42,6 +42,7 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
     g.spindle()
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=0, y=0)
+    g.move(z=0)
 
 def main():
     parser = argparse.ArgumentParser(
