@@ -7,7 +7,7 @@ from material import *
 from utility import *
 
 
-def hole(g, param, cut_depth, tool_size, radius):
+def hole(g, mat, cut_depth, tool_size, radius):
     r = radius - tool_size / 2
 
     if r <= 0:
@@ -20,10 +20,25 @@ def hole(g, param, cut_depth, tool_size, radius):
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
-    g.write("(init)")
+    g.comment("hole")
+    g.comment("depth=" + cut_depth)
+    g.comment("tool size=" + tool_size)
+    g.comment("radius" + radius)
+
+    # An unexpected bug: if the path is short enough then the plunge is too
+    # great, since it passDepth and not the plunge rate. Therefore, compute
+    # the path length and use the more conservative value.
+    feed_rate = mat['feedRate']
+    pass_depth = mat['passDepth']
+    path_len = 2.0 * math.pi * radius
+    dz_dt = pass_depth / (path_len / mat['feedRate'])
+    if dz_dt > mat['plungeRate']:
+        feed_rate = feed_rate *
+        g.comment('down adjusted speed=')
+
     g.relative()
-    g.feed(param['feedRate'])
-    g.spindle('CW', param['spindleSpeed'])
+    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindleSpeed'])
 
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=r)
@@ -34,7 +49,7 @@ def hole(g, param, cut_depth, tool_size, radius):
         g.arc2(x=-2 * r, y=0, i=-r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
         g.arc2(x=2 * r, y=0, i=r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
-    steps = calc_steps(cut_depth, -param['passDepth'])
+    steps = calc_steps(cut_depth, -mat['passDepth'])
     run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth)  # up to the starting point

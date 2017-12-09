@@ -4,6 +4,13 @@ from material import *
 from wedgecut import wedgecut
 from utility import *
 
+'''
+mat('aluminum')
+depth=-3
+outer_d = 31.7
+tool
+'''
+
 center_hole_d = 12
 outer_d = 31.7
 cut_depth = -3
@@ -15,7 +22,7 @@ outer_r = outer_d / 2
 center_hole_r = center_hole_d / 2
 
 
-def punch(x, y, d):
+def hole_punch(x, y, d):
     g.absolute()
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=x, y=y)
@@ -39,11 +46,11 @@ wedgecut(g, mat, cut_depth, theta0, theta0 + thetaW, center_hole_r, outer_r)
 wedgecut(g, mat, cut_depth, theta0+180, theta0 + thetaW+180, outer_r-3, outer_r)
 
 # rods that hold it together
-punch(-2, 12, 3.5)
-punch(2, -12, 3.5)
+hole_punch(-2, 12, 3.5)
+hole_punch(2, -12, 3.5)
 
 # channel for wires
-punch(-8, 8, 5.6)
+hole_punch(-8, 8, 5.6)
 
 # trick to do the outer cut
 hole(g, mat, cut_depth, 0, outer_r + tool_size/2)

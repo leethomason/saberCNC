@@ -6,35 +6,35 @@ materials = [
                 "feedRate":        1000,
                 "passDepth":       0.5,
                 "spindleSpeed":    10000,
-                "plungeRate":      100 },
+                "plungeRate":      100},
 
     # 1/8, 3mm
     { "name":   "aluminum",
                 "feedRate":        150,
                 "passDepth":       0.05,   #woh. slow and easy for aluminum
                 "spindleSpeed":    10000,
-                "plungeRate":      12 },
+                "plungeRate":      12},
 
     # 0.8mm pcb
     { "name":   "fr08",
                 "feedRate":        160,
                 "passDepth":       0.15,
                 "spindleSpeed":    10000,
-                "plungeRate":      30 },
+                "plungeRate":      30},
 
     # 1.0mm pcb
     { "name":   "fr10",
                 "feedRate":        200, # was: 280 felt a little fast?
                 "passDepth":       0.15,
                 "spindleSpeed":    10000,
-                "plungeRate":      30 },
+                "plungeRate":      30},
 
     # testing
     {  "name":  "air",
                 "feedRate":        1200,
                 "passDepth":       2.0,
                 "spindleSpeed":    0,
-                "plungeRate":      150 }
+                "plungeRate":      150}
 ]
 
 def initMaterial(name):
