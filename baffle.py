@@ -4,12 +4,6 @@ from material import *
 from wedgecut import wedgecut
 from utility import *
 
-'''
-mat('aluminum')
-depth=-3
-outer_d = 31.7
-tool
-'''
 
 center_hole_d = 12
 outer_d = 31.7

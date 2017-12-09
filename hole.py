@@ -1,7 +1,7 @@
 # Cuts one hole: essentially a descending circular cut.
 
 import argparse
-
+import sys
 from mecode import G
 from material import *
 from utility import *
@@ -21,20 +21,28 @@ def hole(g, mat, cut_depth, tool_size, radius):
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     g.comment("hole")
-    g.comment("depth=" + cut_depth)
-    g.comment("tool size=" + tool_size)
-    g.comment("radius" + radius)
+    g.comment("depth=" + str(cut_depth))
+    g.comment("tool size=" + str(tool_size))
+    g.comment("radius=" + str(radius))
+    g.comment("pass depth=" + str(mat['passDepth']))
+    g.comment("plunge rate=" + str(mat['plungeRate']))
 
     # An unexpected bug: if the path is short enough then the plunge is too
     # great, since it passDepth and not the plunge rate. Therefore, compute
-    # the path length and use the more conservative value.
+    # the path length and use the more conserveative value.
     feed_rate = mat['feedRate']
     pass_depth = mat['passDepth']
-    path_len = 2.0 * math.pi * radius
-    dz_dt = pass_depth / (path_len / mat['feedRate'])
-    if dz_dt > mat['plungeRate']:
-        feed_rate = feed_rate *
-        g.comment('down adjusted speed=')
+    path_len = 2.0 * math.pi * r
+    dz_dt = pass_depth * feed_rate / path_len
+    g.comment("dz/dt=" + str(dz_dt))
+
+    factor_of_safety = 4.0
+    if dz_dt * factor_of_safety > mat['plungeRate']:
+        pass_depth = mat['plungeRate'] * path_len / (feed_rate * factor_of_safety)
+        g.comment('ADJUSTED pass depth=' + str(pass_depth))
+
+    if (pass_depth < 0.01):
+        raise RuntimeError("Pass depth too small due to small hole size.")
 
     g.relative()
     g.feed(mat['feedRate'])
@@ -49,7 +57,7 @@ def hole(g, mat, cut_depth, tool_size, radius):
         g.arc2(x=-2 * r, y=0, i=-r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
         g.arc2(x=2 * r, y=0, i=r, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
-    steps = calc_steps(cut_depth, -mat['passDepth'])
+    steps = calc_steps(cut_depth, -pass_depth)
     run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth)  # up to the starting point
