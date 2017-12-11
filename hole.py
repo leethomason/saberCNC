@@ -25,6 +25,7 @@ def hole(g, mat, cut_depth, tool_size, radius):
     g.comment("tool size=" + str(tool_size))
     g.comment("radius=" + str(radius))
     g.comment("pass depth=" + str(mat['passDepth']))
+    g.comment("feed rate=" + str(mat['feedRate']))
     g.comment("plunge rate=" + str(mat['plungeRate']))
 
     # An unexpected bug: if the path is short enough then the plunge is too
@@ -38,19 +39,24 @@ def hole(g, mat, cut_depth, tool_size, radius):
 
     factor_of_safety = 4.0
     if dz_dt * factor_of_safety > mat['plungeRate']:
+        # drop the pass_depth, then be even more conservative
+        # and drop the feedrate. Small holes are very challenging.
         pass_depth = mat['plungeRate'] * path_len / (feed_rate * factor_of_safety)
+        feed_rate = feed_rate * 0.10
+        g.comment('ADJUSTED feed rate=' + str(feed_rate))
         g.comment('ADJUSTED pass depth=' + str(pass_depth))
 
     if (pass_depth < 0.01):
         raise RuntimeError("Pass depth too small due to small hole size.")
 
     g.relative()
-    g.feed(mat['feedRate'])
     g.spindle('CW', mat['spindleSpeed'])
+    g.feed(mat['feedRate'])
 
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=r)
     g.move(z=-CNC_TRAVEL_Z)
+    g.feed(feed_rate)
 
     def path(g, plunge):
         # 1 segment, 2, or 4? Go with a balance.

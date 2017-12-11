@@ -39,10 +39,11 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
     steps = calc_steps(cut_depth, -mat['passDepth'])
     run_3_stages(path, g, steps, True)
 
-    g.spindle()
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=0, y=0)
     g.move(z=0)
+    g.spindle()
+
 
 def main():
     parser = argparse.ArgumentParser(
