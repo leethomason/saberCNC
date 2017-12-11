@@ -30,24 +30,25 @@ def hole(g, mat, cut_depth, tool_size, radius):
 
     # An unexpected bug: if the path is short enough then the plunge is too
     # great, since it passDepth and not the plunge rate. Therefore, compute
-    # the path length and use the more conserveative value.
+    # the path length and use the more conservative value.
+    # The first pass at fixing this used the descent rate. However, that
+    # wasn't as mathematically clean as I expected. (Need to model a
+    # non zero size bit?) 2nd pass is interpolating.
     feed_rate = mat['feedRate']
     pass_depth = mat['passDepth']
-    path_len = 2.0 * math.pi * r
-    dz_dt = pass_depth * feed_rate / path_len
-    g.comment("dz/dt=" + str(dz_dt))
 
-    factor_of_safety = 4.0
-    if dz_dt * factor_of_safety > mat['plungeRate']:
-        # drop the pass_depth, then be even more conservative
-        # and drop the feedrate. Small holes are very challenging.
-        pass_depth = mat['plungeRate'] * path_len / (feed_rate * factor_of_safety)
-        feed_rate = feed_rate * 0.10
+    small_hole = tool_size * 1.5
+    smallest_hole = tool_size * 0.55
+
+    if radius < smallest_hole:
+        raise RuntimeError("Hole too small.")
+
+    if radius < small_hole:
+        factor = (radius - smallest_hole) / (small_hole - smallest_hole)
+        feed_rate = feed_rate * (0.2 + 0.8 * factor)
+        pass_depth = pass_depth * (0.5 + 0.5 * factor)
         g.comment('ADJUSTED feed rate=' + str(feed_rate))
         g.comment('ADJUSTED pass depth=' + str(pass_depth))
-
-    if (pass_depth < 0.01):
-        raise RuntimeError("Pass depth too small due to small hole size.")
 
     g.relative()
     g.spindle('CW', mat['spindleSpeed'])
@@ -71,6 +72,17 @@ def hole(g, mat, cut_depth, tool_size, radius):
     g.move(x=-r)  # back to center of the circle
     g.move(z=-CNC_TRAVEL_Z)
     g.spindle()
+
+def hole_abs(g, mat, cut_depth, tool_size, radius, x, y):
+    if g is None:
+        raise RuntimeError("must pass in a g object for abs move. Or fix code.")
+
+    g.absolute()
+    g.move(z=CNC_TRAVEL_Z)
+    g.move(x=x, y=y)
+    g.move(z=0)
+    hole(g, mat, cut_depth, tool_size, radius)
+    g.absolute()
 
 
 def main():

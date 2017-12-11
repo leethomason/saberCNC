@@ -34,7 +34,8 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
         g.move(x=math.cos(math.radians(theta0))*outer, y=math.sin(math.radians(theta0))*outer, z=base)
         g.arc(x=math.cos(math.radians(theta1))*outer, y=math.sin(math.radians(theta1))*outer, direction='CCW', radius=outer)
         g.move(x=math.cos(math.radians(theta1))*inner, y=math.sin(math.radians(theta1))*inner)
-        g.arc(x=math.cos(math.radians(theta0))*inner, y=math.sin(math.radians(theta0))*inner, direction='CW', radius=inner)
+        if inner > 0:
+            g.arc(x=math.cos(math.radians(theta0))*inner, y=math.sin(math.radians(theta0))*inner, direction='CW', radius=inner)
 
     steps = calc_steps(cut_depth, -mat['passDepth'])
     run_3_stages(path, g, steps, True)
