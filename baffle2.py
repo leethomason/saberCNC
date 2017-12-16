@@ -82,13 +82,11 @@ for step in steps:
         current = i % len(path)
         prev = (i - 1 + len(path)) % len(path)
         next = (i+1) % len(path)
-        h_normal = path[current].head_normal(path[prev])
-        t_normal = path[next].tail_normal(path[current])
 
         prev_x = x
         prev_y = y
-        x = path[current].x - h_normal[0] - t_normal[0]
-        y = path[current].y - h_normal[1] - t_normal[1]
+        x = path[current].x
+        y = path[current].y
 
         if not spindle_down:
             g.move(x=x, y=y)
@@ -101,10 +99,8 @@ for step in steps:
         if cmd.type == MOVE_TO:
             g.move(x=x, y=y, z=z)
         elif cmd.type == ARC_CCW:
-            #g.arc(x=x, y=y, direction='CCW', radius=math.sqrt(x*x + y*y))
             g.arc2(x=x, y=y, i=-prev_x, j=-prev_y, direction='CCW')
         else:
-            #g.arc(x=x, y=y, direction='CW', radius=math.sqrt(x*x + y*y))
             g.arc2(x=x, y=y, i=-prev_x, j=-prev_y, direction= 'CW')
 
 # rods that hold it together
