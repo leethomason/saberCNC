@@ -67,6 +67,7 @@ def hole(g, mat, cut_depth, tool_size, radius):
     steps = calc_steps(cut_depth, -pass_depth)
     run_3_stages(path, g, steps)
 
+    g.feed(mat['feedRate']) # go fast again...else. wow. boring.
     g.move(z=-cut_depth)  # up to the starting point
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=-r)  # back to center of the circle

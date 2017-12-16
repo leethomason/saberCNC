@@ -31,9 +31,9 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
     g.move(z=0)
 
     def path(g, base, d):
-        g.move(x=math.cos(math.radians(theta0))*outer, y=math.sin(math.radians(theta0))*outer, z=base)
+        g.move(x=math.cos(math.radians(theta0))*outer, y=math.sin(math.radians(theta0))*outer, z=base/2)
         g.arc(x=math.cos(math.radians(theta1))*outer, y=math.sin(math.radians(theta1))*outer, direction='CCW', radius=outer)
-        g.move(x=math.cos(math.radians(theta1))*inner, y=math.sin(math.radians(theta1))*inner)
+        g.move(x=math.cos(math.radians(theta1))*inner, y=math.sin(math.radians(theta1))*inner, z=base/2)
         if inner > 0:
             g.arc(x=math.cos(math.radians(theta0))*inner, y=math.sin(math.radians(theta0))*inner, direction='CW', radius=inner)
 
