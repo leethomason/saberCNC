@@ -4,13 +4,13 @@ from material import *
 from utility import *
 
 inner_d = 12
-outer_d = 31.7
+outer_d = 31.7 + 0.5
 cut_depth = -2
 tool_size = 3.175
 half_tool = tool_size / 2
-theta0 = math.radians(-10)
-theta1 = math.radians(80)
-theta2 = math.radians(170)
+theta0 = math.radians(-5)
+theta1 = math.radians(75)
+theta2 = math.radians(210)
 theta3 = math.radians(260)
 
 outer_r = outer_d / 2 + half_tool
