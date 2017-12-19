@@ -1,4 +1,8 @@
 # Material setup that seems to work (with the Elkesmill)
+# wood
+# wood-1.0
+# wood-0.8
+# wood-2.0
 
 materials = [
      # 1/8, 3mm
@@ -41,7 +45,7 @@ def initMaterial(name):
     for m in materials:
         if name == m['name']:
             return m
-    raise RunTimeError('material "{}" not defined'.format(name))
+    raise RuntimeError('material "{}" not defined'.format(name))
 
 '''
 For PCB

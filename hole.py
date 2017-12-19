@@ -46,7 +46,7 @@ def hole(g, mat, cut_depth, tool_size, radius):
     if radius < small_hole:
         factor = (radius - smallest_hole) / (small_hole - smallest_hole)
         feed_rate = feed_rate * (0.2 + 0.8 * factor)
-        pass_depth = pass_depth * (0.5 + 0.5 * factor)
+        pass_depth = pass_depth * (0.3 + 0.7 * factor)
         g.comment('ADJUSTED feed rate=' + str(feed_rate))
         g.comment('ADJUSTED pass depth=' + str(pass_depth))
 
@@ -79,6 +79,8 @@ def hole_abs(g, mat, cut_depth, tool_size, radius, x, y):
         raise RuntimeError("must pass in a g object for abs move. Or fix code.")
 
     g.absolute()
+    g.spindle('CW', mat['spindleSpeed'])
+    g.feed(mat['feedRate'])
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=x, y=y)
     g.move(z=0)
