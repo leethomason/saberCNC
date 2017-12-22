@@ -1,3 +1,5 @@
+import sys
+
 # Material setup that seems to work (with the Elkesmill)
 # wood
 # wood-1.0
@@ -5,47 +7,91 @@
 # wood-2.0
 
 materials = [
-     # 1/8, 3mm
-     { "name":  "wood",
-                "feedRate":        1000,
-                "passDepth":       0.5,
-                "spindleSpeed":    10000,
-                "plungeRate":      100},
-
     # 1/8, 3mm
-    { "name":   "aluminum",
-                "feedRate":        150,
-                "passDepth":       0.05,   #woh. slow and easy for aluminum
-                "spindleSpeed":    10000,
-                "plungeRate":      12},
+    {"name": "wood",
+     "tool_size": 3.125,
+     "feedRate": 1000,
+     "passDepth": 0.5,
+     "spindleSpeed": 10000,
+     "plungeRate": 100},
 
-    # 0.8mm pcb
-    { "name":   "fr08",
-                "feedRate":        160,
-                "passDepth":       0.15,
-                "spindleSpeed":    10000,
-                "plungeRate":      30},
+    # 3.125
+    {"name": "aluminum",
+     "tool_size": 3.125,
+     "feedRate": 150,
+     "passDepth": 0.05,  # woh. slow and easy for aluminum
+     "spindleSpeed": 10000,
+     "plungeRate": 12},
 
     # 1.0mm pcb
-    { "name":   "fr10",
-                "feedRate":        200, # was: 280 felt a little fast?
-                "passDepth":       0.15,
-                "spindleSpeed":    10000,
-                "plungeRate":      30},
+    {"name": "fr",
+     "tool_size": 1.0,
+     "feedRate": 200,  # was: 280 felt a little fast?
+     "passDepth": 0.15,
+     "spindleSpeed": 10000,
+     "plungeRate": 30},
+
+    # 0.8mm pcb
+    {"name": "fr",
+     "tool_size": 0.8,
+     "feedRate": 160,
+     "passDepth": 0.15,
+     "spindleSpeed": 10000,
+     "plungeRate": 30},
 
     # testing
-    {  "name":  "air",
-                "feedRate":        1200,
-                "passDepth":       2.0,
-                "spindleSpeed":    0,
-                "plungeRate":      150}
+    {"name": "air",
+     "tool_size": 3.125,
+     "feedRate": 1200,
+     "passDepth": 2.0,
+     "spindleSpeed": 0,
+     "plungeRate": 150}
 ]
 
-def initMaterial(name):
-    for m in materials:
-        if name == m['name']:
+
+def initMaterial(name: str):
+    # if there is a "dash" syntax, look to interpolate.
+    # else just take the first one
+    dash_index = name.find('-')
+    if dash_index > 0:
+        tool_size = float(name[dash_index + 1:])
+        mat_name = name[0:dash_index]
+
+        min_greater_size = 5.0
+        min_greater_mat = None
+        max_lesser_size = 0
+        max_lesser_mat = None
+
+        for m in materials:
+            if mat_name == m['name']:
+                if m['tool_size'] >= tool_size and m['tool_size'] < min_greater_size:
+                    min_greater_size = m['tool_size']
+                    min_greater_mat = m
+                if m['tool_size'] <= tool_size and m['tool_size'] > max_lesser_size:
+                    max_lesser_size = m['tool_size']
+                    max_lesser_mat = m
+
+        if min_greater_mat is not None and max_lesser_mat is not None and min_greater_size != max_lesser_size:
+            # interpolate. cool.
+            fraction = (tool_size - max_lesser_size) / (min_greater_size - max_lesser_size)
+            m = max_lesser_mat.copy()
+
+            params = ['tool_size', 'feedRate', 'passDepth', 'plungeRate']
+            for p in params:
+                m[p] = max_lesser_mat[p] + fraction * (min_greater_mat[p] - max_lesser_mat[p])
             return m
+        elif min_greater_mat is not None:
+            return min_greater_mat
+        else:
+            return max_lesser_mat
+
+    else:
+        for m in materials:
+            if name == m['name']:
+                return m
+
     raise RuntimeError('material "{}" not defined'.format(name))
+
 
 '''
 For PCB
@@ -76,3 +122,13 @@ Max pass depth: 0.006" (0.15 mm)
 '''
 
 
+def main():
+    m = initMaterial(sys.argv[1])
+    if m is not None:
+        keys = m.keys()
+        for k in keys:
+            print(str(k) + " " + str(m[k]))
+
+
+if __name__ == "__main__":
+    main()
