@@ -346,13 +346,13 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.comment("num drill points = {}".format(len(drill_pts)))
 
     g.absolute()
-    g.feed(mat['feedRate'])
+    g.feed(mat['feed_rate'])
     g.move(z=CNC_TRAVEL_Z)
     if cut_pass == 'back':
         g.move(x=-SCALE, y=-SCALE)
         g.write('G92 X0 Y0')
 
-    g.spindle('CW', mat['spindleSpeed'])
+    g.spindle('CW', mat['spindle_speed'])
 
     # impossible starting value to force moving to
     # the cut depth on the first point.
@@ -400,10 +400,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         x = cut_path[0].x * SCALE
         y = (n_rows - 1 - cut_path[0].y) * SCALE
         g.move(x=x, y=y)
-        g.spindle('CW', mat['spindleSpeed'])
+        g.spindle('CW', mat['spindle_speed'])
         g.move(z=0)
 
-        steps = calc_steps(drill_depth, -mat['passDepth'])
+        steps = calc_steps(drill_depth, -mat['pass_depth'])
         run_3_stages(path, g, steps, absolute=True)
 
     g.move(z=CNC_TRAVEL_Z)

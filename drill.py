@@ -14,7 +14,7 @@ from material import *
 from utility import *
 
 def drill(g, mat, cutDepth, points):
-    nPlunge = 1 + int(-cutDepth / (0.05 * mat['plungeRate']))
+    nPlunge = 1 + int(-cutDepth / (0.05 * mat['plunge_rate']))
     if cutDepth >= 0:
         raise RunTimeError('Cut depth must be less than zero.')
 
@@ -28,13 +28,13 @@ def drill(g, mat, cutDepth, points):
     g.comment("  num pecks: " + str(nPlunge))
 
     g.absolute()
-    g.feed(mat['feedRate'])
+    g.feed(mat['feed_rate'])
 
     sort_shortest_path(points);
     g.comment("  num points: " + str(len(points)))
 
     g.move(z=CNC_TRAVEL_Z)
-    g.spindle('CW', mat['spindleSpeed'])
+    g.spindle('CW', mat['spindle_speed'])
 
     for p in points:
         g.comment('drill hole at {},{}'.format(p['x'], p['y']))
@@ -42,7 +42,7 @@ def drill(g, mat, cutDepth, points):
         g.move(z=0)
 
         zTarget = 0
-        g.feed(mat['plungeRate'])
+        g.feed(mat['plunge_rate'])
 
         # move up and down in stages.
         # don't move up on the last step, and hold at the bottom of the hole.
@@ -57,9 +57,9 @@ def drill(g, mat, cutDepth, points):
         g.dwell(0.250)
 
         g.move(z=0)
-        # switch back to feedrate *before* going up, so we don't see the bit 
+        # switch back to feed_rate *before* going up, so we don't see the bit
         # rise in slowwww motionnnn
-        g.feed(mat['feedRate'])
+        g.feed(mat['feed_rate'])
         g.move(z=CNC_TRAVEL_Z)
 
     g.spindle()

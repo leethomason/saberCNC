@@ -17,7 +17,7 @@ def line(g, mat, cut_depth, x0, y0, x1, y1):
 
     g.comment('line')
     g.relative()
-    g.feed(mat['feedRate'])
+    g.feed(mat['feed_rate'])
 
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=x0, y=y0)
@@ -25,13 +25,13 @@ def line(g, mat, cut_depth, x0, y0, x1, y1):
     dy = y1 - y0
 
     g.move(z=-CNC_TRAVEL_Z)
-    g.spindle('CW', mat['spindleSpeed'])
+    g.spindle('CW', mat['spindle_speed'])
 
     def path(g, plunge):
         g.move(x=dx, y=dy, z=plunge/2)
         g.move(x=-dx, y=-dy, z=plunge/2)
 
-    steps = calc_steps(cut_depth, -mat['passDepth'])
+    steps = calc_steps(cut_depth, -mat['pass_depth'])
     run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth + CNC_TRAVEL_Z)

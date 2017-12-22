@@ -37,8 +37,8 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
     g.comment('capsule')
     g.comment('end radius = {}'.format(r))
     g.relative()
-    g.feed(mat['feedRate'])
-    g.spindle('CW', mat['spindleSpeed'])
+    g.feed(mat['feed_rate'])
+    g.spindle('CW', mat['spindle_speed'])
 
     def path(g, plunge):
         g.arc(x=0, y=-(y - tool_size), radius=r, direction='CCW')
@@ -50,7 +50,7 @@ def capsule(g, mat, cut_depth, tool_size, x, y, d):
 
     g.move(x=half_tool)
     g.move(y=y / 2 - half_tool)
-    steps = calc_steps(cut_depth, -mat['passDepth'])
+    steps = calc_steps(cut_depth, -mat['pass_depth'])
     run_3_stages(path, g, steps)
 
     g.move(z=-cut_depth)  # up to the starting point

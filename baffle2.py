@@ -71,15 +71,15 @@ path = [
     CMD(math.cos(theta0) * outer_r, math.sin(theta0) * outer_r, CMD.ARC_CCW)
 ]
 
-g.spindle('CW', mat['spindleSpeed'])
-g.feed(mat['feedRate'])
+g.spindle('CW', mat['spindle_speed'])
+g.feed(mat['feed_rate'])
 
 g.absolute()
 g.spindle()
 g.move(z=CNC_TRAVEL_Z)
 spindle_down = False
 
-steps = calc_steps(cut_depth, -mat['passDepth'])
+steps = calc_steps(cut_depth, -mat['pass_depth'])
 x = 0
 y = 0
 z = 0
@@ -100,8 +100,8 @@ for step in steps:
 
         if not spindle_down:
             g.move(x=x, y=y)
-            g.spindle('CW', mat['spindleSpeed'])
-            g.feed(mat['feedRate'])
+            g.spindle('CW', mat['spindle_speed'])
+            g.feed(mat['feed_rate'])
             g.move(z=0)
             spindle_down = True
 

@@ -24,18 +24,18 @@ def hole(g, mat, cut_depth, tool_size, radius):
     g.comment("depth=" + str(cut_depth))
     g.comment("tool size=" + str(tool_size))
     g.comment("radius=" + str(radius))
-    g.comment("pass depth=" + str(mat['passDepth']))
-    g.comment("feed rate=" + str(mat['feedRate']))
-    g.comment("plunge rate=" + str(mat['plungeRate']))
+    g.comment("pass depth=" + str(mat['pass_depth']))
+    g.comment("feed rate=" + str(mat['feed_rate']))
+    g.comment("plunge rate=" + str(mat['plunge_rate']))
 
     # An unexpected bug: if the path is short enough then the plunge is too
-    # great, since it passDepth and not the plunge rate. Therefore, compute
+    # great, since it pass_depth and not the plunge rate. Therefore, compute
     # the path length and use the more conservative value.
     # The first pass at fixing this used the descent rate. However, that
     # wasn't as mathematically clean as I expected. (Need to model a
     # non zero size bit?) 2nd pass is interpolating.
-    feed_rate = mat['feedRate']
-    pass_depth = mat['passDepth']
+    feed_rate = mat['feed_rate']
+    pass_depth = mat['pass_depth']
 
     small_hole = tool_size * 1.5
     smallest_hole = tool_size * 0.55
@@ -51,8 +51,8 @@ def hole(g, mat, cut_depth, tool_size, radius):
         g.comment('ADJUSTED pass depth=' + str(pass_depth))
 
     g.relative()
-    g.spindle('CW', mat['spindleSpeed'])
-    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
 
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=r)
@@ -67,7 +67,7 @@ def hole(g, mat, cut_depth, tool_size, radius):
     steps = calc_steps(cut_depth, -pass_depth)
     run_3_stages(path, g, steps)
 
-    g.feed(mat['feedRate']) # go fast again...else. wow. boring.
+    g.feed(mat['feed_rate']) # go fast again...else. wow. boring.
     g.move(z=-cut_depth)  # up to the starting point
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=-r)  # back to center of the circle
@@ -79,8 +79,8 @@ def hole_abs(g, mat, cut_depth, tool_size, radius, x, y):
         raise RuntimeError("must pass in a g object for abs move. Or fix code.")
 
     g.absolute()
-    g.spindle('CW', mat['spindleSpeed'])
-    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=x, y=y)
     g.move(z=0)

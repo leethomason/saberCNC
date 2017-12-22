@@ -10,42 +10,42 @@ materials = [
     # 1/8, 3mm
     {"name": "wood",
      "tool_size": 3.125,
-     "feedRate": 1000,
-     "passDepth": 0.5,
-     "spindleSpeed": 10000,
-     "plungeRate": 100},
+     "feed_rate": 1000,
+     "pass_depth": 0.5,
+     "spindle_speed": 10000,
+     "plunge_rate": 100},
 
     # 3.125
     {"name": "aluminum",
      "tool_size": 3.125,
-     "feedRate": 150,
-     "passDepth": 0.05,  # woh. slow and easy for aluminum
-     "spindleSpeed": 10000,
-     "plungeRate": 12},
+     "feed_rate": 150,
+     "pass_depth": 0.05,  # woh. slow and easy for aluminum
+     "spindle_speed": 10000,
+     "plunge_rate": 12},
 
     # 1.0mm pcb
     {"name": "fr",
      "tool_size": 1.0,
-     "feedRate": 200,  # was: 280 felt a little fast?
-     "passDepth": 0.15,
-     "spindleSpeed": 10000,
-     "plungeRate": 30},
+     "feed_rate": 200,  # was: 280 felt a little fast?
+     "pass_depth": 0.15,
+     "spindle_speed": 10000,
+     "plunge_rate": 30},
 
     # 0.8mm pcb
     {"name": "fr",
      "tool_size": 0.8,
-     "feedRate": 160,
-     "passDepth": 0.15,
-     "spindleSpeed": 10000,
-     "plungeRate": 30},
+     "feed_rate": 160,
+     "pass_depth": 0.15,
+     "spindle_speed": 10000,
+     "plunge_rate": 30},
 
     # testing
     {"name": "air",
      "tool_size": 3.125,
-     "feedRate": 1200,
-     "passDepth": 2.0,
-     "spindleSpeed": 0,
-     "plungeRate": 150}
+     "feed_rate": 1200,
+     "pass_depth": 2.0,
+     "spindle_speed": 0,
+     "plunge_rate": 150}
 ]
 
 
@@ -76,7 +76,7 @@ def initMaterial(name: str):
             fraction = (tool_size - max_lesser_size) / (min_greater_size - max_lesser_size)
             m = max_lesser_mat.copy()
 
-            params = ['tool_size', 'feedRate', 'passDepth', 'plungeRate']
+            params = ['tool_size', 'feed_rate', 'pass_depth', 'plunge_rate']
             for p in params:
                 m[p] = max_lesser_mat[p] + fraction * (min_greater_mat[p] - max_lesser_mat[p])
             return m

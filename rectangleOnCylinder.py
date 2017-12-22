@@ -47,8 +47,8 @@ def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy):
 
     g.write("(init)")
     g.relative()
-    g.spindle('CW', mat['spindleSpeed'])
-    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
 
     # move the head to the starting position
     z = z_on_cylinder(dy / 2 - half_tool, radius)
@@ -57,7 +57,7 @@ def rectangle_on_cylinder(g, mat, radius, depth, tool_size, dx, dy):
     g.move(y=-(dy / 2 - half_tool))
     g.move(z=z)
 
-    steps = calc_steps(depth, -mat['passDepth'])
+    steps = calc_steps(depth, -mat['pass_depth'])
     run_3_stages(path, g, steps, False)
 
     g.spindle()

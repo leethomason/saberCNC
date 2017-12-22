@@ -21,8 +21,8 @@ def rectcut(g, mat, cut_depth, tool_size, dx, dy):
 
     g.comment("Rectangular cut")
     g.relative()
-    g.spindle('CW', mat['spindleSpeed'])
-    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
 
     dx = dx - tool_size
     dy = dy - tool_size
@@ -38,7 +38,7 @@ def rectcut(g, mat, cut_depth, tool_size, dx, dy):
         g.move(x=-dx, z=plunge * fractionW / 2)
         g.move(y=-dy, z=plunge * fractionH / 2)
 
-    steps = calc_steps(cut_depth, -mat['passDepth'])
+    steps = calc_steps(cut_depth, -mat['pass_depth'])
     run_3_stages(path, g, steps)
 
     g.spindle()

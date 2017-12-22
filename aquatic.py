@@ -69,7 +69,7 @@ def path(g, plunge):
     g.move(x=-dx0, z=plunge/2)
     g.move(y=dy0, z=-zNeck)
 
-steps = calc_steps(BODY_DEPTH, -mat['passDepth'])
+steps = calc_steps(BODY_DEPTH, -mat['pass_depth'])
 run_3_stages(path, g, steps)
 
 g.move(z=-BODY_DEPTH)     # up to the starting point

@@ -26,8 +26,8 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
     g.move(z=CNC_TRAVEL_Z)
 
     g.move(x=x, y=y)
-    g.spindle('CW', mat['spindleSpeed'])
-    g.feed(mat['feedRate'])
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
     g.move(z=0)
 
     def path(g, base, d):
@@ -37,7 +37,7 @@ def wedgecut(g, mat, cut_depth, theta0, theta1, inner, outer):
         if inner > 0:
             g.arc(x=math.cos(math.radians(theta0))*inner, y=math.sin(math.radians(theta0))*inner, direction='CW', radius=inner)
 
-    steps = calc_steps(cut_depth, -mat['passDepth'])
+    steps = calc_steps(cut_depth, -mat['pass_depth'])
     run_3_stages(path, g, steps, True)
 
     g.move(z=CNC_TRAVEL_Z)
