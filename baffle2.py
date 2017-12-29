@@ -37,27 +37,6 @@ class CMD:
         self.y = y
         self.type = type
 
-    def head_normal(self, prev):
-        theta = math.atan2(self.y, self.x)
-        if self.type == CMD.MOVE_TO:
-            dx = self.x - prev.x
-            dy = self.y - prev.y
-            length = math.sqrt(dx * dx + dy * dy)
-            return [(self.x - prev.x) / length, (self.y - prev.y) / length]
-        elif self.type == CMD.ARC_CCW:
-            return [-math.sin(theta), math.cos(theta)]
-        else:
-            return [-math.sin(theta), math.cos(theta)]
-
-    def tail_normal(self, prev):
-        theta = math.atan2(prev.y, prev.x)
-        if self.type == CMD.MOVE_TO:
-            return self.head_normal(prev)
-        elif self.type == CMD.ARC_CCW:
-            return [-math.sin(theta), math.cos(theta)]
-        else:
-            return [-math.sin(theta), math.cos(theta)]
-
 
 # first command must be a MOVE_TO
 path = [
