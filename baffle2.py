@@ -5,7 +5,7 @@ from utility import *
 
 inner_d = 12
 outer_d = 31.7 + 0.5
-cut_depth = -2
+cut_depth = -1.8
 tool_size = 3.175
 half_tool = tool_size / 2
 theta0 = math.radians(-5)
