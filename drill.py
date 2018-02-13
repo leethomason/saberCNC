@@ -67,18 +67,17 @@ def drill(g, mat, cutDepth, points):
     g.move(x=0, y=0)
 
 def main():
-    isNumberPairs = False
-
     try:
-        float(sys.argv[4])
+        float(sys.argv[3])
         isNumberPairs = True
     except:
-        isNumberPairs = False
+        isNumberPairs = (sys.argv[3].find(',') >= 0)
 
     if len(sys.argv) < 4:
         print('Drill a set of holes.')
         print('Usage:')
         print('  drill material depth file')
+        print('  drill material depth x0,y0 x1,y1 (etc)')
         print('  drill material depth x0 y0 x1 y1 (etc)')
         print('Notes:')
         print('  Runs in ABSOLUTE coordinates.')
@@ -88,15 +87,22 @@ def main():
 
     param    = initMaterial(sys.argv[1])
     cutDepth = float(sys.argv[2])
-    filename = None
     points  = []
 
     if not isNumberPairs:
         filename = sys.argv[3]
         points = read_DRL(filename)
     else:
-        for i in range(3, len(sys.argv), 2):
-            points.append({'x':float(sys.argv[i+0]), 'y':float(sys.argv[i+1])})
+        # Comma separated or not?
+        if sys.argv[3].find(',') > 0:
+            for i in range(3, len(sys.argv)):
+                comma = sys.argv[i].find(',')
+                x = float(sys.argv[i][0:comma])
+                y = float(sys.argv[i][comma+1:])
+                points.append({'x':x, 'y':y})
+        else:
+            for i in range(3, len(sys.argv), 2):
+                points.append({'x':float(sys.argv[i+0]), 'y':float(sys.argv[i+1])})
 
     drill(None, param, cutDepth, points)
 

@@ -1,10 +1,5 @@
 import sys
-
-# Material setup that seems to work (with the Elkesmill)
-# em-wood
-# np883-wood-1.0
-# em-wood-0.8
-# np883-wood-2.0
+import argparse
 
 materials = [
     {
@@ -12,6 +7,13 @@ materials = [
         "machine": "Nomad Pro 883",
         "materials": [
             {"name": "pine",
+             "tool_size": 3.125,
+             "pass_depth": 0.76,
+             "spindle_speed": 4500,
+             "feed_rate": 1828,
+             "plunge_rate": 812},
+
+            {"name": "hardwood",
              "tool_size": 3.125,
              "pass_depth": 0.76,
              "spindle_speed": 4500,
@@ -148,10 +150,17 @@ def initMaterial(name: str):
 
 
 def main():
-    #parser = argparse.ArgumentParser(
-    #    description='List information about the machines and materials.')
-    #parser.add_argument('name', help='The filter prefix.')
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description='List information about the machines and materials. If no arguments ' +
+                    'are provided, then will list the available machines. Format ' +
+                    'is the same as used by the command line. Examples: ' +
+                    "'material', " +
+                    "'material em', " +
+                    "'material em-wood', " +
+                    "'material np883-pine-3.0'.")
+
+    parser.add_argument('material', help='machineID-material-tool_size. For example: np883-pine-3.0')
+    args = parser.parse_args()
 
     info = {}
     machine = None
