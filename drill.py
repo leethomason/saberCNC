@@ -20,7 +20,6 @@ def drill(g, mat, cut_depth, points):
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     g.comment("Drill")
-    g.comment("init ABSOLUTE:")
     g.comment("  material: " + mat['name'])
     g.comment("  depth: " + str(cut_depth))
     g.comment("  num pecks: " + str(nPlunge))

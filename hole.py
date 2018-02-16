@@ -1,4 +1,9 @@
 # Cuts one hole: essentially a descending circular cut.
+# re-thinking this.
+#   Plunge to the cut depth
+#   Repeat:
+#       Draw out to radius of cut
+#       Draw circle at radius
 
 import argparse
 import sys
@@ -91,12 +96,9 @@ def hole_abs(g, mat, cut_depth, tool_size, radius, x, y):
 def main():
     parser = argparse.ArgumentParser(
         description='Cut a hole at given radius and depth. (Implemented with helical arcs.)')
-    parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
-    parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
-    parser.add_argument('toolSize',
-                        help='diameter of the tool; the cut will account for the tool size. May be zero.',
-                        type=float)
-    parser.add_argument('radius', help='radius of the hole', type=float)
+    parser.add_argument('material', help='The material to cut (wood, aluminum, etc.) Must include the tool size.')
+    parser.add_argument('depth', help='Depth of the cut. Must be negative.', type=float)
+    parser.add_argument('radius', help='Radius of the hole.', type=float)
     try:
         args = parser.parse_args()
     except:
@@ -104,7 +106,7 @@ def main():
         sys.exit(1)
 
     mat = initMaterial(args.material)
-    hole(None, mat, args.depth, args.toolSize, args.radius)
+    hole(None, mat, args.depth, mat["tool_size"], args.radius)
 
 
 if __name__ == "__main__":

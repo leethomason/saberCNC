@@ -1,0 +1,154 @@
+{
+    "CIRCLE_OBJECTS": [
+        {
+            "group_id": [
+            ],
+            "id": "{91bfbfc4-a637-4c28-980c-38207079b9bd}",
+            "position": [
+                12.7,
+                12.699999999999989
+            ],
+            "radius": 3.175
+        },
+        {
+            "group_id": [
+            ],
+            "id": "{3f16e294-e2b3-4c28-aa27-656212f45700}",
+            "position": [
+                12.7,
+                190.5
+            ],
+            "radius": 3.175
+        },
+        {
+            "group_id": [
+            ],
+            "id": "{1e353a4f-5b87-4f8c-885c-8c0f5d42fbdc}",
+            "position": [
+                190.5,
+                12.7
+            ],
+            "radius": 3.175
+        },
+        {
+            "group_id": [
+            ],
+            "id": "{0b82ec50-749c-4440-97f3-9f81b2e194f1}",
+            "position": [
+                190.5,
+                190.5
+            ],
+            "radius": 3.175
+        },
+        {
+            "group_id": [
+            ],
+            "id": "{ad86db92-ab49-43eb-b96d-aa4f231cb12b}",
+            "position": [
+                120.64999999999999,
+                101.6
+            ],
+            "radius": 3.175
+        }
+    ],
+    "CURVE_OBJECTS": [
+    ],
+    "DOCUMENT_VALUES": {
+        "BACKGROUND_IMAGE": "AAAAAA==",
+        "BACKGROUND_OPACITY": 0.5,
+        "BACKGROUND_POSITION_X": 0,
+        "BACKGROUND_POSITION_Y": 0,
+        "BACKGROUND_ROTATION": 0,
+        "BACKGROUND_SCALE": 1,
+        "BACKGROUND_VISIBLE": false,
+        "DISPLAYMM": false,
+        "HEIGHT": 203.2,
+        "MACHINE": "Nomad 883",
+        "MATERIAL": "Wax",
+        "RETRACT": 10,
+        "THICKNESS": 10.16,
+        "WIDTH": 203.2,
+        "ZERO_X": 0,
+        "ZERO_Y": 0,
+        "ZERO_Z": 0,
+        "grid_enabled": true,
+        "grid_spacing": 5,
+        "version": 1
+    },
+    "RECT_OBJECTS": [
+    ],
+    "REGULAR_POLYGON_OBJECTS": [
+    ],
+    "TEXT_OBJECTS": [
+    ],
+    "TOOLPATH_OBJECTS": [
+        {
+            "automatic_parameters": true,
+            "elements": [
+                {
+                    "tab_index": [
+                    ],
+                    "tab_u": [
+                    ],
+                    "uuid": "{ad86db92-ab49-43eb-b96d-aa4f231cb12b}"
+                },
+                {
+                    "tab_index": [
+                    ],
+                    "tab_u": [
+                    ],
+                    "uuid": "{0b82ec50-749c-4440-97f3-9f81b2e194f1}"
+                },
+                {
+                    "tab_index": [
+                    ],
+                    "tab_u": [
+                    ],
+                    "uuid": "{1e353a4f-5b87-4f8c-885c-8c0f5d42fbdc}"
+                },
+                {
+                    "tab_index": [
+                    ],
+                    "tab_u": [
+                    ],
+                    "uuid": "{3f16e294-e2b3-4c28-aa27-656212f45700}"
+                },
+                {
+                    "tab_index": [
+                    ],
+                    "tab_u": [
+                    ],
+                    "uuid": "{91bfbfc4-a637-4c28-980c-38207079b9bd}"
+                }
+            ],
+            "enabled": true,
+            "end_depth": -10.0076,
+            "name": "pockets",
+            "ofset_dir": 2,
+            "speeds": {
+                "feedrate": 584.2000000000011,
+                "plungerate": 292.10000000000053,
+                "rpm": 3750
+            },
+            "start_depth": 0,
+            "stepdown": 0.9232653739612189,
+            "stepover": 1.42875,
+            "tab_height": 3,
+            "tab_width": 12,
+            "tolerance": 0.01,
+            "tool": {
+                "angle": 0,
+                "corner_radius": 0,
+                "diameter": 3.175,
+                "display_mm": false,
+                "flutes": 2,
+                "length": 19.049999999999997,
+                "name": "",
+                "number": 102,
+                "overall_length": 0,
+                "uuid": "{00000000-0000-0000-0000-000000000102}"
+            },
+            "uuid": "{f1a59898-9f83-407a-b03e-3738deee8553}"
+        }
+    ]
+}
