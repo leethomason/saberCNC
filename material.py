@@ -41,7 +41,7 @@ materials = [
             {"name": "brass",           
              "quality": "Carbide3D test",
              "tool_size": 3.125,
-             "pass_depth": 0.25,        # 0.01" in docs.
+             "pass_depth": 0.25,
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
@@ -49,15 +49,15 @@ materials = [
             {"name": "brass",           
              "quality": "implied from othermill data",
              "tool_size": 1.6,
-             "pass_depth": 0.25,        # 0.01" in docs.
+             "pass_depth": 0.25,
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
 
             {"name": "brass",           
-             "quality": "extrapolated from othermill data",
+             "quality": "implied from othermill data",
              "tool_size": 1.0,
-             "pass_depth": 0.10,        # 0.01" in docs.
+             "pass_depth": 0.10,
              "spindle_speed": 9200,
              "feed_rate": 100,
              "plunge_rate": 10},
@@ -65,7 +65,7 @@ materials = [
             {"name": "aluminum", 
              "quality": "Carbide3D test",
              "tool_size": 3.125,
-             "pass_depth": 0.25,        # 0.01" in docs.
+             "pass_depth": 0.25,
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
@@ -73,18 +73,42 @@ materials = [
             {"name": "aluminum", 
              "quality": "implied from othermill data",
              "tool_size": 2.0,
-             "pass_depth": 0.25,        # 0.01" in docs.
+             "pass_depth": 0.25,
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
 
             {"name": "aluminum", 
-             "quality": "extrapolated from othermill data",
+             "quality": "implied from othermill data",
              "tool_size": 1.0,
-             "pass_depth": 0.15,        # 0.01" in docs.
+             "pass_depth": 0.15,
              "spindle_speed": 9200,
              "feed_rate": 100,
-             "plunge_rate": 10}
+             "plunge_rate": 10},
+
+             {"name": "fr",
+             "quality": "othermill data",
+             "tool_size": 3.2,
+             "pass_depth": 0.13,
+             "spindle_speed": 12000,
+             "feed_rate": 360,
+             "plunge_rate": 30},
+
+             {"name": "fr",
+             "quality": "othermill data",
+             "tool_size": 1.6,
+             "pass_depth": 0.13,
+             "spindle_speed": 12000,
+             "feed_rate": 360,
+             "plunge_rate": 30},
+
+             {"name": "fr",
+             "quality": "othermill data guess",
+             "tool_size": 0.8,
+             "pass_depth": 0.10,
+             "spindle_speed": 12000,
+             "feed_rate": 250,
+             "plunge_rate": 30}
         ]
     },
 
