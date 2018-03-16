@@ -26,7 +26,7 @@ def calc_steps(goal, step):
     if total < goal:
         steps.append(goal - total)
 
-    return list(map(lambda x: x * bias, steps))
+    return list(map(lambda x: round(x * bias, 5), steps))
 
 
 def run_3_stages(path, g, steps, absolute=False):
