@@ -27,8 +27,8 @@ def hole(g, mat, cut_depth, radius):
     g.comment("plunge rate=" + str(mat['plunge_rate']))
 
     # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
-    # Iterator on several approaches. Current approach is to adjust the
-    # depth-of-cut but leave the feed_rate.
+    # Approaches below.
+
     travel_feed = mat['feed_rate']  # todo: introduce a travel_rate to the machine
     feed_rate = mat['feed_rate']
     path_len_mm = 2.0 * math.pi * radius_inner
@@ -36,11 +36,25 @@ def hole(g, mat, cut_depth, radius):
     plunge_from_path = mat['pass_depth'] / path_time_min
     depth_of_cut = mat['pass_depth']
 
+    # This approach reduces the depth of cut, while keeping the feed rate.
+    # Not sure I love super-fast little circles.
+    '''
     if plunge_from_path > mat['plunge_rate']:
         depth_of_cut = mat['pass_depth'] * mat['plunge_rate'] / plunge_from_path
         if depth_of_cut > mat['pass_depth']:
             raise RuntimeError("Error computing depth_of_cut")
         g.comment('adjusted pass depth=' + str(depth_of_cut))
+    '''
+
+    # Both 1) fast little holes and 2) too fast plunge are bad.
+    if plunge_from_path > mat['plunge_rate']:
+        factor = mat['plunge_rate'] / plunge_from_path
+        if factor < 0.3:
+            factor = 0.3    # slowing down to less than 10% (factor * factor) seems excessive
+        depth_of_cut = mat['pass_depth'] * factor
+        feed_rate = mat['feed_rate'] * factor
+        g.comment('adjusted pass depth=' + str(depth_of_cut))
+        g.comment('adjusted feed rate =' + str(feed_rate))
 
     g.relative()
     g.spindle('CW', mat['spindle_speed'])

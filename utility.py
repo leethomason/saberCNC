@@ -29,12 +29,26 @@ def calc_steps(goal, step):
     return list(map(lambda x: round(x * bias, 5), steps))
 
 
-def run_3_stages(path, g, steps, absolute=False):
+def run_3_stages(path, g, steps):
     g.comment("initial pass")
-    if absolute is True:
-        path(g, 0, 0)
-    else:
-        path(g, 0)
+    path(g, 0)
+
+    for d in steps:
+        if d > 0:
+            raise RuntimeError("Positive value for step: " + str(d))
+        if d > -0.0000001:
+            d = 0
+
+        g.comment('pass: depth={}'.format(d))
+        path(g, d)
+
+    g.comment('final pass')
+    path(g, 0)
+    g.comment('complete')
+
+def run_3_stages_abs(path, g, steps):
+    g.comment("initial pass")
+    path(g, 0, 0)
     base_z = 0
 
     for d in steps:
@@ -44,17 +58,11 @@ def run_3_stages(path, g, steps, absolute=False):
             d = 0
 
         g.comment('pass: depth={}'.format(d))
-        if absolute is True:
-            path(g, base_z, d)
-        else:
-            path(g, d)
+        path(g, base_z, d)
         base_z += d
 
     g.comment('final pass')
-    if absolute is True:
-        path(g, base_z, 0)
-    else:
-        path(g, 0)
+    path(g, base_z, 0)
     g.comment('complete')
 
 
