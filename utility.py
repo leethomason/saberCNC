@@ -58,7 +58,7 @@ def run_3_stages_abs(path, g, steps):
             d = 0
 
         g.comment('pass: depth={}'.format(d))
-        path(g, base_z, d)
+        path(g, base_z+d, d)
         base_z += d
 
     g.comment('final pass')
