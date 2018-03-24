@@ -46,6 +46,7 @@ def run_3_stages(path, g, steps):
     path(g, 0)
     g.comment('complete')
 
+
 def run_3_stages_abs(path, g, steps):
     g.comment("initial pass")
     path(g, 0, 0)
@@ -58,7 +59,7 @@ def run_3_stages_abs(path, g, steps):
             d = 0
 
         g.comment('pass: depth={}'.format(d))
-        path(g, base_z+d, d)
+        path(g, base_z + d, d)
         base_z += d
 
     g.comment('final pass')

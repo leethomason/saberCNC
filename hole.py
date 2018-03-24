@@ -1,5 +1,3 @@
-import argparse
-import sys
 from mecode import G
 from material import *
 from utility import *

@@ -6,7 +6,7 @@ materials = [
         "id": "np883",
         "machine": "Nomad Pro 883",
         "materials": [
-            {"name": "polycarb",        
+            {"name": "polycarb",
              "quality": "Carbide3D test",
              "tool_size": 3.125,
              "pass_depth": 0.33,
@@ -14,7 +14,7 @@ materials = [
              "feed_rate": 1300,
              "plunge_rate": 450},
 
-            {"name": "pine",            
+            {"name": "pine",
              "quality": "Carbide3D test",
              "tool_size": 3.125,
              "pass_depth": 0.76,
@@ -30,7 +30,7 @@ materials = [
              "feed_rate": 400,
              "plunge_rate": 400},
 
-            {"name": "hardwood",        
+            {"name": "hardwood",
              "quality": "Carbide3D test",
              "tool_size": 3.125,
              "pass_depth": 0.76,
@@ -38,7 +38,7 @@ materials = [
              "feed_rate": 1828,
              "plunge_rate": 812},
 
-            {"name": "brass",           
+            {"name": "brass",
              "quality": "Carbide3D test. Plunge can lock bit.",
              "tool_size": 3.125,
              "pass_depth": 0.25,
@@ -46,7 +46,7 @@ materials = [
              "feed_rate": 200,
              "plunge_rate": 25},
 
-            {"name": "brass",           
+            {"name": "brass",
              "quality": "Implied from othermill data.",
              "tool_size": 1.6,
              "pass_depth": 0.25,
@@ -54,7 +54,7 @@ materials = [
              "feed_rate": 200,
              "plunge_rate": 25},
 
-            {"name": "brass",           
+            {"name": "brass",
              "quality": "implied from othermill data",
              "tool_size": 1.0,
              "pass_depth": 0.10,
@@ -62,7 +62,7 @@ materials = [
              "feed_rate": 100,
              "plunge_rate": 15},
 
-            {"name": "aluminum", 
+            {"name": "aluminum",
              "quality": "Carbide3D test",
              "tool_size": 3.125,
              "pass_depth": 0.25,
@@ -70,7 +70,7 @@ materials = [
              "feed_rate": 200,
              "plunge_rate": 25},
 
-            {"name": "aluminum", 
+            {"name": "aluminum",
              "quality": "implied from othermill data",
              "tool_size": 2.0,
              "pass_depth": 0.25,
@@ -78,7 +78,7 @@ materials = [
              "feed_rate": 200,
              "plunge_rate": 25},
 
-            {"name": "aluminum", 
+            {"name": "aluminum",
              "quality": "implied from othermill data",
              "tool_size": 1.0,
              "pass_depth": 0.15,
@@ -86,7 +86,7 @@ materials = [
              "feed_rate": 100,
              "plunge_rate": 10},
 
-             {"name": "fr",
+            {"name": "fr",
              "quality": "othermill data",
              "tool_size": 3.2,
              "pass_depth": 0.13,
@@ -94,7 +94,7 @@ materials = [
              "feed_rate": 360,
              "plunge_rate": 30},
 
-             {"name": "fr",
+            {"name": "fr",
              "quality": "othermill data",
              "tool_size": 1.6,
              "pass_depth": 0.13,
@@ -102,7 +102,7 @@ materials = [
              "feed_rate": 360,
              "plunge_rate": 30},
 
-             {"name": "fr",
+            {"name": "fr",
              "quality": "othermill data guess",
              "tool_size": 0.8,
              "pass_depth": 0.10,
@@ -171,8 +171,7 @@ def get_quality(m):
     return '(not specified)'
 
 
-def material_data(machine_ID: str, material:str, tool_size: float):
-
+def material_data(machine_ID: str, material: str, tool_size: float):
     machine = find_machine(machine_ID)
 
     if machine is None:
@@ -220,7 +219,6 @@ def material_data(machine_ID: str, material:str, tool_size: float):
 
 
 def parse_name(name: str):
-    machine = None
     material = None
     tool_size = None
 
@@ -229,18 +227,19 @@ def parse_name(name: str):
 
     if dash1 > 0:
         machine = name[0:dash0]
-        material = name[dash0+1:dash1]
-        tool_size = float(name[dash1+1:])
+        material = name[dash0 + 1:dash1]
+        tool_size = float(name[dash1 + 1:])
     elif dash0 > 0:
         machine = name[0:dash0]
-        material = name[dash0+1:]
+        material = name[dash0 + 1:]
     else:
         machine = name
 
-    #print("machine=  " + machine)
-    #print("material= " + material)
-    #print("tool=     " + str(tool_size))
+    # print("machine=  " + machine)
+    # print("material= " + material)
+    # print("tool=     " + str(tool_size))
     return [machine, material, tool_size]
+
 
 def initMaterial(name: str):
     info = parse_name(name)
@@ -268,7 +267,7 @@ def main():
 
     if len(sys.argv) > 1:
         info = parse_name(sys.argv[1])
-        #print(info)
+        # print(info)
         if info is not None:
             machine = find_machine(info[0])
 
@@ -286,6 +285,7 @@ def main():
     else:
         for m in materials:
             print(m["id"] + ": " + m["machine"])
+
 
 if __name__ == "__main__":
     main()
