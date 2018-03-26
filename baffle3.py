@@ -5,26 +5,26 @@ from material import *
 mat = initMaterial(sys.argv[1])
 tool_size = mat['tool_size']
 
-inner_d = 12 - tool_size  # fixme: determine crystal dimensions
-outer_d = 32.2 + tool_size
+inner_d = 11 - tool_size  # fixme: determine crystal dimensions
+outer_d = 32 + tool_size
 cut_depth = -2.0
 
-theta0 = math.radians(-30)  # theta0 -> 1 is the window to the center
-theta1 = math.radians(30)
-theta2 = math.radians(210)
-theta3 = math.radians(270)
+theta0 = math.radians(-20)  # theta0 -> 1 is the window to the center
+theta1 = math.radians(20)
+theta2 = math.radians(165)  # theta2 -> 3 is the inset
+theta3 = math.radians(245)
 
 outer_r = outer_d / 2
 inner_r = inner_d / 2
 inset_r = outer_r - 5
 
 rod_d = 3.6         #
-rod_x = -6          # fixme
-rod_y = 12          # fixme
+rod_x = 0           #
+rod_y = 11          #
 
 channel_d = 5.8     #
-channel_x = -10     # fixme
-channel_y = 4       # fixme
+channel_x = -8      #
+channel_y = 8       #
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 g.comment("Material: " + mat['name'])
