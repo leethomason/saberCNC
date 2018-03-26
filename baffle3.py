@@ -18,11 +18,11 @@ outer_r = outer_d / 2
 inner_r = inner_d / 2
 inset_r = outer_r - 5
 
-rod_d = 4.0         # fixme
+rod_d = 3.6         #
 rod_x = -6          # fixme
 rod_y = 12          # fixme
 
-channel_d = 5.6     # fixme
+channel_d = 5.8     #
 channel_x = -10     # fixme
 channel_y = 4       # fixme
 
@@ -40,7 +40,6 @@ def y_r(theta, r):
 
 
 def g_arc(g, theta, r, direction, dz=0):
-    # g.arc(x=x_r(theta, r), y=y_r(theta, r), radius=r, direction=dir, helix_dim='z', helix_len=dz)
     x = x_r(theta, r)
     y = y_r(theta, r)
 
@@ -51,10 +50,10 @@ def g_arc(g, theta, r, direction, dz=0):
         g.arc2(x=x, y=y, i=i, j=j, direction=direction, helix_dim='z', helix_len=dz)
     else:
         g.arc2(x=x, y=y, i=i, j=j, direction=direction)
-
+    pass
 
 def g_move(g, theta, r):
-    g.move(x=x_r(theta, r), y=y_r(theta, r))
+    g.abs_move(x=x_r(theta, r), y=y_r(theta, r))
 
 
 def path(g, z, _):
@@ -77,10 +76,10 @@ hole_abs(g, mat, cut_depth, channel_d / 2, channel_x, channel_y)
 g.feed(mat['feed_rate'])
 g.absolute()
 
-g.move(z=CNC_TRAVEL_Z)
+g.abs_move(z=CNC_TRAVEL_Z)
 g_move(g, theta0, inner_r)
 g.spindle('CW', mat['spindle_speed'])
-g.move(z=0)
+g.abs_move(z=0)
 
 steps = calc_steps(cut_depth, -mat['pass_depth'])
 run_3_stages_abs(path, g, steps)

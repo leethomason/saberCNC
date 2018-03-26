@@ -2,6 +2,8 @@ from mecode import G
 from material import *
 from utility import *
 
+# center, radius, linear method. center is preferred; linear is a bug work-around.
+method = "center"
 
 def hole(g, mat, cut_depth, radius):
     radius_inner = radius - mat['tool_size'] / 2
@@ -65,9 +67,35 @@ def hole(g, mat, cut_depth, radius):
     g.feed(feed_rate)
 
     def path(g, plunge):
-        # 1 segment, 2, or 4? Go with a balance.
-        g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-        g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+        #g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+        #g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+
+        if method == "center":
+            g.arc2(x=-radius_inner, y=radius_inner,  i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc2(x=radius_inner,  y=-radius_inner, i=radius_inner, j=0,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc2(x=radius_inner,  y=radius_inner,  i=0, j=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+
+        if method == "radius":
+            g.arc(x=-radius_inner, y=radius_inner,  radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc(x=-radius_inner, y=-radius_inner, radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc(x=radius_inner,  y=-radius_inner, radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc(x=radius_inner,  y=radius_inner,  radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+
+        if method == "linear":
+            prev_x = radius_inner
+            prev_y = 0
+
+            steps = 16
+            for i in range(0, steps):
+                idx = float(i + 1)
+                ax = math.cos(2.0 * math.pi * idx / steps) * radius_inner
+                ay = math.sin(2.0 * math.pi * idx / steps) * radius_inner
+                x = ax - prev_x
+                y = ay - prev_y
+                prev_x = ax
+                prev_y = ay
+                g.move(x=x, y=y, z=plunge/steps)
 
     steps = calc_steps(cut_depth, -depth_of_cut)
     run_3_stages(path, g, steps)

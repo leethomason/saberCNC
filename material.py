@@ -23,12 +23,20 @@ materials = [
              "plunge_rate": 812},
 
             {"name": "pine",
-             "quality": "first iteration",
+             "quality": "Test run, broken bit.",
+             "tool_size": 2.0,
+             "pass_depth": 0.30,
+             "spindle_speed": 4500,
+             "feed_rate": 800,
+             "plunge_rate": 500},
+
+            {"name": "pine",
+             "quality": "Guided guess",
              "tool_size": 1.0,
-             "pass_depth": 0.25,
+             "pass_depth": 0.20,
              "spindle_speed": 4500,
              "feed_rate": 400,
-             "plunge_rate": 400},
+             "plunge_rate": 300},
 
             {"name": "hardwood",
              "quality": "Carbide3D test",
@@ -191,7 +199,8 @@ def material_data(machine_ID: str, material: str, tool_size: float):
                 max_lesser_size = m['tool_size']
                 max_lesser_mat = m
 
-    if min_greater_mat is not None and max_lesser_mat is not None and min_greater_size != max_lesser_size:
+
+    if (min_greater_mat is not None) and (max_lesser_mat is not None) and (min_greater_size != max_lesser_size):
         # interpolate. cool.
         fraction = (tool_size - max_lesser_size) / (min_greater_size - max_lesser_size)
         m = max_lesser_mat.copy()
@@ -212,6 +221,7 @@ def material_data(machine_ID: str, material: str, tool_size: float):
         m = min_greater_mat.copy()
         m['quality'] = 'under ' + str(m['tool_size']) + ' ' + get_quality(m)
         return m
+
     else:
         m = max_lesser_mat.copy()
         m['quality'] = 'over: ' + str(m['tool_size']) + ' ' + get_quality(m)
