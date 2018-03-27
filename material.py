@@ -15,7 +15,7 @@ materials = [
              "plunge_rate": 450},
 
             {"name": "pine",
-             "quality": "Carbide3D test",
+             "quality": "Verified Carbide3D test",
              "tool_size": 3.125,
              "pass_depth": 0.76,
              "spindle_speed": 4500,
@@ -23,7 +23,7 @@ materials = [
              "plunge_rate": 812},
 
             {"name": "pine",
-             "quality": "Test run, broken bit.",
+             "quality": "Test run (success after broken bit)",
              "tool_size": 2.0,
              "pass_depth": 0.30,
              "spindle_speed": 4500,
@@ -192,12 +192,18 @@ def material_data(machine_ID: str, material: str, tool_size: float):
 
     for m in machine['materials']:
         if material == m['name']:
+            if m['tool_size'] == tool_size:
+                return_m = m.copy()
+                return_m['quality'] = 'match: ' + get_quality(m)
+                return return_m
+
             if m['tool_size'] >= tool_size and m['tool_size'] < min_greater_size:
                 min_greater_size = m['tool_size']
                 min_greater_mat = m
             if m['tool_size'] <= tool_size and m['tool_size'] > max_lesser_size:
                 max_lesser_size = m['tool_size']
                 max_lesser_mat = m
+
 
 
     if (min_greater_mat is not None) and (max_lesser_mat is not None) and (min_greater_size != max_lesser_size):
@@ -209,22 +215,18 @@ def material_data(machine_ID: str, material: str, tool_size: float):
         for p in params:
             m[p] = max_lesser_mat[p] + fraction * (min_greater_mat[p] - max_lesser_mat[p])
 
-        if fraction > 0.9:
-            m['quality'] = 'match: ' + get_quality(min_greater_mat)
-        elif fraction < 0.1:
-            m['quality'] = 'match: ' + get_quality(max_lesser_mat)
-        else:
-            m['quality'] = 'interpolated: ' + get_quality(max_lesser_mat) + ' < ' + get_quality(min_greater_mat)
+        m['quality'] = '{}%: {}  <  {}% {}'.format(round((1.0 - fraction) * 100.0, 0), get_quality(max_lesser_mat),
+                                                   round(fraction * 100, 0), get_quality(min_greater_mat))
         return m
 
     elif min_greater_mat is not None:
         m = min_greater_mat.copy()
-        m['quality'] = 'under ' + str(m['tool_size']) + ' ' + get_quality(m)
+        m['quality'] = '{} under: {}'.format(round(m['tool_size'] - tool_size, 2), get_quality(m))
         return m
 
     else:
         m = max_lesser_mat.copy()
-        m['quality'] = 'over: ' + str(m['tool_size']) + ' ' + get_quality(m)
+        m['quality'] = '{} over: {}'.format(round(tool_size - m['tool_size'], 2), get_quality(m))
         return m
 
 

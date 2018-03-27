@@ -39,28 +39,30 @@ def y_r(theta, r):
     return math.sin(theta) * r
 
 
-def g_arc(g, theta, r, direction, dz=0):
+def g_arc(g, theta, r, direction, z=None):
     x = x_r(theta, r)
     y = y_r(theta, r)
 
     i = -g.current_position['x']
     j = -g.current_position['y']
 
-    if dz != 0:
-        g.arc2(x=x, y=y, i=i, j=j, direction=direction, helix_dim='z', helix_len=dz)
+    if z is not None:
+        g.arc2(x=x, y=y, i=i, j=j, direction=direction, helix_dim='z', helix_len=z)
     else:
         g.arc2(x=x, y=y, i=i, j=j, direction=direction)
     pass
 
-def g_move(g, theta, r):
-    g.abs_move(x=x_r(theta, r), y=y_r(theta, r))
+def g_move(g, theta, r, z=None):
+    if z is None:
+        g.abs_move(x=x_r(theta, r), y=y_r(theta, r))
+    else:
+        g.abs_move(x=x_r(theta, r), y=y_r(theta, r), z=z)
 
-
-def path(g, z, _):
-    g_move(g, theta0, inner_r)
+def path(g, z, dz):
+    g_move(g, theta0, inner_r, z + dz/2)
     g_arc(g, theta1, inner_r, 'CW')
-    g_move(g, theta1, outer_r)
-    g_arc(g, theta2, outer_r, 'CCW', z)
+    g_move(g, theta1, outer_r, z + dz)
+    g_arc(g, theta2, outer_r, 'CCW')
     g_move(g, theta2, inset_r)
     g_arc(g, theta3, inset_r, 'CCW')
     g_move(g, theta3, outer_r)

@@ -3,7 +3,7 @@ from material import *
 from utility import *
 
 # center, radius, linear method. center is preferred; linear is a bug work-around.
-method = "center"
+method = "linear"
 
 def hole(g, mat, cut_depth, radius):
     radius_inner = radius - mat['tool_size'] / 2
