@@ -18,13 +18,13 @@ outer_r = outer_d / 2
 inner_r = inner_d / 2
 inset_r = outer_r - 5
 
-rod_d = 3.6  #
-rod_x = 0  #
-rod_y = 11  #
+rod_d = 3.5
+rod_x = 0
+rod_y = 11
 
-channel_d = 5.8  #
-channel_x = -8  #
-channel_y = 8  #
+channel_d = 5.8
+channel_x = -8
+channel_y = 8
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 g.comment("Material: " + mat['name'])

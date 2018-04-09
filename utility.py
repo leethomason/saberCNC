@@ -92,6 +92,44 @@ def read_DRL(fname):
 
     return result
 
+'''
+    fname: file to read (input)
+    tool_size: size of the bit (input)
+    drills: list of {x, y} holes to drill
+    holes: list of {x, y, d} holes to cut
+'''
+def read_DRL_2(fname, tool_size, drills, holes ):
+    tool = []
+    current = 1
+    all_holes = []
+
+    progToolChange = re.compile('T[0-9][0-9]')
+    progToolSize = re.compile('T[0-9][0-9]C')
+    progPosition = re.compile('X[+-]?[0-9]+Y[+-]?[0-9]+')
+
+    with open(fname) as f:
+        for line in f:
+            pos = progToolSize.search(line)
+            if pos is not None:
+                s = pos.group()
+                index = int(s[1:3])
+                tool[index] = float(line[pos+4:])
+                continue
+            pos = progToolChange.search(line)
+            if pos is not None:
+                s = pos.group()
+                current = int(s[1:])
+                continue
+            pos = progPosition.search(line)
+            if pos is not None:
+                s = pos.group()
+                numbers = re.findall('[+-]?[0-9]+', s)
+                scale = 100.0
+                all_holes.append({'size': tool[current], 'x': float(numbers[0]) / scale, 'y': float(numbers[1]) / scale})
+
+    for h in all_holes:
+        print("size={} x={} y={}".format(h['size'], h['x'], h['y']))
+
 
 def index_of_closest_point(origin, points):
     index = 0
@@ -118,3 +156,8 @@ def sort_shortest_path(points):
         new_points.append(points.pop(i))
     for p in new_points:
         points.append(p)
+
+if __name__ == "__main__":
+    hole = []
+    drill = []
+    read_DRL_2("test.drl", 3.125, drill, hole);
