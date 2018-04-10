@@ -2,10 +2,17 @@ from hole import *
 from mecode import G
 from material import *
 
+FRONT_PLATE = True
+BACK_PLATE = False
+
 mat = initMaterial(sys.argv[1])
 tool_size = mat['tool_size']
 
-inner_d = 11 - tool_size  # fixme: determine crystal dimensions
+if FRONT_PLATE or BACK_PLATE:
+    inner_d = 5 - tool_size
+else:
+    inner_d = 11 - tool_size
+
 outer_d = 32 + tool_size
 cut_depth = -2.0
 
@@ -22,7 +29,10 @@ rod_d = 3.5
 rod_x = 0
 rod_y = 11
 
-channel_d = 5.8
+if FRONT_PLATE:
+    channel_d = 4.6
+else:
+    channel_d = 5.8
 channel_x = -8
 channel_y = 8
 
