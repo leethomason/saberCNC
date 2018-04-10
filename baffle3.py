@@ -26,7 +26,7 @@ channel_d = 5.8  #
 channel_x = -8  #
 channel_y = 8  #
 
-g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 g.comment("Material: " + mat['name'])
 g.comment("Tool Size: " + str(mat['tool_size']))
 
