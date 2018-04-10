@@ -47,9 +47,9 @@ materials = [
              "plunge_rate": 812},
 
             {"name": "brass",
-             "quality": "Carbide3D test. Plunge can lock bit.",
+             "quality": "Carbide3D test and refined. Plunge can lock bit.",
              "tool_size": 3.125,
-             "pass_depth": 0.25,
+             "pass_depth": 0.20,    # wrestle with this value. Was 0.25
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
@@ -57,7 +57,7 @@ materials = [
             {"name": "brass",
              "quality": "Implied from othermill data.",
              "tool_size": 1.6,
-             "pass_depth": 0.25,
+             "pass_depth": 0.20,
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
