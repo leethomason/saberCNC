@@ -1,23 +1,19 @@
-# Resister connector
-# # # # # # # # # # #
+# Display mount
+# # # # # # # #
+[             ]
+  o o o o o o
+  | | | | | |
+  s s | s s |
+  | | | | | |
+  o o o o o o
 
-%%    %%%     %%
-%              %
-  oo        oo  
 
-  oo        oo
 
-% oo        oo %
-%              %
-%%%%%      %%%%%
-    %      %
 
-      o--o 
 
-    %      %
-    %%%%%%%%
-
-# Red
-# Green
-# Blue
-# power
+  o o o o o o
+  | | | | | |
+  | s s | s |
+  | | | | | |
+  o o o o o o
+[             ]
