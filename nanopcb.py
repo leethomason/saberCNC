@@ -339,7 +339,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         for c in cut_path:
             c.x = cut_size.x - c.x
 
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     g.comment("NanoPCB")
     g.comment("size col x row = {} x {}".format(n_cols, n_rows))
@@ -404,7 +404,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         g.move(z=0)
 
         steps = calc_steps(drill_depth, -mat['pass_depth'])
-        run_3_stages(path, g, steps, absolute=True)
+        run_3_stages_abs(path, g, steps)
 
     g.move(z=CNC_TRAVEL_Z)
     g.spindle()
@@ -439,12 +439,8 @@ def main():
     parser.add_argument(
         '-b', '--back', help='second pass of dual sided board (isolate, cut)', action='store_true')
 
-    try:
-        args = parser.parse_args()
-    except:
-        parser.print_help()
-        sys.exit(1)
-
+    args = parser.parse_args()
+ 
     if args.front is True and args.back is True:
         raise RuntimeError("Can't specify both first and second pass.")
 
