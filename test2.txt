@@ -1,19 +1,21 @@
 # Display mount
-# # # # # # # #
-[             ]
-  o o o o o o
-  | | | | | |
-  s s | s s |
-  | | | | | |
-  o o o o o o
+# Hole: P 8.0   Power Port
+# Hole: M 2.2   Mounting
+# # # # # # # # # # # #
+[                                 ]
+  o o o o o o  o   o
+  | | | | | |  |   |
+  s s | s s |  |   |
+  | | | | | |  |   |
+  o o o o o o  o   o
+   
 
+                          P
 
-
-
-
-  o o o o o o
-  | | | | | |
-  | s s | s |
-  | | | | | |
-  o o o o o o
-[             ]
+              
+  o o o o o o  o   o
+  | | | | | |  |   |
+  | s s | s |  |   |
+  | | | | | |  |   |
+  o o o o o o  o   o
+[                                 ]
