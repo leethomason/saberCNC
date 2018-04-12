@@ -33,7 +33,7 @@ class PtPair:
         self.x1 = x1
         self.y1 = y1
 
-    def swappt(self):
+    def swap_points(self):
         self.x0, self.x1 = self.x1, self.x0
         self.y0, self.y1 = self.y1, self.y0
 
@@ -128,10 +128,10 @@ def pop_closest_pt_pair(x: PtPair, y: PtPair, arr):
             error = err
         err = (p.x1 - x) ** 2 + (p.y1 - y) ** 2
         if err == 0:
-            p.swappt()
+            p.swap_points()
             return arr.pop(i)
         if err < error:
-            p.swappt()
+            p.swap_points()
             index = i
             error = err
     return arr.pop(index)
@@ -159,7 +159,11 @@ def scan_file(filename: str, cut_pass: str):
     # first get the list of strings that are the lines of the file.
     ascii_pcb = []
     max_char_w = 0
+    holes = {}
     back_found = False
+
+    re_hole_definition = re.compile('\+[a-zA-Z]\s')
+    re_number = re.compile('[\d.]+')
 
     with open(filename, "r") as ins:
         for line in ins:
@@ -168,6 +172,15 @@ def scan_file(filename: str, cut_pass: str):
             line = line.rstrip(' ')
             index = line.find('#')
             if index >= 0:
+                m = re_hole_definition.search(line)
+                if m:
+                    key = m.group()[1]
+                    digit_index = m.end(0)
+                    m = re_number.match(line[digit_index:])
+                    size = float(m.group())
+                    holes[key] = size
+
+                # todo: clean up front / back. does it even work?
                 line = line.replace(' ', '')
                 if line.lower() == '#back':
                     back_found = True
@@ -187,7 +200,7 @@ def scan_file(filename: str, cut_pass: str):
     for line in ascii_pcb:
         max_char_w = max(len(line), max_char_w)
 
-    return ascii_pcb, max_char_w
+    return ascii_pcb, max_char_w, holes
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
@@ -204,10 +217,13 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     if cut_pass == 'back':
         do_drilling = False
 
-    ascii_pcb, max_char_w = scan_file(filename, cut_pass)
+    ascii_pcb, max_char_w, holes = scan_file(filename, cut_pass)
     PAD = 1
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
+
+    for k, v in holes.items():
+        print("hole: " + k + " size: " + str(v))
 
     # use the C notation
     # pcb[y][x]
@@ -225,6 +241,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             x = i + PAD
             y = j + PAD
             if c != ' ':
+                # Handle the cutting borders of the board.
                 if c == '[' or c == ']':
                     if cut_pass == 'front':
                         # Add the drill points but don't do isolation routing.
@@ -234,10 +251,16 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                             {'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
                     continue
 
+                # Handle an outline cutting path
                 if c == '%':
                     if start_mark is None:
                         start_mark = Point(x, y)
                     cut_map[y][x] = 1
+                    continue
+
+                # Handle cutting holes
+                if c in holes:
+                    # will be cut or drilled later. For now, do nothing.
                     continue
 
                 pcb[y][x] = COPPER

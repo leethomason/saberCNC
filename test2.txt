@@ -1,9 +1,7 @@
 # Display mount
-# add hole system
-# add isolation path for holes
-# Hole: P 8.0   Power Port
-# Hole: M 2.2   Mounting
-# # # # # # # # # # # #
+# +P 8.0   Power Port
+# +M 2.2   Mounting
+# # # # # # # # # # # # # #
   o o o o o o         o   o
   | | | | | |    M    |   |
   s s | s s |         |   |
