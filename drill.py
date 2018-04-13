@@ -42,7 +42,6 @@ def drill(g, mat, cut_depth):
 
 
 def drill_points(g, mat, cut_depth, points):
-
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 

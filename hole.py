@@ -52,7 +52,7 @@ def hole(g, mat, cut_depth, radius):
     if plunge_from_path > mat['plunge_rate']:
         factor = mat['plunge_rate'] / plunge_from_path
         if factor < 0.3:
-            factor = 0.3    # slowing down to less than 10% (factor * factor) seems excessive
+            factor = 0.3  # slowing down to less than 10% (factor * factor) seems excessive
         depth_of_cut = mat['pass_depth'] * factor
         feed_rate = mat['feed_rate'] * factor
         g.comment('adjusted pass depth=' + str(depth_of_cut))
@@ -69,20 +69,28 @@ def hole(g, mat, cut_depth, radius):
     g.feed(feed_rate)
 
     def path(g, plunge):
-        #g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-        #g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+        # g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+        # g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
         if method == "center":
-            g.arc2(x=-radius_inner, y=radius_inner,  i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc2(x=radius_inner,  y=-radius_inner, i=radius_inner, j=0,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc2(x=radius_inner,  y=radius_inner,  i=0, j=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
 
         if method == "radius":
-            g.arc(x=-radius_inner, y=radius_inner,  radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc(x=-radius_inner, y=-radius_inner, radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc(x=radius_inner,  y=-radius_inner, radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
-            g.arc(x=radius_inner,  y=radius_inner,  radius=radius_inner,  direction='CCW', helix_dim='z', helix_len=plunge / 4)
+            g.arc(x=-radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
+                  helix_len=plunge / 4)
+            g.arc(x=-radius_inner, y=-radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
+                  helix_len=plunge / 4)
+            g.arc(x=radius_inner, y=-radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
+                  helix_len=plunge / 4)
+            g.arc(x=radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
+                  helix_len=plunge / 4)
 
         if method == "linear":
             prev_x = radius_inner
@@ -97,18 +105,19 @@ def hole(g, mat, cut_depth, radius):
                 y = ay - prev_y
                 prev_x = ax
                 prev_y = ay
-                g.move(x=x, y=y, z=plunge/steps)
+                g.move(x=x, y=y, z=plunge / steps)
 
     steps = calc_steps(cut_depth, -depth_of_cut)
     run_3_stages(path, g, steps)
 
-    g.feed(travel_feed) # go fast again...else. wow. boring.
+    g.feed(travel_feed)  # go fast again...else. wow. boring.
     g.move(z=-cut_depth)  # up to the starting point
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=-radius_inner)  # back to center of the circle
     g.move(z=-CNC_TRAVEL_Z)
     g.spindle()
     g.absolute()
+
 
 def hole_abs(g, mat, cut_depth, radius, x, y):
     if g is None:
@@ -150,6 +159,7 @@ def main():
 
     mat = initMaterial(args.material)
     hole(None, mat, args.depth, args.radius)
+
 
 if __name__ == "__main__":
     main()

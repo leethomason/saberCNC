@@ -9,7 +9,6 @@ from utility import *
 from drill import drill_points
 from hole import hole_or_drill
 
-
 SCALE = 2.54 / 2
 NOT_INIT = 0
 COPPER = 1
@@ -228,7 +227,7 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
 
     for h in holes:
         diameter = h["diameter"]
-        type = hole_or_drill(None, mat, -1.0, diameter/2)
+        type = hole_or_drill(None, mat, -1.0, diameter / 2)
         print("Hole ({}): d = {}  pos = {}, {}".format(type, diameter, h["x"], h["y"]))
 
     print('Number of drill ={}'.format(len(drill_ascii)))
@@ -259,7 +258,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     drill_pts = []
     drill_ascii = []
     start_mark = None
-    holes = []              # {diameter, x, y}
+    holes = []  # {diameter, x, y}
 
     for j in range(len(ascii_pcb)):
         out = ascii_pcb[j]
@@ -384,7 +383,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             diameter = h["diameter"]
             g.move(x=h["x"], y=h["y"])
             g.move(z=0)
-            hole_or_drill(g, mat, drill_depth, diameter/2)
+            hole_or_drill(g, mat, drill_depth, diameter / 2)
             g.move(z=CNC_TRAVEL_Z)
 
     if do_cutting:
