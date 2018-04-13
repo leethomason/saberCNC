@@ -1,9 +1,11 @@
 from mecode import G
 from material import *
 from utility import *
+from drill import drill
 
 # center, radius, linear method. center is preferred; linear is a bug work-around.
 method = "linear"
+
 
 def hole(g, mat, cut_depth, radius):
     radius_inner = radius - mat['tool_size'] / 2
@@ -120,6 +122,17 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
     g.move(z=0)
     hole(g, mat, cut_depth, radius)
     g.absolute()
+
+
+def hole_or_drill(g, mat, cut_depth, radius):
+    if mat['tool_size'] + 0.1 < radius * 2:
+        if g:
+            hole(g, mat, cut_depth, radius)
+        return "hole"
+    else:
+        if g:
+            drill(g, mat, cut_depth)
+        return "drill"
 
 
 def main():

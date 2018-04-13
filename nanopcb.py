@@ -6,7 +6,9 @@ import sys
 from mecode import G
 from material import *
 from utility import *
-from drill import drill
+from drill import drill_points
+from hole import hole_or_drill
+
 
 SCALE = 2.54 / 2
 NOT_INIT = 0
@@ -176,8 +178,8 @@ def scan_file(filename: str):
                     key = m.group()[1]
                     digit_index = m.end(0)
                     m = re_number.match(line[digit_index:])
-                    size = float(m.group())
-                    holes[key] = size
+                    diameter = float(m.group())
+                    holes[key] = diameter
             else:
                 ascii_pcb.append(line)
 
@@ -192,7 +194,7 @@ def scan_file(filename: str):
     return ascii_pcb, max_char_w, holes
 
 
-def print_to_console(pcb, n_cols, n_rows, drill_ascii, cut_path, cut_size):
+def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes):
     output_rows = []
     for y in range(n_rows):
         out = ""
@@ -224,9 +226,14 @@ def print_to_console(pcb, n_cols, n_rows, drill_ascii, cut_path, cut_size):
     for r in output_rows:
         print(r)
 
-    print('nDrill points = {}'.format(len(drill_ascii)))
+    for h in holes:
+        diameter = h["diameter"]
+        type = hole_or_drill(None, mat, -1.0, diameter/2)
+        print("Hole ({}): d = {}  pos = {}, {}".format(type, diameter, h["x"], h["y"]))
+
+    print('Number of drill ={}'.format(len(drill_ascii)))
     print('rows/cols = {},{}'.format(n_cols, n_rows))
-    print('size (on tool center) = {},{}'.format(cut_size.x, cut_size.y))
+    print('size (on tool center) = {}, {}'.format(cut_size.x, cut_size.y))
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
@@ -236,13 +243,13 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     if drill_depth > 0:
         raise RuntimeError("drill depth must be less than zero")
 
-    ascii_pcb, max_char_w, holes = scan_file(filename)
+    ascii_pcb, max_char_w, hole_def = scan_file(filename)
     PAD = 1
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
 
-    for k, v in holes.items():
-        print("hole: " + k + " size: " + str(v))
+    for k, v in hole_def.items():
+        print("hole: " + k + " diameter: " + str(v))
 
     # use the C notation
     # pcb[y][x]
@@ -252,6 +259,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     drill_pts = []
     drill_ascii = []
     start_mark = None
+    holes = []              # {diameter, x, y}
 
     for j in range(len(ascii_pcb)):
         out = ascii_pcb[j]
@@ -277,8 +285,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                     continue
 
                 # Handle cutting holes
-                if c in holes:
-                    # will be cut or drilled later. For now, do nothing.
+                if c in hole_def:
+                    diameter = hole_def[c]
+                    holes.append(
+                        {'diameter': diameter, 'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
                     continue
 
                 pcb[y][x] = COPPER
@@ -306,7 +316,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE, (cut_max_dim.y - cut_min_dim.y) * SCALE)
 
     if info_mode is True:
-        print_to_console(pcb, n_cols, n_rows, drill_ascii, cut_path, cut_size)
+        print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes)
         sys.exit(0)
 
     isolation_pairs = []
@@ -369,7 +379,13 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.move(z=CNC_TRAVEL_Z)
 
     if do_drilling:
-        drill(g, mat, drill_depth, drill_pts)
+        drill_points(g, mat, drill_depth, drill_pts)
+        for h in holes:
+            diameter = h["diameter"]
+            g.move(x=h["x"], y=h["y"])
+            g.move(z=0)
+            hole_or_drill(g, mat, drill_depth, diameter/2)
+            g.move(z=CNC_TRAVEL_Z)
 
     if do_cutting:
         total_len = 0

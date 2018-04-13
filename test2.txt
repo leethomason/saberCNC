@@ -4,7 +4,7 @@
 # # # # # # # # # # # # # #
   o o o o o o         o   o
   | | | | | |    M    |   |
-  s s | s s |         |   |
+      |     |         |   |
   | | | | | |         |   |
   o o o o o o         o   o
             
@@ -14,6 +14,6 @@
               
   o o o o o o         o   o
   | | | | | |         |   |
-  | s s | s |         |   |
+  |     |   |         |   |
   | | | | | |    M    |   |
   o o o o o o         o   o

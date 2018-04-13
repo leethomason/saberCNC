@@ -11,10 +11,37 @@ from material import *
 from utility import *
 
 
-def drill(g, mat, cut_depth, points):
-    nPlunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
+def drill(g, mat, cut_depth):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
+
+    nPlunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
+    g.comment("drill num pecks: " + str(nPlunge))
+    g.move(z=CNC_TRAVEL_Z)
+
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['plunge_rate'])
+
+    # move up and down in stages.
+    # don't move up on the last step, and hold at the bottom of the hole.
+    zStep = cut_depth / nPlunge
+    for i in range(0, nPlunge - 1):
+        g.move(z=zStep * (i + 1))
+        g.dwell(0.250)
+        g.move(z=zStep * i)
+        g.dwell(0.250)
+
+    g.move(z=cut_depth)
+    g.dwell(0.250)
+
+    g.move(z=0)
+    # switch back to feed_rate *before* going up, so we don't see the bit
+    # rise in slowwww motionnnn
+    g.feed(mat['feed_rate'])
+    g.move(z=CNC_TRAVEL_Z)
+
+
+def drill_points(g, mat, cut_depth, points):
 
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
@@ -22,42 +49,17 @@ def drill(g, mat, cut_depth, points):
     g.comment("Drill")
     g.comment("  material: " + mat['name'])
     g.comment("  depth: " + str(cut_depth))
-    g.comment("  num pecks: " + str(nPlunge))
 
-    g.absolute()
     g.feed(mat['feed_rate'])
 
+    g.absolute()
     sort_shortest_path(points)
     g.comment("  num points: " + str(len(points)))
-
-    g.move(z=CNC_TRAVEL_Z)
-    g.spindle('CW', mat['spindle_speed'])
 
     for p in points:
         g.comment('drill hole at {},{}'.format(p['x'], p['y']))
         g.move(x=p['x'], y=p['y'])
-        g.move(z=0)
-
-        zTarget = 0
-        g.feed(mat['plunge_rate'])
-
-        # move up and down in stages.
-        # don't move up on the last step, and hold at the bottom of the hole.
-        zStep = cut_depth / nPlunge
-        for i in range(0, nPlunge - 1):
-            g.move(z=zStep * (i + 1))
-            g.dwell(0.250)
-            g.move(z=zStep * i)
-            g.dwell(0.250)
-
-        g.move(z=cut_depth)
-        g.dwell(0.250)
-
-        g.move(z=0)
-        # switch back to feed_rate *before* going up, so we don't see the bit
-        # rise in slowwww motionnnn
-        g.feed(mat['feed_rate'])
-        g.move(z=CNC_TRAVEL_Z)
+        drill(g, mat, cut_depth)
 
     g.spindle()
     # Leaves the head at (0, 0, CNC_TRAVEL_Z)
