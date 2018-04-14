@@ -22,6 +22,7 @@ def drill(g, mat, cut_depth):
 
     g.feed(mat['travel_plunge'])
     g.move(z=-CNC_TRAVEL_Z)
+    g.dwell(0.250)
     g.feed(mat['plunge_rate'])
 
     # move up and down in stages.
