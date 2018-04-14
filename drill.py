@@ -11,21 +11,23 @@ from material import *
 from utility import *
 
 
+# assume we are at (x, y, CNC_TRAVEL_Z)
 def drill(g, mat, cut_depth):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
 
-    nPlunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
-    g.comment("drill num pecks: " + str(nPlunge))
-    g.move(z=CNC_TRAVEL_Z)
-
+    num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
+    g.comment("drill num pecks: " + str(num_plunge))
     g.spindle('CW', mat['spindle_speed'])
+
+    g.feed(mat['travel_plunge'])
+    g.move(z=-CNC_TRAVEL_Z)
     g.feed(mat['plunge_rate'])
 
     # move up and down in stages.
     # don't move up on the last step, and hold at the bottom of the hole.
-    zStep = cut_depth / nPlunge
-    for i in range(0, nPlunge - 1):
+    zStep = cut_depth / num_plunge
+    for i in range(0, num_plunge - 1):
         g.move(z=zStep * (i + 1))
         g.dwell(0.250)
         g.move(z=zStep * i)
@@ -37,7 +39,7 @@ def drill(g, mat, cut_depth):
     g.move(z=0)
     # switch back to feed_rate *before* going up, so we don't see the bit
     # rise in slowwww motionnnn
-    g.feed(mat['feed_rate'])
+    g.feed(mat['travel_plunge'])
     g.move(z=CNC_TRAVEL_Z)
 
 
@@ -49,14 +51,13 @@ def drill_points(g, mat, cut_depth, points):
     g.comment("  material: " + mat['name'])
     g.comment("  depth: " + str(cut_depth))
 
-    g.feed(mat['feed_rate'])
-
     g.absolute()
     sort_shortest_path(points)
     g.comment("  num points: " + str(len(points)))
 
     for p in points:
         g.comment('drill hole at {},{}'.format(p['x'], p['y']))
+        g.feed(mat['travel_feed'])
         g.move(x=p['x'], y=p['y'])
         drill(g, mat, cut_depth)
 
@@ -68,9 +69,9 @@ def drill_points(g, mat, cut_depth, points):
 def main():
     try:
         float(sys.argv[3])
-        isNumberPairs = True
+        is_number_pairs = True
     except:
-        isNumberPairs = len(sys.argv) > 3 and (sys.argv[3].find(',') >= 0)
+        is_number_pairs = len(sys.argv) > 3 and (sys.argv[3].find(',') >= 0)
 
     if len(sys.argv) < 4:
         print('Drill a set of holes.')
@@ -87,7 +88,7 @@ def main():
     cutDepth = float(sys.argv[2])
     points = []
 
-    if not isNumberPairs:
+    if not is_number_pairs:
         filename = sys.argv[3]
         points = read_DRL(filename)
     else:

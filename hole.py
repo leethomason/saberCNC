@@ -3,10 +3,8 @@ from material import *
 from utility import *
 from drill import drill
 
-# center, radius, linear method. center is preferred; linear is a bug work-around.
-method = "linear"
 
-
+# assume we are at (x, y, CNC_TRAVEL_Z)
 def hole(g, mat, cut_depth, radius):
     radius_inner = radius - mat['tool_size'] / 2
 
@@ -17,8 +15,11 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
+    spindle_off = False
     if g is None:
         g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+        spindle_off = True
+    was_relative = g.is_relative
 
     g.comment("hole")
     g.comment("depth=" + str(cut_depth))
@@ -31,7 +32,6 @@ def hole(g, mat, cut_depth, radius):
     # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
     # Approaches below.
 
-    travel_feed = mat['feed_rate']  # todo: introduce a travel_rate to the machine
     feed_rate = mat['feed_rate']
     path_len_mm = 2.0 * math.pi * radius_inner
     path_time_min = path_len_mm / feed_rate
@@ -60,9 +60,8 @@ def hole(g, mat, cut_depth, radius):
 
     g.relative()
     g.spindle('CW', mat['spindle_speed'])
-    g.feed(travel_feed)
+    g.feed(mat['travel_plunge'])
 
-    g.move(z=CNC_TRAVEL_Z)
     g.move(x=radius_inner)
     g.move(z=-CNC_TRAVEL_Z)
 
@@ -72,52 +71,44 @@ def hole(g, mat, cut_depth, radius):
         # g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
         # g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
-        '''
-        if method == "radius":
-            g.arc(x=-radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
-                  helix_len=plunge / 4)
-            g.arc(x=-radius_inner, y=-radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
-                  helix_len=plunge / 4)
-            g.arc(x=radius_inner, y=-radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
-                  helix_len=plunge / 4)
-            g.arc(x=radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
-                  helix_len=plunge / 4)
-        '''
 
-        if radius_inner > 5:
-            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-        else:
-            prev_x = radius_inner
-            prev_y = 0
+        # if radius_inner > 2:
+        #    g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
+        #           helix_len=plunge / 4)
+        #    g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+        #           helix_len=plunge / 4)
+        #    g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
+        #           helix_len=plunge / 4)
+        #    g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
+        #           helix_len=plunge / 4)
+        #else:
 
-            steps = 16
-            for i in range(0, steps):
-                idx = float(i + 1)
-                ax = math.cos(2.0 * math.pi * idx / steps) * radius_inner
-                ay = math.sin(2.0 * math.pi * idx / steps) * radius_inner
-                x = ax - prev_x
-                y = ay - prev_y
-                prev_x = ax
-                prev_y = ay
-                g.move(x=x, y=y, z=plunge / steps)
+        prev_x = radius_inner
+        prev_y = 0
+
+        steps = 16
+        for i in range(0, steps):
+            idx = float(i + 1)
+            ax = math.cos(2.0 * math.pi * idx / steps) * radius_inner
+            ay = math.sin(2.0 * math.pi * idx / steps) * radius_inner
+            x = ax - prev_x
+            y = ay - prev_y
+            prev_x = ax
+            prev_y = ay
+            g.move(x=x, y=y, z=plunge / steps)
 
     steps = calc_steps(cut_depth, -depth_of_cut)
     run_3_stages(path, g, steps)
 
-    g.feed(travel_feed)  # go fast again...else. wow. boring.
     g.move(z=-cut_depth)  # up to the starting point
-    g.move(z=CNC_TRAVEL_Z)
-    g.move(x=-radius_inner)  # back to center of the circle
-    g.move(z=-CNC_TRAVEL_Z)
-    g.spindle()
-    g.absolute()
+    g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
+    g.move(z=-CNC_TRAVEL_Z)  # up to the starting point
+    g.move(x=-radius_inner, z=CNC_TRAVEL_Z)  # back to center of the circle
+
+    if not was_relative:
+        g.absolute()
+    if spindle_off:
+        g.spindle()
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):
@@ -125,15 +116,14 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
         raise RuntimeError("must pass in a g object for abs move. Or fix code.")
 
     g.absolute()
-    g.spindle('CW', mat['spindle_speed'])
-    g.feed(mat['feed_rate'])
+    g.feed(mat['travel_feed'])
     g.move(z=CNC_TRAVEL_Z)
     g.move(x=x, y=y)
-    g.move(z=0)
     hole(g, mat, cut_depth, radius)
     g.absolute()
 
 
+# assume we are at (x, y, CNC_TRAVEL_Z)
 def hole_or_drill(g, mat, cut_depth, radius):
     if mat['tool_size'] + 0.1 < radius * 2:
         if g:

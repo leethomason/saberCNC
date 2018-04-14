@@ -8,6 +8,9 @@ materials = [
     {
         "id": "np883",
         "machine": "Nomad Pro 883",
+        "travel_feed": 2000,
+        "travel_plunge": 400,
+
         "materials": [
             {"name": "polycarb",
              "quality": "Carbide3D test",
@@ -126,6 +129,9 @@ materials = [
     {
         "id": "em",
         "machine": "Eleksmill",
+        "travel_feed": 1000,
+        "travel_plunge": 100,
+
         "materials": [
             {"name": "wood",
              "tool_size": 3.125,
@@ -198,6 +204,8 @@ def material_data(machine_ID: str, material: str, tool_size: float):
             if m['tool_size'] == tool_size:
                 return_m = m.copy()
                 return_m['quality'] = 'match: ' + get_quality(m)
+                return_m['travel_feed'] = machine["travel_feed"]
+                return_m['travel_plunge'] = machine["travel_plunge"]
                 return return_m
 
             if m['tool_size'] >= tool_size and m['tool_size'] < min_greater_size:
@@ -207,9 +215,7 @@ def material_data(machine_ID: str, material: str, tool_size: float):
                 max_lesser_size = m['tool_size']
                 max_lesser_mat = m
 
-
-
-    if (min_greater_mat is not None) and (max_lesser_mat is not None) and (min_greater_size != max_lesser_size):
+    if min_greater_mat and max_lesser_mat and (min_greater_size != max_lesser_size):
         # interpolate. cool.
         fraction = (tool_size - max_lesser_size) / (min_greater_size - max_lesser_size)
         m = max_lesser_mat.copy()
@@ -220,16 +226,22 @@ def material_data(machine_ID: str, material: str, tool_size: float):
 
         m['quality'] = '{}%: {}  <  {}% {}'.format(round((1.0 - fraction) * 100.0, 0), get_quality(max_lesser_mat),
                                                    round(fraction * 100, 0), get_quality(min_greater_mat))
+        m['travel_feed'] = machine["travel_feed"]
+        m['travel_plunge'] = machine["travel_plunge"]
         return m
 
     elif min_greater_mat is not None:
         m = min_greater_mat.copy()
         m['quality'] = '{} under: {}'.format(round(m['tool_size'] - tool_size, 2), get_quality(m))
+        m['travel_feed'] = machine["travel_feed"]
+        m['travel_plunge'] = machine["travel_plunge"]
         return m
 
     else:
         m = max_lesser_mat.copy()
         m['quality'] = '{} over: {}'.format(round(tool_size - m['tool_size'], 2), get_quality(m))
+        m['travel_feed'] = machine["travel_feed"]
+        m['travel_plunge'] = machine["travel_plunge"]
         return m
 
 
