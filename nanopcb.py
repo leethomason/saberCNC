@@ -232,7 +232,7 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
 
     print('Number of drill ={}'.format(len(drill_ascii)))
     print('rows/cols = {},{}'.format(n_cols, n_rows))
-    print('size (on tool center) = {}, {}'.format(cut_size.x, cut_size.y))
+    print('size (after cut) = {}, {}'.format(cut_size.x - mat['tool_size'], cut_size.y - mat['tool_size']))
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
@@ -314,8 +314,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     cut_min_dim, cut_max_dim = bounds_of_points(cut_path)
     cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE, (cut_max_dim.y - cut_min_dim.y) * SCALE)
 
+    print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes)
     if info_mode is True:
-        print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes)
         sys.exit(0)
 
     isolation_pairs = []

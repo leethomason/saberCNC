@@ -72,16 +72,7 @@ def hole(g, mat, cut_depth, radius):
         # g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
         # g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
-        if method == "center":
-            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
-                   helix_len=plunge / 4)
-
+        '''
         if method == "radius":
             g.arc(x=-radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
                   helix_len=plunge / 4)
@@ -91,8 +82,18 @@ def hole(g, mat, cut_depth, radius):
                   helix_len=plunge / 4)
             g.arc(x=radius_inner, y=radius_inner, radius=radius_inner, direction='CCW', helix_dim='z',
                   helix_len=plunge / 4)
+        '''
 
-        if method == "linear":
+        if radius_inner > 5:
+            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
+                   helix_len=plunge / 4)
+        else:
             prev_x = radius_inner
             prev_y = 0
 

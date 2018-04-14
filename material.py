@@ -100,7 +100,7 @@ materials = [
             {"name": "fr",
              "quality": "othermill data",
              "tool_size": 3.2,
-             "pass_depth": 0.13,
+             "pass_depth": 0.30,        # kicked up from 0.13
              "spindle_speed": 12000,
              "feed_rate": 360,
              "plunge_rate": 80},        # kicked up from 30 (sloww....)
@@ -108,7 +108,7 @@ materials = [
             {"name": "fr",
              "quality": "othermill data",
              "tool_size": 1.6,
-             "pass_depth": 0.13,
+             "pass_depth": 0.30,
              "spindle_speed": 12000,
              "feed_rate": 360,
              "plunge_rate": 80},
@@ -116,7 +116,7 @@ materials = [
             {"name": "fr",
              "quality": "othermill data guess",
              "tool_size": 0.8,
-             "pass_depth": 0.10,
+             "pass_depth": 0.20,
              "spindle_speed": 12000,
              "feed_rate": 250,
              "plunge_rate": 60}
