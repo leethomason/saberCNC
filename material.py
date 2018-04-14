@@ -1,5 +1,8 @@
 import sys
 import argparse
+import pprint
+
+pp = pprint.PrettyPrinter()
 
 materials = [
     {
@@ -262,41 +265,40 @@ def initMaterial(name: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='List information about the machines and materials. If no arguments ' +
-                    'are provided, then will list the available machines. Format ' +
-                    'is the same as used by the command line. Examples: ' +
-                    "'material', " +
-                    "'material em', " +
-                    "'material em-wood', " +
-                    "'material np883-pine-3.0'.")
+    if len(sys.argv) == 1:
+        print("""List information about the machines and materials.
+If not machine is provided, then will list the available machines. 
+Format is the same as used by the command line. Examples:
+    'material list'
+    'material em'
+    'material em-wood'
+    'material np883-pine-3.0'.""")
 
-    parser.add_argument('material', help='machineID-material-tool_size. For example: np883-pine-3.0')
-    args = parser.parse_args()
-
-    info = {}
     machine = None
+    info = [None, None]
 
-    if len(sys.argv) > 1:
+    if len(sys.argv) == 2:
         info = parse_name(sys.argv[1])
         # print(info)
         if info is not None:
             machine = find_machine(info[0])
 
-    if machine != None and info[1] != None and info[2] != None:
+    if machine and info[1] and info[2]:
         data = material_data(info[0], info[1], info[2])
-        for d in data:
-            print(d + ": " + str(data[d]))
-    elif machine != None and info[1] != None:
+        pp.pprint(data)
+    elif machine and info[1]:
         for m in machine["materials"]:
             if m["name"] == info[1]:
                 print(m["name"] + " " + str(m["tool_size"]))
-    elif machine != None:
+    elif machine:
+        mat_set = set()
         for m in machine["materials"]:
-            print(m["name"] + " " + str(m["tool_size"]))
+            mat_set.add(m["name"])
+        for s in mat_set:
+           print(s)
     else:
         for m in materials:
-            print(m["id"] + ": " + m["machine"])
+            print(m["id"] + " " + m["machine"])
 
 
 if __name__ == "__main__":

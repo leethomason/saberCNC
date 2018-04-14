@@ -247,8 +247,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
 
-    for k, v in hole_def.items():
-        print("hole: " + k + " diameter: " + str(v))
+    # for k, v in hole_def.items():
+    #    print("hole: " + k + " diameter: " + str(v))
 
     # use the C notation
     # pcb[y][x]
