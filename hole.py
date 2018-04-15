@@ -101,7 +101,9 @@ def hole(g, mat, cut_depth, radius):
     g.move(z=-CNC_TRAVEL_Z)  # up to the starting point
     g.move(x=-radius_inner, z=CNC_TRAVEL_Z)  # back to center of the circle
 
-    if not was_relative:
+    if was_relative:
+        g.relative()
+    else:
         g.absolute()
 
 
