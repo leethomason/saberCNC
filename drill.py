@@ -17,35 +17,35 @@ def drill(g, mat, cut_depth):
         raise RuntimeError('Cut depth must be less than zero.')
 
     was_relative = g.is_relative
-    g.relative()
+    g.absolute()
 
     num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
     g.comment("drill num pecks: " + str(num_plunge))
     g.spindle('CW', mat['spindle_speed'])
 
     g.feed(mat['travel_plunge'])
-    g.move(z=-CNC_TRAVEL_Z)
+    g.move(z=0)
     g.dwell(0.250)
     g.feed(mat['plunge_rate'])
 
     # move up and down in stages.
     # don't move up on the last step, and hold at the bottom of the hole.
-    zStep = cut_depth / num_plunge
-    for i in range(0, num_plunge - 1):
-        g.move(z=zStep * (i + 1))
+    for i in range(0, num_plunge):
+        g.move(z=cut_depth * (i + 1) / num_plunge)
         g.dwell(0.250)
-        g.move(z=zStep * i)
+        g.move(z=cut_depth * i / num_plunge)
         g.dwell(0.250)
-
-    g.move(z=cut_depth)
-    g.dwell(0.250)
 
     g.move(z=0)
+    g.dwell(0.250)
+
     # switch back to feed_rate *before* going up, so we don't see the bit
     # rise in slowwww motionnnn
     g.feed(mat['travel_plunge'])
     g.move(z=CNC_TRAVEL_Z)
-    if not was_relative:
+    if was_relative:
+        g.relative()
+    else:
         g.absolute()
 
 def drill_points(g, mat, cut_depth, points):
