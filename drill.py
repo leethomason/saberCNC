@@ -16,6 +16,9 @@ def drill(g, mat, cut_depth):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
 
+    was_relative = g.is_relative
+    g.relative()
+
     num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
     g.comment("drill num pecks: " + str(num_plunge))
     g.spindle('CW', mat['spindle_speed'])
@@ -42,7 +45,8 @@ def drill(g, mat, cut_depth):
     # rise in slowwww motionnnn
     g.feed(mat['travel_plunge'])
     g.move(z=CNC_TRAVEL_Z)
-
+    if not was_relative:
+        g.absolute()
 
 def drill_points(g, mat, cut_depth, points):
     if g is None:

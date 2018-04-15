@@ -15,10 +15,6 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    spindle_off = False
-    if g is None:
-        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
-        spindle_off = True
     was_relative = g.is_relative
 
     g.comment("hole")
@@ -68,9 +64,9 @@ def hole(g, mat, cut_depth, radius):
     g.feed(feed_rate)
 
     def path(g, plunge):
-        # g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-        # g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-
+        # if True:
+        #    g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+        #    g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
 
         # if radius_inner > 2:
         #    g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
@@ -86,16 +82,16 @@ def hole(g, mat, cut_depth, radius):
         prev_x = radius_inner
         prev_y = 0
 
-        steps = 16
-        for i in range(0, steps):
+        STEPS = 16
+        for i in range(0, STEPS):
             idx = float(i + 1)
-            ax = math.cos(2.0 * math.pi * idx / steps) * radius_inner
-            ay = math.sin(2.0 * math.pi * idx / steps) * radius_inner
+            ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
+            ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
             x = ax - prev_x
             y = ay - prev_y
             prev_x = ax
             prev_y = ay
-            g.move(x=x, y=y, z=plunge / steps)
+            g.move(x=x, y=y, z=plunge / STEPS)
 
     steps = calc_steps(cut_depth, -depth_of_cut)
     run_3_stages(path, g, steps)
@@ -107,8 +103,6 @@ def hole(g, mat, cut_depth, radius):
 
     if not was_relative:
         g.absolute()
-    if spindle_off:
-        g.spindle()
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):
@@ -142,11 +136,7 @@ def main():
     parser.add_argument('material', help='The material to cut in standard machine-material-size format.', type=str)
     parser.add_argument('depth', help='Depth of the cut. Must be negative.', type=float)
     parser.add_argument('radius', help='Radius of the hole.', type=float)
-    try:
-        args = parser.parse_args()
-    except:
-        parser.print_help()
-        sys.exit(1)
+    args = parser.parse_args()
 
     mat = initMaterial(args.material)
     hole(None, mat, args.depth, args.radius)

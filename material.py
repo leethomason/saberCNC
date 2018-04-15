@@ -307,7 +307,7 @@ Format is the same as used by the command line. Examples:
         for m in machine["materials"]:
             mat_set.add(m["name"])
         for s in mat_set:
-           print(s)
+            print(s)
     else:
         for m in materials:
             print(m["id"] + " " + m["machine"])
