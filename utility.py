@@ -161,13 +161,22 @@ def sort_shortest_path(points):
 
 
 class GContext:
-    def __init__(self, g):
+    def __init__(self, g, **kwargs):
         self.g = g
+        self.check_z = None
+        if 'z' in kwargs:
+            self.check_z = kwargs["z"]
 
     def __enter__(self):
         self.is_relative = self.g.is_relative
+        if self.check_z:
+            assert(self.g.current_position["z"] > self.check_z - 0.1)
+            assert(self.g.current_position["z"] < self.check_z + 0.1)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.check_z:
+            assert(self.g.current_position["z"] > self.check_z - 0.1)
+            assert(self.g.current_position["z"] < self.check_z + 0.1)
         if self.is_relative:
             self.g.relative()
         else:

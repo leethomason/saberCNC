@@ -8,7 +8,7 @@ def drill(g, mat, cut_depth):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
 
-    with GContext(g):
+    with GContext(g, z=CNC_TRAVEL_Z):
         g.absolute()
 
         num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))

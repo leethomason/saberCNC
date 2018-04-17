@@ -15,7 +15,7 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    with GContext(g):
+    with GContext(g, z=CNC_TRAVEL_Z):
         g.relative()
 
         g.comment("hole")
