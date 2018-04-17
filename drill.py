@@ -1,11 +1,3 @@
-# Drill a set of holes that are the size of the current
-# tool bit. Can be a set of points specified on the command 
-# line, or from a .drl file.
-#
-# If a .drl is used, tool change isn't supported, and it's all
-# done as one pass. (Tool change wolud be straightforward, I
-# just don't a machine that can do it reliably.)
-#
 from mecode import G
 from material import *
 from utility import *
@@ -20,7 +12,7 @@ def drill(g, mat, cut_depth):
         g.absolute()
 
         num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
-        g.comment("drill num pecks: " + str(num_plunge))
+        g.comment("Drill depth={} num_taps={}".format(cut_depth, num_plunge))
         g.spindle('CW', mat['spindle_speed'])
 
         g.feed(mat['travel_plunge'])
@@ -46,26 +38,17 @@ def drill(g, mat, cut_depth):
 
 
 def drill_points(g, mat, cut_depth, points):
-    if g is None:
-        g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    with GContext(g):
+        g.absolute()
+        sort_shortest_path(points)
 
-    g.comment("Drill")
-    g.comment("  material: " + mat['name'])
-    g.comment("  depth: " + str(cut_depth))
+        for p in points:
+            g.feed(mat['travel_feed'])
+            g.move(x=p['x'], y=p['y'])
+            drill(g, mat, cut_depth)
 
-    g.absolute()
-    sort_shortest_path(points)
-    g.comment("  num points: " + str(len(points)))
-
-    for p in points:
-        g.comment('drill hole at {},{}'.format(p['x'], p['y']))
-        g.feed(mat['travel_feed'])
-        g.move(x=p['x'], y=p['y'])
-        drill(g, mat, cut_depth)
-
-    g.spindle()
-    # Leaves the head at (0, 0, CNC_TRAVEL_Z)
-    g.move(x=0, y=0)
+        # Leaves the head at CNC_TRAVEL_Z)
+        g.move(x=0, y=0)
 
 
 def main():
@@ -87,8 +70,9 @@ def main():
         sys.exit(1)
 
     param = initMaterial(sys.argv[1])
-    cutDepth = float(sys.argv[2])
+    cut_depth = float(sys.argv[2])
     points = []
+    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
 
     if not is_number_pairs:
         filename = sys.argv[3]
@@ -105,7 +89,8 @@ def main():
             for i in range(3, len(sys.argv), 2):
                 points.append({'x': float(sys.argv[i + 0]), 'y': float(sys.argv[i + 1])})
 
-    drill(None, param, cutDepth, points)
+    drill_points(g, param, cut_depth, points)
+    g.spindle()
 
 
 if __name__ == "__main__":

@@ -16,6 +16,8 @@ def hole(g, mat, cut_depth, radius):
         raise RuntimeError('Tool size must be zero or greater.')
 
     with GContext(g):
+        g.relative()
+
         g.comment("hole")
         g.comment("depth=" + str(cut_depth))
         g.comment("tool size=" + str(mat['tool_size']))
@@ -46,7 +48,6 @@ def hole(g, mat, cut_depth, radius):
             g.comment('adjusted pass depth=' + str(depth_of_cut))
             g.comment('adjusted feed rate =' + str(feed_rate))
 
-        g.relative()
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['travel_plunge'])
 
@@ -90,20 +91,18 @@ def hole(g, mat, cut_depth, radius):
 
         g.move(z=-cut_depth)  # up to the starting point
         g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
-        g.move(z=-CNC_TRAVEL_Z)  # up to the starting point
-        g.move(x=-radius_inner, z=CNC_TRAVEL_Z)  # back to center of the circle
+        g.move(z=CNC_TRAVEL_Z)  # up to the starting point
+        g.move(x=-radius_inner)  # back to center of the circle
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):
-    if g is None:
-        raise RuntimeError("must pass in a g object for abs move. Or fix code.")
-
-    g.absolute()
-    g.feed(mat['travel_feed'])
-    g.move(z=CNC_TRAVEL_Z)
-    g.move(x=x, y=y)
-    hole(g, mat, cut_depth, radius)
-    g.absolute()
+    with GContext(g):
+        g.absolute()
+        g.feed(mat['travel_feed'])
+        g.move(z=CNC_TRAVEL_Z)
+        g.move(x=x, y=y)
+        hole(g, mat, cut_depth, radius)
+        g.absolute()
 
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
