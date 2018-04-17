@@ -15,96 +15,83 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    was_relative = g.is_relative
+    with GContext(g):
+        g.comment("hole")
+        g.comment("depth=" + str(cut_depth))
+        g.comment("tool size=" + str(mat['tool_size']))
+        g.comment("radius=" + str(radius))
+        g.comment("pass depth=" + str(mat['pass_depth']))
+        g.comment("feed rate=" + str(mat['feed_rate']))
+        g.comment("plunge rate=" + str(mat['plunge_rate']))
 
-    g.comment("hole")
-    g.comment("depth=" + str(cut_depth))
-    g.comment("tool size=" + str(mat['tool_size']))
-    g.comment("radius=" + str(radius))
-    g.comment("pass depth=" + str(mat['pass_depth']))
-    g.comment("feed rate=" + str(mat['feed_rate']))
-    g.comment("plunge rate=" + str(mat['plunge_rate']))
+        # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
+        # Approaches below.
 
-    # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
-    # Approaches below.
+        feed_rate = mat['feed_rate']
+        path_len_mm = 2.0 * math.pi * radius_inner
+        path_time_min = path_len_mm / feed_rate
+        plunge_from_path = mat['pass_depth'] / path_time_min
+        depth_of_cut = mat['pass_depth']
 
-    feed_rate = mat['feed_rate']
-    path_len_mm = 2.0 * math.pi * radius_inner
-    path_time_min = path_len_mm / feed_rate
-    plunge_from_path = mat['pass_depth'] / path_time_min
-    depth_of_cut = mat['pass_depth']
+        # Both 1) fast little holes and 2) too fast plunge are bad.
+        # Therefore, apply corrections to both. (If for some reason
+        # alternate approaches need to be reviewed, they are in
+        # source control.)
+        if plunge_from_path > mat['plunge_rate']:
+            factor = mat['plunge_rate'] / plunge_from_path
+            if factor < 0.3:
+                factor = 0.3  # slowing down to less than 10% (factor * factor) seems excessive
+            depth_of_cut = mat['pass_depth'] * factor
+            feed_rate = mat['feed_rate'] * factor
+            g.comment('adjusted pass depth=' + str(depth_of_cut))
+            g.comment('adjusted feed rate =' + str(feed_rate))
 
-    # This approach reduces the depth of cut, while keeping the feed rate.
-    # Not sure I love super-fast little circles.
-    '''
-    if plunge_from_path > mat['plunge_rate']:
-        depth_of_cut = mat['pass_depth'] * mat['plunge_rate'] / plunge_from_path
-        if depth_of_cut > mat['pass_depth']:
-            raise RuntimeError("Error computing depth_of_cut")
-        g.comment('adjusted pass depth=' + str(depth_of_cut))
-    '''
-
-    # Both 1) fast little holes and 2) too fast plunge are bad.
-    if plunge_from_path > mat['plunge_rate']:
-        factor = mat['plunge_rate'] / plunge_from_path
-        if factor < 0.3:
-            factor = 0.3  # slowing down to less than 10% (factor * factor) seems excessive
-        depth_of_cut = mat['pass_depth'] * factor
-        feed_rate = mat['feed_rate'] * factor
-        g.comment('adjusted pass depth=' + str(depth_of_cut))
-        g.comment('adjusted feed rate =' + str(feed_rate))
-
-    g.relative()
-    g.spindle('CW', mat['spindle_speed'])
-    g.feed(mat['travel_plunge'])
-
-    g.move(x=radius_inner)
-    g.move(z=-CNC_TRAVEL_Z)
-
-    g.feed(feed_rate)
-
-    def path(g, plunge):
-        # if True:
-        #    g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-        #    g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-
-        # if radius_inner > 2:
-        #    g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
-        #           helix_len=plunge / 4)
-        #    g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
-        #           helix_len=plunge / 4)
-        #    g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
-        #           helix_len=plunge / 4)
-        #    g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
-        #           helix_len=plunge / 4)
-        #else:
-
-        prev_x = radius_inner
-        prev_y = 0
-
-        STEPS = 16
-        for i in range(0, STEPS):
-            idx = float(i + 1)
-            ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
-            ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
-            x = ax - prev_x
-            y = ay - prev_y
-            prev_x = ax
-            prev_y = ay
-            g.move(x=x, y=y, z=plunge / STEPS)
-
-    steps = calc_steps(cut_depth, -depth_of_cut)
-    run_3_stages(path, g, steps)
-
-    g.move(z=-cut_depth)  # up to the starting point
-    g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
-    g.move(z=-CNC_TRAVEL_Z)  # up to the starting point
-    g.move(x=-radius_inner, z=CNC_TRAVEL_Z)  # back to center of the circle
-
-    if was_relative:
         g.relative()
-    else:
-        g.absolute()
+        g.spindle('CW', mat['spindle_speed'])
+        g.feed(mat['travel_plunge'])
+
+        g.move(x=radius_inner)
+        g.move(z=-CNC_TRAVEL_Z)
+
+        g.feed(feed_rate)
+
+        def path(g, plunge):
+            # if True:
+            #    g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+            #    g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+
+            # if radius_inner > 2:
+            #    g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
+            #           helix_len=plunge / 4)
+            #    g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+            #           helix_len=plunge / 4)
+            #    g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
+            #           helix_len=plunge / 4)
+            #    g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
+            #           helix_len=plunge / 4)
+            #else:
+
+            prev_x = radius_inner
+            prev_y = 0
+
+            STEPS = 16
+            for i in range(0, STEPS):
+                idx = float(i + 1)
+                ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
+                ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
+                x = ax - prev_x
+                y = ay - prev_y
+                prev_x = ax
+                prev_y = ay
+                g.move(x=x, y=y, z=plunge / STEPS)
+
+        steps = calc_steps(cut_depth, -depth_of_cut)
+        run_3_stages(path, g, steps)
+
+        g.move(z=-cut_depth)  # up to the starting point
+        g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
+        g.move(z=-CNC_TRAVEL_Z)  # up to the starting point
+        g.move(x=-radius_inner, z=CNC_TRAVEL_Z)  # back to center of the circle
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):

@@ -160,6 +160,20 @@ def sort_shortest_path(points):
         points.append(p)
 
 
+class GContext:
+    def __init__(self, g):
+        self.g = g
+
+    def __enter__(self):
+        self.is_relative = self.g.is_relative
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.is_relative:
+            self.g.relative()
+        else:
+            self.g.absolute()
+
+
 if __name__ == "__main__":
     result = read_DRL_2("test.drl");
     for h in result:
