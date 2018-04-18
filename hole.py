@@ -120,14 +120,17 @@ def hole_or_drill(g, mat, cut_depth, radius):
 def main():
     parser = argparse.ArgumentParser(
         description='Cut a hole at given radius and depth. Implemented with helical arcs,' +
-                    'and avoids plunging.')
+                    'and avoids plunging. (BUG: currently using linear approximation due' +
+                    'to Carbide Motion throwing a validation error.)')
     parser.add_argument('material', help='The material to cut in standard machine-material-size format.', type=str)
     parser.add_argument('depth', help='Depth of the cut. Must be negative.', type=float)
     parser.add_argument('radius', help='Radius of the hole.', type=float)
     args = parser.parse_args()
 
     mat = initMaterial(args.material)
-    hole(None, mat, args.depth, args.radius)
+    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
+    g.abs_move(z=CNC_TRAVEL_Z)
+    hole(g, mat, args.depth, args.radius)
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ def main():
     param = initMaterial(sys.argv[1])
     cut_depth = float(sys.argv[2])
     points = []
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None)
+    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     if not is_number_pairs:
         filename = sys.argv[3]
