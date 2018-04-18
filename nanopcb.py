@@ -26,6 +26,13 @@ class Point:
     def __ne__(self, other):
         return self.x != other.x or self.y != other.y
 
+    def __getitem__(self, item):
+        if item == 'x':
+            return self.x
+        if item == 'y':
+            return self.y
+        return None
+
 
 class PtPair:
     def __init__(self, x0, y0, x1, y1):
@@ -235,6 +242,10 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
     print('size (after cut) = {}, {}'.format(cut_size.x - mat['tool_size'], cut_size.y - mat['tool_size']))
 
 
+def rc_to_xy(x, y, n_rows):
+    return Point(x * SCALE, (n_rows - 1 - y) * SCALE)
+
+
 def nanopcb(filename, mat, pcb_depth, drill_depth,
             do_cutting, info_mode, do_drilling):
     if pcb_depth > 0:
@@ -272,8 +283,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                     # Add the drill points but don't do isolation routing.
                     drill_ascii.append(
                         {'x': x, 'y': y})
-                    drill_pts.append(
-                        {'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
+                    drill_pts.append(rc_to_xy(x, y, n_rows))
                     continue
 
                 # Handle an outline cutting path
@@ -286,8 +296,9 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 # Handle cutting holes
                 if c in hole_def:
                     diameter = hole_def[c]
+                    point = rc_to_xy(x, y, n_rows)
                     holes.append(
-                        {'diameter': diameter, 'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
+                        {'diameter': diameter, 'x': point.x, 'y': point.y})
                     continue
 
                 pcb[y][x] = COPPER
@@ -302,9 +313,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 if c != '-' and c != '|' and c != '+':
                     drill_ascii.append(
                         {'x': x, 'y': y})
-                    drill_pts.append(
-                        {'x': x * SCALE, 'y': (n_rows - 1 - y) * SCALE})
-
+                    drill_pts.append( rc_to_xy(x, y, n_rows))
     cut_path = marks_to_path(start_mark, cut_map)
 
     # Create a cut_path, if not specified, to simplify the code from here on:
@@ -326,8 +335,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
-            c = PtPair(x0 * SCALE, (n_rows - 1 - y) * SCALE,
-                       (x1 - 1) * SCALE, (n_rows - 1 - y) * SCALE)
+            p0 = rc_to_xy(x0, y, n_rows)
+            p1 = rc_to_xy(x1, y, n_rows)
+
+            c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
 
     for x in range(n_cols):
@@ -340,8 +351,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
-            c = PtPair(x * SCALE, (n_rows - 1 - y0) * SCALE,
-                       x * SCALE, (n_rows - y1) * SCALE)
+            p0 = rc_to_xy(x, y0, n_rows)
+            p1 = rc_to_xy(x, y1, n_rows)
+
+            c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
@@ -398,17 +411,15 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             for i in range(0, len(cut_path)):
                 n = (i + 1) % len(cut_path)
                 section_len = distance(cut_path[i], cut_path[n])
-                x = cut_path[n].x * SCALE
-                y = (n_rows - 1 - cut_path[n].y) * SCALE
+                p = rc_to_xy(cut_path[n].x, cut_path[n].y, n_rows)
                 z += delta_plunge * section_len / total_len
-                g.move(x=x, y=y, z=z)
+                g.move(x=p.x, y=p.y, z=z)
 
         g.absolute()
         g.move(z=CNC_TRAVEL_Z)
         g.spindle()
-        x = cut_path[0].x * SCALE
-        y = (n_rows - 1 - cut_path[0].y) * SCALE
-        g.move(x=x, y=y)
+        p = rc_to_xy(cut_path[0].x, cut_path[0].y, n_rows)
+        g.move(x=p.x, y=p.y)
         g.spindle('CW', mat['spindle_speed'])
         g.move(z=0)
 
