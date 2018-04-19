@@ -129,9 +129,9 @@ def main():
 
     mat = initMaterial(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    g.abs_move(z=CNC_TRAVEL_Z)
+    g.move(z=CNC_TRAVEL_Z)
     hole(g, mat, args.depth, args.radius)
-
+    g.spindle()
 
 if __name__ == "__main__":
     main()
