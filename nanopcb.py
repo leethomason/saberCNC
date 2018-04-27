@@ -1,8 +1,5 @@
 # turn ascii art into a pcb. for real.
 
-import argparse
-import sys
-
 from mecode import G
 from material import *
 from utility import *
@@ -234,8 +231,8 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
 
     for h in holes:
         diameter = h["diameter"]
-        type = hole_or_drill(None, mat, -1.0, diameter / 2)
-        print("Hole ({}): d = {}  pos = {}, {}".format(type, diameter, h["x"], h["y"]))
+        cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
+        print("Hole ({}): d = {}  pos = {}, {}".format(cut_type, diameter, h["x"], h["y"]))
 
     print('Number of drill ={}'.format(len(drill_ascii)))
     print('rows/cols = {},{}'.format(n_cols, n_rows))
@@ -313,7 +310,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 if c != '-' and c != '|' and c != '+':
                     drill_ascii.append(
                         {'x': x, 'y': y})
-                    drill_pts.append( rc_to_xy(x, y, n_rows))
+                    drill_pts.append(rc_to_xy(x, y, n_rows))
     cut_path = marks_to_path(start_mark, cut_map)
 
     # Create a cut_path, if not specified, to simplify the code from here on:
@@ -360,8 +357,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     g.comment("NanoPCB")
-    g.comment("size col x row = {} x {}".format(n_cols, n_rows))
-    g.comment("num drill points = {}".format(len(drill_pts)))
 
     g.absolute()
     g.feed(mat['feed_rate'])
@@ -455,7 +450,7 @@ def main():
     mat = initMaterial(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut == False, args.info, args.no_drill == False)
+            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False)
 
 
 if __name__ == "__main__":
