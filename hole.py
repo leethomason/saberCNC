@@ -107,7 +107,9 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
 def hole_or_drill(g, mat, cut_depth, radius):
-    if mat['tool_size'] + 0.1 < radius * 2:
+    if radius == 0:
+        return "mark"
+    elif mat['tool_size'] + 0.1 < radius * 2:
         if g:
             hole(g, mat, cut_depth, radius)
         return "hole"
