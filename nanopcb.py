@@ -333,7 +333,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             x1 = pairs.pop(0)
 
             p0 = rc_to_xy(x0, y, n_rows)
-            p1 = rc_to_xy(x1, y, n_rows)
+            p1 = rc_to_xy(x1 - 1, y, n_rows)
 
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
@@ -349,7 +349,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             y1 = pairs.pop(0)
 
             p0 = rc_to_xy(x, y0, n_rows)
-            p1 = rc_to_xy(x, y1, n_rows)
+            p1 = rc_to_xy(x, y1 - 1, n_rows)
 
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
