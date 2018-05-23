@@ -50,8 +50,8 @@ def main():
                     'calls. Optionally accounts for tool size. Can also cut an axis aligned line.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
-    parser.add_argument('dx', help='x width of the cut. (tool size is not accounted for.)', type=float)
-    parser.add_argument('dy', help='y width of the cut.', type=float)
+    parser.add_argument('dx', help='x width of the cut. (Tool size is not accounted for.)', type=float)
+    parser.add_argument('dy', help='y width of the cut. (Tool size is not accounted for.)', type=float)
     parser.add_argument('-t', '--tool',
                         help='diameter of the tool; the cut will account for the tool size. May be zero.',
                         action='store_true')
