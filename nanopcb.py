@@ -1,10 +1,12 @@
 # turn ascii art into a pcb. for real.
 
 from mecode import G
-from material import *
+from material import initMaterial
 from utility import *
 from drill import drill_points
 from hole import hole_or_drill
+import argparse
+import sys
 
 SCALE = 2.54 / 2
 NOT_INIT = 0
@@ -220,7 +222,8 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
                      sign(cut_path[n].y - cut_path[i].y))
         p = Point(cut_path[i].x, cut_path[i].y)
         while True:
-            output_rows[int(p.y)] = output_rows[int(p.y)][0:int(p.x)] + '%' + output_rows[int(p.y)][int(p.x + 1):]
+            output_rows[int(p.y)] = output_rows[int(p.y)][0:int(
+                p.x)] + '%' + output_rows[int(p.y)][int(p.x + 1):]
             if p == cut_path[n]:
                 break
             p.x += step.x
@@ -236,21 +239,63 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
         cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
         print("Hole ({}): d = {}  pos = {}, {}".format(cut_type, diameter, h["x"] - EDGE_OFFSET, h["y"] - EDGE_OFFSET))
 
-    print('Number of drill ={}'.format(len(drill_ascii)))
-    print('rows/cols = {},{}'.format(n_cols, n_rows))
-    print('size (after cut) = {}, {}'.format(cut_size.x - mat['tool_size'], cut_size.y - mat['tool_size']))
+    print('Number of drill holes = {}'.format(len(drill_ascii)))
+    print('Rows/Cols = {} x {}'.format(n_cols, n_rows))
+
+    sx = cut_size.x - mat['tool_size']
+    sy = cut_size.y - mat['tool_size']
+    print('Size (after cut) = {} x {} mm ({:.2f} x {:.2f} in)'.format(
+        sx, sy, sx/25.4, sy/25.4))
 
 
-def rc_to_xy(x, y, n_rows):
+def print_for_openscad(pcb, mat, cut_size, holes):
+
+    EDGE_OFFSET = mat["tool_size"] / 2 
+    sx = cut_size.x - mat['tool_size']
+    sy = cut_size.y - mat['tool_size']
+
+    center_line = sx / 2
+
+    print("")
+    print("openscad:")
+    print("[")
+
+    for h in holes:
+        diameter = h["diameter"]
+        hx = h['x'] - EDGE_OFFSET
+        hy = h['y'] - EDGE_OFFSET
+
+        cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
+        if cut_type == "hole":
+            support = "buttress"
+            if (hx > sx / 3) and (hx < 2 * sx / 3):
+                support = "column"
+            
+            print('    [{:.3f}, {:.3f}, "{}" ],     // d={}'.format(hx - center_line, hy, support, diameter))
+
+    print("]")
+
+
+def rc_to_xy_normal(x, y, n_cols, n_rows):
     return Point(x * SCALE, (n_rows - 1 - y) * SCALE)
 
 
+def rc_to_xy_flip(x, y, n_cols, n_rows):
+    return Point((n_cols - 1 - x) * SCALE, (n_rows - 1 - y) * SCALE)
+
+
 def nanopcb(filename, mat, pcb_depth, drill_depth,
-            do_cutting, info_mode, do_drilling):
+            do_cutting, info_mode, do_drilling, 
+            flip, openscad):
+
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
     if drill_depth > 0:
         raise RuntimeError("drill depth must be less than zero")
+
+    rc_to_xy = rc_to_xy_normal
+    if flip:
+        rc_to_xy = rc_to_xy_flip
 
     ascii_pcb, max_char_w, hole_def = scan_file(filename)
     PAD = 1
@@ -265,7 +310,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     pcb = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
     cut_map = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
 
-    drill_pts = []
     drill_ascii = []
     start_mark = None
     holes = []  # {diameter, x, y}
@@ -279,10 +323,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             if c != ' ':
                 # Handle the cutting borders of the board.
                 if c == '[' or c == ']':
-                    # Add the drill points but don't do isolation routing.
-                    drill_ascii.append(
-                        {'x': x, 'y': y})
-                    drill_pts.append(rc_to_xy(x, y, n_rows))
                     continue
 
                 # Handle an outline cutting path
@@ -295,7 +335,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 # Handle cutting holes
                 if c in hole_def:
                     diameter = hole_def[c]
-                    point = rc_to_xy(x, y, n_rows)
+                    point = rc_to_xy(x, y, n_cols, n_rows)
                     holes.append(
                         {'diameter': diameter, 'x': point.x, 'y': point.y})
                     continue
@@ -312,17 +352,24 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                 if c != '-' and c != '|' and c != '+':
                     drill_ascii.append(
                         {'x': x, 'y': y})
-                    drill_pts.append(rc_to_xy(x, y, n_rows))
+
     cut_path = marks_to_path(start_mark, cut_map)
 
     # Create a cut_path, if not specified, to simplify the code from here on:
     if cut_path is None:
-        cut_path = [Point(0, 0), Point(n_cols - 1, 0), Point(n_cols - 1, n_rows - 1), Point(0, n_rows - 1)]
+        cut_path = [Point(0, 0), Point(n_cols - 1, 0),
+                    Point(n_cols - 1, n_rows - 1), Point(0, n_rows - 1)]
 
     cut_min_dim, cut_max_dim = bounds_of_points(cut_path)
-    cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE, (cut_max_dim.y - cut_min_dim.y) * SCALE)
+    cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE,
+                     (cut_max_dim.y - cut_min_dim.y) * SCALE)
 
-    print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes)
+    print_to_console(pcb, mat, n_cols, n_rows, drill_ascii,
+                     cut_path, cut_size, holes)
+
+    if openscad:
+        print_for_openscad(pcb, mat, cut_size, holes)
+
     if info_mode is True:
         sys.exit(0)
 
@@ -334,8 +381,9 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
 
-            p0 = rc_to_xy(x0, y, n_rows)
-            p1 = rc_to_xy(x1 - 1, y, n_rows)
+
+            p0 = rc_to_xy(x0, y, n_cols, n_rows)
+            p1 = rc_to_xy(x1 - 1, y, n_cols, n_rows)
 
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
@@ -350,13 +398,14 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             y0 = pairs.pop(0)
             y1 = pairs.pop(0)
 
-            p0 = rc_to_xy(x, y0, n_rows)
-            p1 = rc_to_xy(x, y1 - 1, n_rows)
+            p0 = rc_to_xy(x, y0, n_cols, n_rows)
+            p1 = rc_to_xy(x, y1 - 1, n_cols, n_rows)
 
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
 
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
+    g = G(outfile='path.nc', aerotech_include=False,
+          header=None, footer=None, print_lines=False)
 
     g.comment("NanoPCB")
 
@@ -388,6 +437,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.move(z=CNC_TRAVEL_Z)
 
     if do_drilling:
+        drill_pts = []
+        for da in drill_ascii:
+            drill_pts.append(rc_to_xy(da['x'], da['y'], n_cols, n_rows))
+
         drill_points(g, mat, drill_depth, drill_pts)
         for hole in holes:
             diameter = hole["diameter"]
@@ -408,14 +461,14 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             for i in range(0, len(cut_path)):
                 n = (i + 1) % len(cut_path)
                 section_len = distance(cut_path[i], cut_path[n])
-                p = rc_to_xy(cut_path[n].x, cut_path[n].y, n_rows)
+                p = rc_to_xy(cut_path[n].x, cut_path[n].y, n_cols, n_rows)
                 z += delta_plunge * section_len / total_len
                 g.move(x=p.x, y=p.y, z=z)
 
         g.absolute()
         g.move(z=CNC_TRAVEL_Z)
         g.spindle()
-        p = rc_to_xy(cut_path[0].x, cut_path[0].y, n_rows)
+        p = rc_to_xy(cut_path[0].x, cut_path[0].y, n_cols, n_rows)
         g.move(x=p.x, y=p.y)
         g.spindle('CW', mat['spindle_speed'])
         g.move(z=0)
@@ -446,13 +499,17 @@ def main():
         '-i', '--info', help='display info and exit', action='store_true')
     parser.add_argument(
         '-d', '--no-drill', help='disable drill holes in the pcb', action='store_true')
+    parser.add_argument(
+        '-f', '--flip', help='flip in the x axis for pcb under and mounting over', action='store_true')
+    parser.add_argument(
+        '-o', '--openscad', help='OpenScad printout.', action='store_true')
 
     args = parser.parse_args()
 
     mat = initMaterial(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False)
+            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)
 
 
 if __name__ == "__main__":

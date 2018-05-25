@@ -1,5 +1,6 @@
+import sys
 from mecode import G
-from material import *
+from material import initMaterial
 from utility import *
 
 
