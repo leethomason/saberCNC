@@ -248,6 +248,34 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
         sx, sy, sx/25.4, sy/25.4))
 
 
+def print_for_openscad(pcb, mat, cut_size, holes):
+
+    EDGE_OFFSET = mat["tool_size"] / 2 
+    sx = cut_size.x - mat['tool_size']
+    sy = cut_size.y - mat['tool_size']
+
+    center_line = sx / 2
+
+    print("")
+    print("openscad:")
+    print("[")
+
+    for h in holes:
+        diameter = h["diameter"]
+        hx = h['x'] - EDGE_OFFSET
+        hy = h['y'] - EDGE_OFFSET
+
+        cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
+        if cut_type == "hole":
+            support = "buttress"
+            if (hx > sx / 3) and (hx < 2 * sx / 3):
+                support = "column"
+            
+            print('    [{:.3f}, {:.3f}, "{}" ],     // d={}'.format(hx - center_line, hy, support, diameter))
+
+    print("]")
+
+
 def rc_to_xy_normal(x, y, n_cols, n_rows):
     return Point(x * SCALE, (n_rows - 1 - y) * SCALE)
 
@@ -257,7 +285,8 @@ def rc_to_xy_flip(x, y, n_cols, n_rows):
 
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
-            do_cutting, info_mode, do_drilling, flip):
+            do_cutting, info_mode, do_drilling, 
+            flip, openscad):
 
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
@@ -337,6 +366,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
 
     print_to_console(pcb, mat, n_cols, n_rows, drill_ascii,
                      cut_path, cut_size, holes)
+
+    if openscad:
+        print_for_openscad(pcb, mat, cut_size, holes)
+
     if info_mode is True:
         sys.exit(0)
 
@@ -467,13 +500,15 @@ def main():
         '-d', '--no-drill', help='disable drill holes in the pcb', action='store_true')
     parser.add_argument(
         '-f', '--flip', help='flip in the x axis for pcb under and mounting over', action='store_true')
+    parser.add_argument(
+        '-o', '--openscad', help='OpenScad printout.', action='store_true')
 
     args = parser.parse_args()
 
     mat = initMaterial(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip)
+            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)
 
 
 if __name__ == "__main__":
