@@ -5,7 +5,7 @@ from material import *
 from utility import *
 
 
-def rectangle(g, mat, cut_depth, tool, dx, dy):
+def rectangle(g, mat, cut_depth, dx, dy):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if dx < 0 or dy < 0:
@@ -20,12 +20,6 @@ def rectangle(g, mat, cut_depth, tool, dx, dy):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
-        tool_size = mat['tool_size'] if tool else 0
-
-        dx = dx - tool_size
-        dy = dy - tool_size
-        g.move(x=tool_size / 2, y=-dy/2)
-
         # Spread the plunge out over all 4 sides of the motion.
         fraction_w = dx / (dx + dy)
         fraction_h = 1 - fraction_w
@@ -39,28 +33,23 @@ def rectangle(g, mat, cut_depth, tool, dx, dy):
         steps = calc_steps(cut_depth, -mat['pass_depth'])
         run_3_stages(path, g, steps)
 
-        g.spindle()
         g.move(z=-cut_depth)
-        g.move(x=-tool_size / 2, y=dy/2)
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='Cut a rectangle. Careful to return to original position so it can be used in other' +
-                    'calls. Optionally accounts for tool size. Can also cut an axis aligned line.')
+                    'calls. No account for tool size. Can also cut an axis aligned line.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
-    parser.add_argument('dx', help='x width of the cut. (Tool size is not accounted for.)', type=float)
-    parser.add_argument('dy', help='y width of the cut. (Tool size is not accounted for.)', type=float)
-    parser.add_argument('-t', '--tool',
-                        help='diameter of the tool; the cut will account for the tool size. May be zero.',
-                        action='store_true')
+    parser.add_argument('dx', help='x width of the cut.', type=float)
+    parser.add_argument('dy', help='y width of the cut.', type=float)
 
     args = parser.parse_args()
     mat = initMaterial(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangle(g, mat, args.depth, args.tool, args.dx, args.dy)
+    rectangle(g, mat, args.depth, args.dx, args.dy)
     g.spindle()
 
 

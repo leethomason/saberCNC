@@ -75,7 +75,7 @@ def hole(g, mat, cut_depth, radius):
             prev_x = radius_inner
             prev_y = 0
 
-            STEPS = 16
+            STEPS = 16 if radius_inner < 3 else 32
             for i in range(0, STEPS):
                 idx = float(i + 1)
                 ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
