@@ -232,12 +232,20 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
     for r in output_rows:
         print(r)
 
-    EDGE_OFFSET = mat["tool_size"] / 2 
+    half_tool = mat["tool_size"] / 2 
 
     for h in holes:
         diameter = h["diameter"]
         cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
-        print("Hole ({}): d = {}  pos = {}, {}".format(cut_type, diameter, h["x"] - EDGE_OFFSET, h["y"] - EDGE_OFFSET))
+        print("Hole ({}): d = {}  pos = {}, {}".format(cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool))
+
+        d_north = cut_size.y - (h['y'] + half_tool)
+        d_south = h['y'] - half_tool
+        d_east = cut_size.x - (h['x'] + half_tool)
+        d_west = h['x'] - half_tool
+
+        if (d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1):
+            print("Warning: hole within 1mm of edge.")
 
     print('Number of drill holes = {}'.format(len(drill_ascii)))
     print('Rows/Cols = {} x {}'.format(n_cols, n_rows))
