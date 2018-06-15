@@ -1,19 +1,21 @@
 import math
 import sys
 from mecode import G
-from material import *
+from material import initMaterial
 from utility import *
+import argparse
 
-OVERLAP = 0.7
 
+def plane(g, mat, depth, dx, dy, overlap=0.7):
+    if overlap <= 0.1 or overlap >= 1:
+        raise RuntimeError("step must be between 0 and 1 exclusive")
 
-def plane(g, mat, depth, dx, dy):
     with GContext(g):
         g.comment("Plane depth = {} size = {}, {}".format(depth, dx, dy))
         g.relative()
 
         # a lap is a cut out and back
-        num_lap = int(math.ceil(dy / (mat['tool_size'] * OVERLAP * 2.0)))
+        num_lap = int(math.ceil(dy / (mat['tool_size'] * overlap * 2.0)))
         if num_lap > 1:
             lap_step = dy / (num_lap - 0.5)
         else:

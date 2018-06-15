@@ -1,6 +1,7 @@
 from mecode import G
-from material import *
+from material import initMaterial
 from utility import *
+import argparse
 
 
 # cut a line at current x,y assuming z=CNC_TRAVEL_Z
