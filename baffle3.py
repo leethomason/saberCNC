@@ -5,7 +5,7 @@ from material import *
 FRONT_PLATE = True
 BACK_PLATE = False
 
-mat = initMaterial(sys.argv[1])
+mat = init_material(sys.argv[1])
 tool_size = mat['tool_size']
 
 if FRONT_PLATE or BACK_PLATE:

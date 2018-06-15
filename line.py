@@ -1,5 +1,5 @@
 from mecode import G
-from material import initMaterial
+from material import init_material
 from utility import *
 import argparse
 
@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     g.move(z=CNC_TRAVEL_Z)
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
     line(g, mat, args.depth, args.x0, args.y0, args.x1, args.y1)
     g.spindle()
 

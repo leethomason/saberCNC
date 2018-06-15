@@ -1,7 +1,8 @@
 from mecode import G
-from material import initMaterial
-from utility import *
+from material import init_material
+from utility import CNC_TRAVEL_Z, GContext
 import argparse
+import math
 
 def covertec(g, mat, diameter, width, dy, overlap):
 
@@ -78,7 +79,7 @@ def main():
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
     covertec(g, mat, args.diameter, args.dy, args.dy, args.overlap)
 
 

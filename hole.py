@@ -1,7 +1,8 @@
 from mecode import G
-from material import *
+from material import init_material
 from utility import *
 from drill import drill
+import argparse
 
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
@@ -129,7 +130,7 @@ def main():
     parser.add_argument('radius', help='Radius of the hole.', type=float)
     args = parser.parse_args()
 
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     g.move(z=CNC_TRAVEL_Z)
     hole(g, mat, args.depth, args.radius)

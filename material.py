@@ -269,7 +269,7 @@ def parse_name(name: str):
     return [machine, material, tool_size]
 
 
-def initMaterial(name: str):
+def init_material(name: str):
     info = parse_name(name)
     tool_size = 3.125
     if info[2] is not None:

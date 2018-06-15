@@ -1,7 +1,7 @@
 # turn ascii art into a pcb. for real.
 
 from mecode import G
-from material import initMaterial
+from material import init_material
 from utility import *
 from drill import drill_points
 from hole import hole_or_drill
@@ -514,7 +514,7 @@ def main():
 
     args = parser.parse_args()
 
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
             args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)

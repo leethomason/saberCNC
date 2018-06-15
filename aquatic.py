@@ -9,6 +9,7 @@ from material import *
 # start at hole center,
 # all measurements from the hole center,
 # origin at hole center
+CNC_STD_TOOL = 3.175  # 1/8 inch bit
 
 TOOLSIZE            = CNC_STD_TOOL
 CYLINDER_DIAMETER   = 37
@@ -23,7 +24,7 @@ DISPLAY_X0          = 15
 DISPLAY_X1          = 35
 FILLET              = 1
 
-mat = initMaterial("wood")
+mat = init_material("wood")
 
 
 

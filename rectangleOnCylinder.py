@@ -91,7 +91,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
     #cutoff = args.depth
     #if args.cutoff > 0:
     #    cutoff = args.cutoff

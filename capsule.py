@@ -1,7 +1,7 @@
 from mecode import G
-from material import *
-from utility import *
-
+from material import init_material
+from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
+import argparse
 
 # cup a capsule from the current location
 def capsule(g, mat, cut_depth, x, y, d):
@@ -67,7 +67,7 @@ def main():
 
     args = parser.parse_args()
 
-    mat = initMaterial(args.material)
+    mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     capsule(g, mat, args.depth, args.x, args.y, args.deflection)
     g.spindle()

@@ -3,8 +3,6 @@ import math
 import re
 
 CNC_TRAVEL_Z = 3.0
-CNC_STD_TOOL = 3.175  # 1/8 inch bit
-
 
 # Calculates relative moves to get to a final goal.
 # A goal='5' and a step='2' generates: [2, 2, 1]
@@ -184,6 +182,6 @@ class GContext:
 
 
 if __name__ == "__main__":
-    result = read_DRL_2("test.drl");
+    result = read_DRL_2("test.drl")
     for h in result:
         print("size={} x={} y={}".format(h['size'], h['x'], h['y']))

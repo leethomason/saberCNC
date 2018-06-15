@@ -1,6 +1,6 @@
 import sys
 from mecode import G
-from material import initMaterial
+from material import init_material
 from utility import *
 
 
@@ -70,7 +70,7 @@ def main():
         print('  Travel Z={}'.format(CNC_TRAVEL_Z))
         sys.exit(1)
 
-    param = initMaterial(sys.argv[1])
+    param = init_material(sys.argv[1])
     cut_depth = float(sys.argv[2])
     points = []
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
