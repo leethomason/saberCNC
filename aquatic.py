@@ -1,7 +1,5 @@
 # The cut for the "Aquatic" saber.
-# 
 # Center hole - narrow passage - display
-#
 
 from hole import *
 from material import *
@@ -25,9 +23,6 @@ DISPLAY_X1          = 35
 FILLET              = 1
 
 mat = init_material("wood")
-
-
-
 halfTool = TOOLSIZE / 2
 crad = CYLINDER_DIAMETER / 2
 
