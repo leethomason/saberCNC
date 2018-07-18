@@ -6,6 +6,7 @@ import argparse
 
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
+# accounts for tool size
 def hole(g, mat, cut_depth, radius):
     radius_inner = radius - mat['tool_size'] / 2
 

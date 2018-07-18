@@ -5,6 +5,8 @@ from material import init_material
 from utility import *
 
 
+# from current location
+# no accounting for tool size
 def rectangle(g, mat, cut_depth, dx, dy):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
