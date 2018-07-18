@@ -2,17 +2,19 @@
 
 from mecode import G
 from material import init_material
-from utility import *
+from utility import CNC_TRAVEL_Z
 from drill import drill_points
 from hole import hole_or_drill
+from rectangle import rectangle
 import argparse
 import sys
+import math
+import re
 
 SCALE = 2.54 / 2
 NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
-
 
 class Point:
     def __init__(self, x: float = 0, y: float = 0):
@@ -54,6 +56,12 @@ class PtPair:
         self.x0 = w - self.x0
         self.x1 = w - self.x1
 
+    def dx(self):
+        return abs(self.x1 - self.x0)
+
+    def dy(self):
+        return abs(self.y1 - self.y0)
+
 
 def sign(x):
     if x > 0:
@@ -76,49 +84,6 @@ def bounds_of_points(arr):
         pmax.x = max(pmax.x, p.x)
         pmax.y = max(pmax.y, p.y)
     return pmin, pmax
-
-
-def find_dir(mark, pcb, current_dir):
-    if pcb[mark.y][mark.x] != 1:
-        raise RuntimeError(
-            "should be on cut line at {},{}".format(mark.x, mark.y))
-
-    check = [[1, 0], [-1, 0], [0, 1], [0, -1],
-             [1, 1], [-1, 1], [1, -1], [-1, -1]]
-
-    for c in check:
-        d = Point(c[0], c[1])
-        if current_dir is not None:
-            dot = current_dir.x * d.x + current_dir.y * d.y
-            if dot < 0:
-                continue
-        if pcb[d.y + mark.y][d.x + mark.x] == 1:
-            return Point(c[0], c[1])
-    return None
-
-
-def marks_to_path(start_mark, pcb):
-    if start_mark is None:
-        return None
-
-    cut_path = [start_mark]
-    direction = find_dir(start_mark, pcb, Point(0, 0))
-    if direction is None:
-        raise RuntimeError("Could not find path direction at {},{}".format(
-            start_mark.x, start_mark.y))
-
-    p = Point(start_mark.x, start_mark.y)
-    p.x += direction.x
-    p.y += direction.y
-    while p.x != start_mark.x or p.y != start_mark.y:
-        if pcb[p.y][p.x] == 1:
-            new_dir = find_dir(p, pcb, direction)
-            if (new_dir is not None) and (new_dir != direction):
-                cut_path.append(Point(p.x, p.y))
-                direction = new_dir
-        p.x += direction.x
-        p.y += direction.y
-    return cut_path
 
 
 def pop_closest_pt_pair(x: PtPair, y: PtPair, arr):
@@ -199,7 +164,7 @@ def scan_file(filename: str):
     return ascii_pcb, max_char_w, holes
 
 
-def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, holes):
+def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, holes):
     output_rows = []
     for y in range(n_rows):
         out = ""
@@ -216,19 +181,6 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
                 out = out + '+'
         output_rows.append(out)
 
-    for i in range(0, len(cut_path)):
-        n = (i + 1) % len(cut_path)
-        step = Point(sign(cut_path[n].x - cut_path[i].x),
-                     sign(cut_path[n].y - cut_path[i].y))
-        p = Point(cut_path[i].x, cut_path[i].y)
-        while True:
-            output_rows[int(p.y)] = output_rows[int(p.y)][0:int(
-                p.x)] + '%' + output_rows[int(p.y)][int(p.x + 1):]
-            if p == cut_path[n]:
-                break
-            p.x += step.x
-            p.y += step.y
-
     for r in output_rows:
         print(r)
 
@@ -237,30 +189,31 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path, cut_size, 
     for h in holes:
         diameter = h["diameter"]
         cut_type = hole_or_drill(None, mat, -1.0, diameter / 2)
-        print("Hole ({}): d = {}  pos = {}, {}".format(cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool))
 
-        d_north = cut_size.y - (h['y'] + half_tool)
-        d_south = h['y'] - half_tool
-        d_east = cut_size.x - (h['x'] + half_tool)
-        d_west = h['x'] - half_tool
+        d_north = cut_path_on_center.y1 - (h['y'] + half_tool)
+        d_south = (h['y'] - half_tool) - cut_path_on_center.y0
+        d_east = cut_path_on_center.x1 - (h['x'] + half_tool)
+        d_west = (h['x'] - half_tool) - cut_path_on_center.x0
 
+        warning = ""
         if (d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1):
-            print("Warning: hole within 1mm of edge.")
+            warning = "Warning: hole within 1mm of edge."
+        print("Hole ({}): d = {}  pos = {}, {}  {}".format(cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool, warning))
 
     print('Number of drill holes = {}'.format(len(drill_ascii)))
     print('Rows/Cols = {} x {}'.format(n_cols, n_rows))
 
-    sx = cut_size.x - mat['tool_size']
-    sy = cut_size.y - mat['tool_size']
+    sx = cut_path_on_center.dx() - mat['tool_size']
+    sy = cut_path_on_center.dy() - mat['tool_size']
     print('Size (after cut) = {} x {} mm ({:.2f} x {:.2f} in)'.format(
         sx, sy, sx/25.4, sy/25.4))
 
 
-def print_for_openscad(pcb, mat, cut_size, holes):
+def print_for_openscad(pcb, mat, cut_path_on_center, holes):
 
     EDGE_OFFSET = mat["tool_size"] / 2 
-    sx = cut_size.x - mat['tool_size']
-    sy = cut_size.y - mat['tool_size']
+    sx = cut_path_on_center.dx() - mat['tool_size']
+    sy = cut_path_on_center.dy() - mat['tool_size']
 
     center_line = sx / 2
 
@@ -294,7 +247,7 @@ def rc_to_xy_flip(x, y, n_cols, n_rows):
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
             do_cutting, info_mode, do_drilling, 
-            flip, openscad):
+            flip, openscad, offset_cut):
 
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
@@ -316,10 +269,8 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     # use the C notation
     # pcb[y][x]
     pcb = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
-    cut_map = [[NOT_INIT for x in range(n_cols)] for y in range(n_rows)]
 
     drill_ascii = []
-    start_mark = None
     holes = []  # {diameter, x, y}
 
     for j in range(len(ascii_pcb)):
@@ -331,13 +282,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             if c != ' ':
                 # Handle the cutting borders of the board.
                 if c == '[' or c == ']':
-                    continue
-
-                # Handle an outline cutting path
-                if c == '%':
-                    if start_mark is None:
-                        start_mark = Point(x, y)
-                    cut_map[y][x] = 1
                     continue
 
                 # Handle cutting holes
@@ -361,22 +305,14 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
                     drill_ascii.append(
                         {'x': x, 'y': y})
 
-    cut_path = marks_to_path(start_mark, cut_map)
+    c0 = rc_to_xy(0, 0, n_cols, n_rows)
+    c1 = rc_to_xy(n_cols-1, n_rows-1, n_cols, n_rows) 
 
-    # Create a cut_path, if not specified, to simplify the code from here on:
-    if cut_path is None:
-        cut_path = [Point(0, 0), Point(n_cols - 1, 0),
-                    Point(n_cols - 1, n_rows - 1), Point(0, n_rows - 1)]
-
-    cut_min_dim, cut_max_dim = bounds_of_points(cut_path)
-    cut_size = Point((cut_max_dim.x - cut_min_dim.x) * SCALE,
-                     (cut_max_dim.y - cut_min_dim.y) * SCALE)
-
-    print_to_console(pcb, mat, n_cols, n_rows, drill_ascii,
-                     cut_path, cut_size, holes)
+    cut_path_on_center = PtPair(c0.x - offset_cut, c1.y - offset_cut, c1.x + offset_cut, c0.y + offset_cut)
+    print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, holes)
 
     if openscad:
-        print_for_openscad(pcb, mat, cut_size, holes)
+        print_for_openscad(pcb, mat, cut_path_on_center, holes)
 
     if info_mode is True:
         sys.exit(0)
@@ -459,30 +395,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             g.move(z=CNC_TRAVEL_Z)
 
     if do_cutting:
-        total_len = 0
-        for i in range(0, len(cut_path)):
-            n = (i + 1) % len(cut_path)
-            total_len += distance(cut_path[i], cut_path[n])
-
-        def path(g, base_plunge, delta_plunge):
-            z = base_plunge
-            for i in range(0, len(cut_path)):
-                n = (i + 1) % len(cut_path)
-                section_len = distance(cut_path[i], cut_path[n])
-                p = rc_to_xy(cut_path[n].x, cut_path[n].y, n_cols, n_rows)
-                z += delta_plunge * section_len / total_len
-                g.move(x=p.x, y=p.y, z=z)
-
-        g.absolute()
-        g.move(z=CNC_TRAVEL_Z)
-        g.spindle()
-        p = rc_to_xy(cut_path[0].x, cut_path[0].y, n_cols, n_rows)
-        g.move(x=p.x, y=p.y)
-        g.spindle('CW', mat['spindle_speed'])
+        g.move(x=cut_path_on_center.x0, y=cut_path_on_center.y0)
         g.move(z=0)
-
-        steps = calc_steps(drill_depth, -mat['pass_depth'])
-        run_3_stages_abs(path, g, steps)
+        rectangle(g, mat, pcb_depth, cut_path_on_center.dx(), cut_path_on_center.dy())
+        g.move(z=CNC_TRAVEL_Z)
 
     g.move(z=CNC_TRAVEL_Z)
     g.spindle()
@@ -511,13 +427,15 @@ def main():
         '-f', '--flip', help='flip in the x axis for pcb under and mounting over', action='store_true')
     parser.add_argument(
         '-o', '--openscad', help='OpenScad printout.', action='store_true')
+    parser.add_argument(
+        '-oc', '--offset-cut', help="Offset the cut outwars (positive) or inwards (negative)", type=float, default=0.0)
 
     args = parser.parse_args()
 
     mat = init_material(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)
+            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad, args.offset_cut)
 
 
 if __name__ == "__main__":
