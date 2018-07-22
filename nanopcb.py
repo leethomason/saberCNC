@@ -16,6 +16,7 @@ NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
 
+
 class Point:
     def __init__(self, x: float = 0, y: float = 0):
         self.x = x
@@ -132,6 +133,7 @@ def scan_file(filename: str):
     ascii_pcb = []
     max_char_w = 0
     holes = {}
+    offset_cut = Point(0, 0)
 
     re_hole_definition = re.compile('\+[a-zA-Z]\s')
     re_number = re.compile('[\d.]+')
@@ -144,12 +146,22 @@ def scan_file(filename: str):
             index = line.find('#')
             if index >= 0:
                 m = re_hole_definition.search(line)
+                offset_x = line.find("+offset_x:")
+                offset_y = line.find("+offset_y:")
+
                 if m:
                     key = m.group()[1]
                     digit_index = m.end(0)
                     m = re_number.match(line[digit_index:])
                     diameter = float(m.group())
                     holes[key] = diameter
+
+                if offset_x >= 0:
+                    offset_cut.x = float(line[offset_x + 10:])
+
+                if offset_y >= 0:
+                    offset_cut.y = float(line[offset_y + 10:])
+
             else:
                 ascii_pcb.append(line)
 
@@ -161,7 +173,7 @@ def scan_file(filename: str):
     for line in ascii_pcb:
         max_char_w = max(len(line), max_char_w)
 
-    return ascii_pcb, max_char_w, holes
+    return ascii_pcb, max_char_w, holes, offset_cut
 
 
 def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, holes):
@@ -196,12 +208,14 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, 
         d_west = (h['x'] - half_tool) - cut_path_on_center.x0
 
         warning = ""
-        if (d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1):
+        if d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1:
             warning = "Warning: hole within 1mm of edge."
-        print("Hole ({}): d = {}  pos = {}, {}  {}".format(cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool, warning))
+        print("Hole ({}): d = {}  pos = {}, {}  {}".format(
+            cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool, warning))
 
     print('Number of drill holes = {}'.format(len(drill_ascii)))
     print('Rows/Cols = {} x {}'.format(n_cols, n_rows))
+    print("Cutting offset = {}, {}".format(0.0 - cut_path_on_center.x0, 0.0 - cut_path_on_center.y0))
 
     sx = cut_path_on_center.dx() - mat['tool_size']
     sy = cut_path_on_center.dy() - mat['tool_size']
@@ -209,11 +223,11 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, 
         sx, sy, sx/25.4, sy/25.4))
 
 
-def print_for_openscad(pcb, mat, cut_path_on_center, holes):
+def print_for_openscad(mat, cut_path_on_center, holes):
 
     EDGE_OFFSET = mat["tool_size"] / 2 
     sx = cut_path_on_center.dx() - mat['tool_size']
-    sy = cut_path_on_center.dy() - mat['tool_size']
+    # sy = cut_path_on_center.dy() - mat['tool_size']
 
     center_line = sx / 2
 
@@ -247,7 +261,7 @@ def rc_to_xy_flip(x, y, n_cols, n_rows):
 
 def nanopcb(filename, mat, pcb_depth, drill_depth,
             do_cutting, info_mode, do_drilling, 
-            flip, openscad, offset_cut):
+            flip, openscad):
 
     if pcb_depth > 0:
         raise RuntimeError("cut depth must be less than zero.")
@@ -258,7 +272,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     if flip:
         rc_to_xy = rc_to_xy_flip
 
-    ascii_pcb, max_char_w, hole_def = scan_file(filename)
+    ascii_pcb, max_char_w, hole_def, offset_cut = scan_file(filename)
     PAD = 1
     n_cols = max_char_w + PAD * 2
     n_rows = len(ascii_pcb) + PAD * 2
@@ -308,11 +322,11 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     c0 = rc_to_xy(0, 0, n_cols, n_rows)
     c1 = rc_to_xy(n_cols-1, n_rows-1, n_cols, n_rows) 
 
-    cut_path_on_center = PtPair(c0.x - offset_cut, c1.y - offset_cut, c1.x + offset_cut, c0.y + offset_cut)
+    cut_path_on_center = PtPair(c0.x - offset_cut.x, c1.y - offset_cut.y, c1.x + offset_cut.x, c0.y + offset_cut.y)
     print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, holes)
 
     if openscad:
-        print_for_openscad(pcb, mat, cut_path_on_center, holes)
+        print_for_openscad(mat, cut_path_on_center, holes)
 
     if info_mode is True:
         sys.exit(0)
@@ -324,7 +338,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
         while len(pairs) > 0:
             x0 = pairs.pop(0)
             x1 = pairs.pop(0)
-
 
             p0 = rc_to_xy(x0, y, n_cols, n_rows)
             p1 = rc_to_xy(x1 - 1, y, n_cols, n_rows)
@@ -427,15 +440,13 @@ def main():
         '-f', '--flip', help='flip in the x axis for pcb under and mounting over', action='store_true')
     parser.add_argument(
         '-o', '--openscad', help='OpenScad printout.', action='store_true')
-    parser.add_argument(
-        '-oc', '--offset-cut', help="Offset the cut outwars (positive) or inwards (negative)", type=float, default=0.0)
 
     args = parser.parse_args()
 
     mat = init_material(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
-            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad, args.offset_cut)
+            args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)
 
 
 if __name__ == "__main__":
