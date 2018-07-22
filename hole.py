@@ -17,9 +17,9 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    circumfrance = 2.0 * radius_inner *math.pi
+    circumference = 2.0 * radius_inner * math.pi
     STEPS = 16
-    smooth = math.floor(circumfrance)  # set to 1mm is "smooth" - could add a factor
+    smooth = math.floor(circumference)  # set to 1mm is "smooth" - could add a factor
     if smooth > STEPS:
         STEPS = smooth
 
@@ -142,6 +142,7 @@ def main():
     g.move(z=CNC_TRAVEL_Z)
     hole(g, mat, args.depth, args.radius)
     g.spindle()
+
 
 if __name__ == "__main__":
     main()

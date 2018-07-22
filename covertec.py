@@ -33,7 +33,7 @@ def covertec(g, mat, diameter, width, dy, overlap):
             d_dist = r + cut_depth - z
             dx = math.sqrt(r*r - d_dist*d_dist)
 
-            num_lines = math.ceil((dx * 2) / (mat['tool_size'] * overlap))
+            num_lines = int(math.ceil((dx * 2) / (mat['tool_size'] * overlap)))
             g.move(x=-dx, y=-dy/2)
             z = z - pass_depth
             g.spindle(mat['plunge_rate'])
