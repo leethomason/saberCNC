@@ -17,7 +17,11 @@ def hole(g, mat, cut_depth, radius):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    circumfrance = 2.0 * radius_inner *math.pi;
+    circumfrance = 2.0 * radius_inner *math.pi
+    STEPS = 16
+    smooth = math.floor(circumfrance)  # set to 1mm is "smooth" - could add a factor
+    if smooth > STEPS:
+        STEPS = smooth
 
     with GContext(g, z=CNC_TRAVEL_Z):
         g.relative()
@@ -29,6 +33,7 @@ def hole(g, mat, cut_depth, radius):
         g.comment("pass depth=" + str(mat['pass_depth']))
         g.comment("feed rate=" + str(mat['feed_rate']))
         g.comment("plunge rate=" + str(mat['plunge_rate']))
+        g.comment("steps for linear approx=" + str(STEPS))
 
         # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
         # Approaches below.
@@ -78,11 +83,6 @@ def hole(g, mat, cut_depth, radius):
 
             prev_x = radius_inner
             prev_y = 0
-
-            STEPS = 16
-            smooth = math.floor(circumfrance)  # set to 1mm is "smooth" - could add a factor
-            if smooth > STEPS:
-                STEPS = smooth
 
             for i in range(0, STEPS):
                 idx = float(i + 1)
