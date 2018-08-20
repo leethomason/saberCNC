@@ -47,6 +47,12 @@ class PtPair:
         self.x0, self.x1 = self.x1, self.x0
         self.y0, self.y1 = self.y1, self.y0
 
+    def do_order(self):
+        if self.x0 > self.x1:
+            self.x0, self.x1 = self.x1, self.x0
+        if self.y0 > self.y1:
+            self.y0, self.y1 = self.y1, self.y0
+
     def add(self, x, y):
         self.x0 += x
         self.y0 += y
@@ -319,7 +325,10 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     c0 = rc_to_xy(0, 0, n_cols, n_rows)
     c1 = rc_to_xy(n_cols-1, n_rows-1, n_cols, n_rows) 
 
-    cut_path_on_center = PtPair(c0.x - offset_cut.x, c1.y - offset_cut.y, c1.x + offset_cut.x, c0.y + offset_cut.y)
+    cut_path_on_center = PtPair(c0.x - offset_cut.x, c1.y - offset_cut.y, 
+                                c1.x + offset_cut.x, c0.y + offset_cut.y)
+    cut_path_on_center.do_order()
+
     print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, holes)
 
     if openscad:
@@ -407,7 +416,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     if do_cutting:
         g.move(x=cut_path_on_center.x0, y=cut_path_on_center.y0)
         g.move(z=0)
-        rectangle(g, mat, pcb_depth, cut_path_on_center.dx(), cut_path_on_center.dy())
+        rectangle(g, mat, drill_depth, cut_path_on_center.dx(), cut_path_on_center.dy())
         g.move(z=CNC_TRAVEL_Z)
 
     g.move(z=CNC_TRAVEL_Z)
