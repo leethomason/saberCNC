@@ -37,7 +37,7 @@ class Point:
 
 
 class PtPair:
-    def __init__(self, x0, y0, x1, y1):
+    def __init__(self, x0: float, y0: float, x1: float, y1: float):
         self.x0 = x0
         self.y0 = y0
         self.x1 = x1
@@ -257,11 +257,11 @@ def print_for_openscad(mat, cut_path_on_center, holes):
     print("]")
 
 
-def rc_to_xy_normal(x, y, n_cols, n_rows):
+def rc_to_xy_normal(x: float, y: float, n_cols, n_rows):
     return Point(x * SCALE, (n_rows - 1 - y) * SCALE)
 
 
-def rc_to_xy_flip(x, y, n_cols, n_rows):
+def rc_to_xy_flip(x: float, y: float, n_cols, n_rows):
     return Point((n_cols - 1 - x) * SCALE, (n_rows - 1 - y) * SCALE)
 
 
