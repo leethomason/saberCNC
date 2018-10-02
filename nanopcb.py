@@ -208,10 +208,13 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, 
         d_west = (h['x'] - half_tool) - cut_path_on_center.x0
 
         warning = ""
+        pos_x = round(h["x"] - half_tool, 3)
+        pos_y = round(h["y"] - half_tool, 3)
+
         if d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1:
             warning = "Warning: hole within 1mm of edge."
         print("Hole ({}): d = {}  pos = {}, {}  {}".format(
-            cut_type, diameter, h["x"] - half_tool, h["y"] - half_tool, warning))
+            cut_type, diameter, pos_x, pos_y, warning))
 
     print('Number of drill holes = {}'.format(len(drill_ascii)))
     print('Rows/Cols = {} x {}'.format(n_cols, n_rows))

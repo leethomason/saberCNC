@@ -298,7 +298,21 @@ Format is the same as used by the command line. Examples:
 
     if machine and info[1] and info[2]:
         data = material_data(info[0], info[1], info[2])
+        print("*** Millimeters ***")
         pp.pprint(data)
+
+        # Conversion to inches, when working with grumpy software.
+        data_in = data.copy()
+        data_in['feed_rate'] = round(data_in['feed_rate'] / 25.4, 5)
+        data_in['pass_depth'] = round(data_in['pass_depth'] / 25.4, 5)
+        data_in['plunge_rate'] = round(data_in['plunge_rate'] / 25.4, 5)
+        data_in['tool_size'] = round(data_in['tool_size'] / 25.4, 4)
+        data_in['travel_feed'] = round(data_in['travel_feed'] / 25.4, 2)
+        data_in['travel_plunge'] = round(data_in['travel_plunge'] / 25.4, 2)
+        print("")
+        print("*** Inches ***")
+        pp.pprint(data_in)
+
     elif machine and info[1]:
         for m in machine["materials"]:
             if m["name"] == info[1]:
