@@ -22,11 +22,10 @@ def drill(g, mat, cut_depth):
         g.feed(mat['plunge_rate'])
 
         # move up and down in stages.
-        # don't move up on the last step, and hold at the bottom of the hole.
         for i in range(0, num_plunge):
-            g.move(z=cut_depth * (i + 1) / num_plunge)
+            g.move(z=cut_depth * (i + 1) / num_plunge)  # drill down
             g.dwell(0.250)
-            g.move(z=cut_depth * i / num_plunge)
+            g.move(z=cut_depth * i / num_plunge)  # move up to cast out chips
             g.dwell(0.250)
 
         g.move(z=0)
