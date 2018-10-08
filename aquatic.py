@@ -53,7 +53,7 @@ def path(g, plunge):
 
     g.move(y=dy0, z=zNeck)
     g.move(x=dx0, z=plunge/2)
-    g.arc(x=FILLET, y=FILLET, direction='CCW', radius=FILLET) #technically there should be a z change here, but close enough.
+    g.arc(x=FILLET, y=FILLET, direction='CCW', radius=FILLET)  # technically there should be a z change here, but close enough.
     g.move(y=dy1, z=zDisplay - zNeck)
     g.move(x=dx1)
 

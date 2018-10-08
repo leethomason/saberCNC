@@ -2,6 +2,7 @@ from mecode import G
 from material import init_material
 from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
+import math
 
 def capsule(g, mat, cut_depth, x, y, d, outer, axis):
     with GContext(g):
