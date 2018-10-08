@@ -3,7 +3,7 @@ from material import init_material
 from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
 
-def capsule(g, mat, cut_depth, x, y, d, outer):
+def capsule(g, mat, cut_depth, x, y, d, outer, axis):
     with GContext(g):
         g.relative()
 
@@ -36,16 +36,15 @@ def capsule(g, mat, cut_depth, x, y, d, outer):
         g.comment('capsule')
         g.comment('end radius = {}'.format(r))
         g.relative()
-        g.move(z=CNC_TRAVEL_Z)
         g.feed(mat['feed_rate'])
+
+        g.move(z=CNC_TRAVEL_Z)
         g.spindle('CW', mat['spindle_speed'])
 
         def path(g, plunge):
-            g.arc(x=0, y=-(y - tool_size), radius=r, direction='CCW')
-
+            g.arc2(x=0, y=-(y - tool_size), i=0, j=-(y - tool_size)/2, direction='CCW')
             g.move(x=(x - tool_size), z=plunge / 2)
-            g.arc(x=0, y=(y - tool_size), radius=r, direction='CCW')
-
+            g.arc2(x=0, y=(y - tool_size), i=0, j=(y - tool_size)/2, direction='CCW')
             g.move(x=-(x - tool_size), z=plunge / 2)
 
         g.move(x=-x / 2 + half_tool)
@@ -69,12 +68,13 @@ def main():
     parser.add_argument('y', help='size of rectangle for y cut', type=float)
     parser.add_argument('-d', '--deflection', help='deflection in x axis at center of arc', type=float, default=None)
     parser.add_argument('-o', '--outer', help="x, y are the outer dimensions.", action="store_true", default=False)
+    parser.add_argument('-a', '--axis', help="axis for the capsule.", type=str, default='x')
 
     args = parser.parse_args()
 
     mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    capsule(g, mat, args.depth, args.x, args.y, args.deflection, args.outer)
+    capsule(g, mat, args.depth, args.x, args.y, args.deflection, args.outer, args.axis)
     g.spindle()
 
 
