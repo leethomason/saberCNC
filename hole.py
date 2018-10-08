@@ -66,33 +66,27 @@ def hole(g, mat, cut_depth, radius):
         g.feed(feed_rate)
 
         def path(g, plunge):
-            # if True:
-            #    g.arc2(x=-2 * radius_inner, y=0, i=-radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
-            #    g.arc2(x=2 * radius_inner, y=0, i=radius_inner, j=0, direction='CCW', helix_dim='z', helix_len=plunge / 2)
+            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0,  direction='CCW', helix_dim='z',
+                    helix_len=plunge / 4)
+            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+                    helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0,   direction='CCW', helix_dim='z',
+                    helix_len=plunge / 4)
+            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
+                    helix_len=plunge / 4)
 
-            # if radius_inner > 2:
-            #    g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0, direction='CCW', helix_dim='z',
-            #           helix_len=plunge / 4)
-            #    g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
-            #           helix_len=plunge / 4)
-            #    g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0, direction='CCW', helix_dim='z',
-            #           helix_len=plunge / 4)
-            #    g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner, direction='CCW', helix_dim='z',
-            #           helix_len=plunge / 4)
-            #else:
+            # prev_x = radius_inner
+            # prev_y = 0
 
-            prev_x = radius_inner
-            prev_y = 0
-
-            for i in range(0, STEPS):
-                idx = float(i + 1)
-                ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
-                ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
-                x = ax - prev_x
-                y = ay - prev_y
-                prev_x = ax
-                prev_y = ay
-                g.move(x=x, y=y, z=plunge / STEPS)
+            # for i in range(0, STEPS):
+            #     idx = float(i + 1)
+            #     ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
+            #     ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
+            #     x = ax - prev_x
+            #     y = ay - prev_y
+            #     prev_x = ax
+            #     prev_y = ay
+            #     g.move(x=x, y=y, z=plunge / STEPS)
 
         steps = calc_steps(cut_depth, -depth_of_cut)
         run_3_stages(path, g, steps)
