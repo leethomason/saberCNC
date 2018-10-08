@@ -1,10 +1,12 @@
 from mecode import G
+from mecode import GMatrix
 from material import init_material
 from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
 import math
 
 def capsule(g, mat, cut_depth, x, y, d, outer, axis):
+
     with GContext(g):
         g.relative()
 
@@ -42,6 +44,10 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
         g.move(z=CNC_TRAVEL_Z)
         g.spindle('CW', mat['spindle_speed'])
 
+        if axis == 'y':
+            g.push_matrix()
+            g.rotate(math.pi / 2)
+
         def path(g, plunge):
             g.arc2(x=0, y=-(y - tool_size), i=0, j=-(y - tool_size)/2, direction='CCW')
             g.move(x=(x - tool_size), z=plunge / 2)
@@ -59,6 +65,9 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
         g.move(y=-(y / 2 - half_tool))
         g.move(x=x / 2 - half_tool)
 
+        if axis == 'y':
+            g.pop_matrix()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -74,7 +83,7 @@ def main():
     args = parser.parse_args()
 
     mat = init_material(args.material)
-    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
+    g = GMatrix(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     capsule(g, mat, args.depth, args.x, args.y, args.deflection, args.outer, args.axis)
     g.spindle()
 
