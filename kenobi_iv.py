@@ -15,35 +15,37 @@ g.absolute()
 g.move(z=CNC_TRAVEL_Z)
 g.spindle('CW', mat['spindle_speed'])
 
-# drill switch holes
+# Drill holes for the tactile switch.
 holes = [
-    [15.9, 14.8],
-    [20.5, 14.9],
+    [15.9, 14.6],
+    [20.3, 14.6],
     [15.9, 8.2],
-    [20.5, 8.2]
+    [20.3, 8.2]
 ]
 
 for h in holes:
     g.move(x=h[0], y=h[1])
     drill(g, mat, cut_depth)
 
-# drill mount holes
+# Mounting holes.
 mount = [
-    [19.685, 19.685],
-    [19.685, 3.175]
+    [2.54, 3.175],
+    [22.225, 3.175],
+    [2.54, 19.685]
+    [22.225, 19.685]
 ]
 for m in mount:
     g.move(x=m[0], y=m[1])
     hole(g, mat, cut_depth, 2.1/2)
 
-# power port hole
+# Power port.
 g.move(x=8.89, y=11.43)
 hole(g, mat, cut_depth, 8.1/2)
 
-# cut board
+# Board outline.
 g.move(x=-half_tool, y=-half_tool)
 g.move(z=0)
-rectangle(g, mat, cut_depth, 22.86 + tool_size, 22.86 + tool_size)
+rectangle(g, mat, cut_depth, 24.76 + tool_size, 22.86 + tool_size)
 g.move(z=CNC_TRAVEL_Z)
 
 g.spindle()

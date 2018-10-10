@@ -17,14 +17,14 @@ inner_r = inner_d / 2
 
 origin = 30
 thetas = [origin - 30, origin + 30, origin + 90, origin + 150, origin + 210, origin + 270]
-hole_r = 3.0
-tube_r = 2.2
+r_rod = 3.6 / 2
+r_tube = 6.0 / 2
 
 rods = [
-    [-7, -7, hole_r],
-    [ 7, -7, hole_r],
-    [ 0,  7, hole_r],
-    [ 0,  0, tube_r]
+    [-7, -7, r_rod],
+    [ 7, -7, r_rod],
+    [ 0,  10, r_rod],
+    [ 0,  0, r_tube]
 ]
 
 
