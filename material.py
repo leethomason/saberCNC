@@ -52,29 +52,32 @@ materials = [
              "feed_rate": 1828,
              "plunge_rate": 812},
 
-            {"name": "brass",
-             "quality": "Carbide3D test and refined. Plunge can lock bit.",
+            {"name": "brass230",
+             "quality": "Guess from 260.",
              "tool_size": 3.125,
-             "pass_depth": 0.20,    # wrestle with this value. Was 0.25
+             "pass_depth": 0.30,
+             "spindle_speed": 9200,
+             "feed_rate": 250,
+             "plunge_rate": 25,
+             "comment": "red brass"},
+
+            {"name": "brass260",    
+             "quality": "Test and refined. Plunge can lock bit.",
+             "tool_size": 3.125,    # there used to be other sizes, but good luck with any other bit.
+             "pass_depth": 0.20,    # wrestle with this value. Was 0.25.
              "spindle_speed": 9200,
              "feed_rate": 200,
-             "plunge_rate": 25},
+             "plunge_rate": 25,
+             "comment": "cartridge brass"},
 
-            {"name": "brass",
-             "quality": "Implied from othermill data.",
-             "tool_size": 1.6,
-             "pass_depth": 0.20,
+            {"name": "brass360",
+             "quality": "Guess from 260.",
+             "tool_size": 3.125,
+             "pass_depth": 0.40,
              "spindle_speed": 9200,
-             "feed_rate": 200,
-             "plunge_rate": 25},
-
-            {"name": "brass",
-             "quality": "implied from othermill data",
-             "tool_size": 1.0,
-             "pass_depth": 0.10,
-             "spindle_speed": 9200,
-             "feed_rate": 100,
-             "plunge_rate": 15},
+             "feed_rate": 250,
+             "plunge_rate": 25,
+             "comment":"free machining brass"},
 
             {"name": "aluminum",
              "quality": "Carbide3D test",
@@ -106,7 +109,8 @@ materials = [
              "pass_depth": 0.40,        # kicked up from 0.13 the 0.30.
              "spindle_speed": 12000,
              "feed_rate": 360,
-             "plunge_rate": 80},        # kicked up from 30 (sloww....)
+             "plunge_rate": 80,         # kicked up from 30 (sloww....)
+             "comment": "printed circuit board"},
 
             {"name": "fr",
              "quality": "othermill data",
@@ -114,7 +118,8 @@ materials = [
              "pass_depth": 0.40,
              "spindle_speed": 12000,
              "feed_rate": 360,
-             "plunge_rate": 80},
+             "plunge_rate": 80,
+             "comment": "printed circuit board"},
 
             {"name": "fr",
              "quality": "othermill data guess",
@@ -122,7 +127,8 @@ materials = [
              "pass_depth": 0.30,
              "spindle_speed": 12000,
              "feed_rate": 150,
-             "plunge_rate": 60}
+             "plunge_rate": 60,
+             "comment": "printed circuit board"},
         ]
     },
 
@@ -320,7 +326,10 @@ Format is the same as used by the command line. Examples:
     elif machine:
         mat_set = set()
         for m in machine["materials"]:
-            mat_set.add(m["name"])
+            s = m['name']
+            if 'comment' in m:
+                s += "  (" + m['comment'] + ")"
+            mat_set.add(s)
         for s in mat_set:
             print(s)
     else:
