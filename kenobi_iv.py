@@ -17,10 +17,10 @@ g.spindle('CW', mat['spindle_speed'])
 
 # Drill holes for the tactile switch.
 holes = [
-    [15.9, 14.6],
-    [20.3, 14.6],
-    [15.9, 8.2],
-    [20.3, 8.2]
+    [15.25, 14.75],
+    [19.85, 14.75],
+    [15.25,  8.26],
+    [19.85,  8.26]
 ]
 
 for h in holes:
@@ -29,9 +29,9 @@ for h in holes:
 
 # Mounting holes.
 mount = [
-    [2.54, 3.175],
-    [22.225, 3.175],
-    [2.54, 19.685]
+    [ 2.54,   3.175],
+    [22.225,  3.175],
+    [ 2.54,  19.685],
     [22.225, 19.685]
 ]
 for m in mount:
@@ -39,7 +39,7 @@ for m in mount:
     hole(g, mat, cut_depth, 2.1/2)
 
 # Power port.
-g.move(x=8.89, y=11.43)
+g.move(x=7.62, y=11.43)
 hole(g, mat, cut_depth, 8.1/2)
 
 # Board outline.
