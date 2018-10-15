@@ -115,11 +115,21 @@ materials = [
             {"name": "fr",
              "quality": "othermill data",
              "tool_size": 1.6,
-             "pass_depth": 0.40,
+             "pass_depth": 0.70,
              "spindle_speed": 12000,
              "feed_rate": 360,
              "plunge_rate": 80,
              "comment": "printed circuit board"},
+
+            {'name': 'fr',
+            'quality': 'significant testing',
+            'tool_size': 1.0,
+            'pass_depth': 0.60,     # up 50% so slow before
+            'spindle_speed': 12000,
+            'feed_rate': 202.5,
+            'plunge_rate': 65.0,
+            'comment': 'printed circuit board'
+            },
 
             {"name": "fr",
              "quality": "othermill data guess",
