@@ -204,9 +204,10 @@ def get_quality(m):
     return '(not specified)'
 
 
-def preprocess_material(m, machine):
+def preprocess_material(m, machine, tool_size):
     m['travel_feed'] = machine["travel_feed"]
     m['travel_plunge'] = machine["travel_plunge"]
+    m['tool_size'] = tool_size
     for key, value in m.items():
         if type(value) is float:
             m[key] = round(value, 5)
@@ -229,7 +230,7 @@ def material_data(machine_ID: str, material: str, tool_size: float):
             if m['tool_size'] == tool_size:
                 return_m = m.copy()
                 return_m['quality'] = 'match: ' + get_quality(m)
-                return preprocess_material(return_m, machine)
+                return preprocess_material(return_m, machine, tool_size)
 
             if m['tool_size'] >= tool_size and m['tool_size'] < min_greater_size:
                 min_greater_size = m['tool_size']
@@ -249,17 +250,17 @@ def material_data(machine_ID: str, material: str, tool_size: float):
 
         m['quality'] = '{}%: {}  <  {}% {}'.format(round((1.0 - fraction) * 100.0, 0), get_quality(max_lesser_mat),
                                                    round(fraction * 100, 0), get_quality(min_greater_mat))
-        return preprocess_material(m, machine)
+        return preprocess_material(m, machine, tool_size)
 
     elif min_greater_mat is not None:
         m = min_greater_mat.copy()
         m['quality'] = '{} under: {}'.format(round(m['tool_size'] - tool_size, 2), get_quality(m))
-        return preprocess_material(m, machine)
+        return preprocess_material(m, machine, tool_size)
 
     else:
         m = max_lesser_mat.copy()
         m['quality'] = '{} over: {}'.format(round(tool_size - m['tool_size'], 2), get_quality(m))
-        return preprocess_material(m, machine)
+        return preprocess_material(m, machine, tool_size)
 
 
 def parse_name(name: str):
