@@ -101,7 +101,7 @@ materials = [
              "pass_depth": 0.15,
              "spindle_speed": 9200,
              "feed_rate": 100,
-             "plunge_rate": 10},
+             "plunge_rate": 10},        # suggested: 55
 
             {"name": "fr",
              "quality": "othermill data",
