@@ -14,7 +14,7 @@ materials = [
         "materials": [
             {"name": "polycarb",
              "quality": "Carbide3D test",
-             "tool_size": 3.125,
+             "tool_size": 3.175,
              "pass_depth": 0.33,
              "spindle_speed": 9000,
              "feed_rate": 1300,
@@ -22,7 +22,7 @@ materials = [
 
             {"name": "pine",
              "quality": "Verified Carbide3D test",
-             "tool_size": 3.125,
+             "tool_size": 3.175,
              "pass_depth": 0.76,
              "spindle_speed": 4500,
              "feed_rate": 1828,
@@ -46,7 +46,7 @@ materials = [
 
             {"name": "hardwood",
              "quality": "Carbide3D test",
-             "tool_size": 3.125,
+             "tool_size": 3.175,
              "pass_depth": 0.76,
              "spindle_speed": 4500,
              "feed_rate": 1828,
@@ -54,7 +54,7 @@ materials = [
 
             {"name": "brass230",
              "quality": "Guess from 260.",
-             "tool_size": 3.125,
+             "tool_size": 3.175,
              "pass_depth": 0.30,
              "spindle_speed": 9200,
              "feed_rate": 250,
@@ -63,7 +63,7 @@ materials = [
 
             {"name": "brass260",    
              "quality": "Test and refined. Plunge can lock bit.",
-             "tool_size": 3.125,    # there used to be other sizes, but good luck with any other bit.
+             "tool_size": 3.175,    # there used to be other sizes, but good luck with any other bit.
              "pass_depth": 0.20,    # wrestle with this value. Was 0.25.
              "spindle_speed": 9200,
              "feed_rate": 200,
@@ -71,17 +71,17 @@ materials = [
              "comment": "cartridge brass"},
 
             {"name": "brass360",
-             "quality": "Guess from 260.",
-             "tool_size": 3.125,
-             "pass_depth": 0.40,
+             "quality": "From 260 + refined.",
+             "tool_size": 3.175,
+             "pass_depth": 0.10,
              "spindle_speed": 9200,
-             "feed_rate": 250,
+             "feed_rate": 220,
              "plunge_rate": 25,
              "comment":"free machining brass"},
 
             {"name": "aluminum",
              "quality": "Carbide3D test",
-             "tool_size": 3.125,
+             "tool_size": 3.175,
              "pass_depth": 0.25,
              "spindle_speed": 9200,
              "feed_rate": 200,
@@ -105,7 +105,7 @@ materials = [
 
             {"name": "fr",
              "quality": "othermill data",
-             "tool_size": 3.2,
+             "tool_size": 3.175,
              "pass_depth": 0.40,        # kicked up from 0.13 the 0.30.
              "spindle_speed": 12000,
              "feed_rate": 360,
