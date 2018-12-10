@@ -38,15 +38,13 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
 
         g.comment('capsule')
         g.comment('end radius = {}'.format(r))
-        g.relative()
         g.feed(mat['feed_rate'])
 
         g.move(z=CNC_TRAVEL_Z)
         g.spindle('CW', mat['spindle_speed'])
 
         if axis == 'y':
-            g.push_matrix()
-            g.rotate(math.pi / 2)
+            g.do_simple_transform(True)
 
         def path(g, plunge):
             g.arc2(x=0, y=-(y - tool_size), i=0, j=-(y - tool_size)/2, direction='CCW')
@@ -66,7 +64,7 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
         g.move(x=x / 2 - half_tool)
 
         if axis == 'y':
-            g.pop_matrix()
+            g.do_simple_transform(False)
 
 
 def main():
