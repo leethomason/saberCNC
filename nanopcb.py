@@ -142,7 +142,7 @@ def scan_file(filename: str):
     offset_cut = Point(0, 0)
 
     re_hole_definition = re.compile('\+[a-zA-Z]\s')
-    re_number = re.compile('[\d.]+')
+    re_number = re.compile('[\d.-]+')
 
     with open(filename, "r") as ins:
         for line in ins:
@@ -150,6 +150,7 @@ def scan_file(filename: str):
             line = line.replace('\t', '    ')
             line = line.rstrip(' ')
             index = line.find('#')
+
             if index >= 0:
                 m = re_hole_definition.search(line)
                 offset_x = line.find("+offset_x:")

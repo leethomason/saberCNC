@@ -72,7 +72,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Cut out the cylinder body for a part ot attach to.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
-    parser.add_argument('diameter', help='diametr of the cylinder the part abuts to.', type=float)
+    parser.add_argument('diameter', help='diameter of the cylinder the part abuts to.', type=float)
     parser.add_argument('dx', help='width of cut', type=float)
     parser.add_argument('dy', help='length of the cut', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)

@@ -21,9 +21,8 @@ axis. It can print the circuit flipped if you want to solder on the down side.
 
 * ````#````         Starts a comment line.
 * ````[ ]````       Square brackets define a cutting border.
-* ````%````         A percent defines a cutting path. The path must close, but can curve around for printing oddly shaped boards.
 * ````a-z````       Letters define drill holes.
-* ````# +M 2.2````  Defines a mounting hole, drill hole, etc. (Not isolated.)
+* ````# +M 2.2````  Defines a mounting hole, drill hole, etc. Not isolated. If size is zero, then just a mark point.
 
 ## Example
 
