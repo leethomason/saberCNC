@@ -1,0 +1,26 @@
+# Layout for an (experimental) switch holder.
+# Reduces wires (good!) but concerned about stress failure.
+# +c 0.0  Center mark
+# |p 2.8  power vertical
+# -q 2.8  power horizontal
+# |s 2.0  switch vertical
+# -w 2.0  switch horizontal
+#
+# v vBat connections (in/out)
+# b battery (in)
+# ground (out)
+# 0 switch connection
+# 1 led connection
+# u capacitor connection
+
+    +b+    g+g    0
+    +++    +++    |
+    +q+    +++    w
+           +++
++++     ++++++
+v+p  c  p++++++s  c  s-1
++++     ++++++++
+v++     |      |
++++     |      +--w
+v+u     u
++++

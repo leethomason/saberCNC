@@ -452,7 +452,6 @@ def main():
         '-o', '--openscad', help='OpenScad printout.', action='store_true')
 
     args = parser.parse_args()
-
     mat = init_material(args.material)
 
     nanopcb(args.filename, mat, args.pcbDepth,
