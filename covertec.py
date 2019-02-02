@@ -40,13 +40,17 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
             flat(g, mat, dx, -cut_y * bias)
 
     def smooth(bias):
-        base_step = 0.4
+        base_step = 0.8
         y = 0
         d = 0
+        lowX = True
 
         while y != hy:
-            g.move(x=dx)
-            g.move(x=-dx)
+            if lowX is True:
+                g.move(x=dx)
+            else:
+                g.move(x=-dx)
+            lowX = not lowX
 
             step = (1 - y / r_hill) * base_step
             if y + step > hy:
@@ -62,13 +66,17 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
             d = zt
         
         g.move(z=-d) 
+        if lowX is False:
+            g.move(x=-dx)
         g.move(y=-y * bias)
 
     with GContext(g):
         g.comment('hill')
-        g.relative()
+        g.absolute()
         g.feed(mat['feed_rate'])
         g.spindle('CW', mat['spindle_speed'])
+        g.move(x=0, y=0, z=0)
+        g.relative()
 
         rough(1)
         rough(-1)

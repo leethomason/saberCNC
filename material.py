@@ -44,6 +44,14 @@ materials = [
              "feed_rate": 400,
              "plunge_rate": 300},
 
+            {"name": "plywood",
+             "quality": "carbide data tested",
+             "tool_size": 3.175,
+             "pass_depth": 0.86,
+             "spindle_speed": 7800,
+             "feed_rate": 1200,
+             "plunge_rate": 500},       
+
             {"name": "hardwood",
              "quality": "Carbide3D test",
              "tool_size": 3.175,
