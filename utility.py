@@ -4,6 +4,13 @@ import re
 
 CNC_TRAVEL_Z = 3.0
 
+def nomad_header(g, mat):
+    g.absolute()
+    g.absolute()
+    g.feed(mat['feed_rate'])
+    g.move(x=0, y=0, z=0)
+
+
 # Calculates relative moves to get to a final goal.
 # A goal='5' and a step='2' generates: [2, 2, 1]
 def calc_steps(goal, step):
