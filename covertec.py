@@ -18,8 +18,8 @@ def z_tool_hill_ball(dx, r_ball, r_hill):
 
 def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
     zf = math.sqrt(math.pow(r_hill - r_ball, 2) - dx * dx)
-    zhc = zf + r_ball
-    return zhc - z_hill
+    zhc = zf + r_ball - z_hill
+    return zhc
 
 def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
@@ -100,29 +100,10 @@ def valley(g, mat, diameter, dx, dy):
     doc = mat['pass_depth']
     dz_hill = -xy_circle(dy/2, r_hill)
 
-    def rough():
-        d = 0
-
-        while True:
-            y = math.sqrt(r_hill * r_hill - pow(d - doc, 2)) - mat['tool_size']
-            if y < 0:
-                return
-
-            if y > dy / 2:
-                y = dy / 2
-
-            g.move(z=-doc)
-            d = d - doc
-            g.move(y=-y)
-            flat(g, mat, dx, y * 2)
-            g.move(y=y)
-
     with GContext(g):
         g.comment('valley')
         g.spindle('CW', mat['spindle_speed'])
         g.relative()
-
-        # rough()
 
         base_step_size = 0.5
         steps = int(dy / base_step_size) + 1
