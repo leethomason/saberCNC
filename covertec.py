@@ -6,15 +6,22 @@ import math
 from plane import plane, flat
 from hole import hole
 
+
 def xy_circle(x, r):
     xy = math.sqrt(r * r - x * x)
     return xy
 
-def z_tool(dx, r_ball, r_hill):
-    z = math.sqrt(math.pow(r_ball + r_hill, 2) + dx * dx)
-    return r_ball + r_hill - z
 
-def hill(g, mat, diameter, dx, dy, ball_cutter):
+def z_tool_hill_ball(dx, r_ball, r_hill):
+    zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
+    return zhc - r_hill
+
+def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
+    zf = math.sqrt(math.pow(r_hill - r_ball, 2) - dx * dx)
+    zhc = zf + r_ball
+    return zhc - z_hill
+
+def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
     pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
@@ -25,8 +32,8 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
         g.move(y=hy * bias)
         d = 0
 
-        while(True):
-            x = math.sqrt(r_hill*r_hill - math.pow(r_hill - (doc - d), 2.0))
+        while (True):
+            x = math.sqrt(r_hill * r_hill - math.pow(r_hill - (doc - d), 2.0))
             cut_y = hy - x - pht
 
             if cut_y < 0:
@@ -35,8 +42,8 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
                 return
 
             d = d - doc
-            g.move(x=dx, z=-doc/2)
-            g.move(x=-dx, z=-doc/2)
+            g.move(x=dx, z=-doc / 2)
+            g.move(x=-dx, z=-doc / 2)
             flat(g, mat, dx, -cut_y * bias)
 
     def smooth(bias):
@@ -61,11 +68,11 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
 
             g.move(y=step * bias)
 
-            zt = z_tool(y, ht, r_hill)
-            g.move(z = zt - d)
+            zt = z_tool_hill_ball(y, ht, r_hill)
+            g.move(z=zt - d)
             d = zt
-        
-        g.move(z=-d) 
+
+        g.move(z=-d)
         if lowX is False:
             g.move(x=-dx)
         g.move(y=-y * bias)
@@ -84,22 +91,85 @@ def hill(g, mat, diameter, dx, dy, ball_cutter):
         g.move(z=CNC_TRAVEL_Z)
         g.spindle()
 
+
+def valley(g, mat, diameter, dx, dy):
+    r_hill = diameter / 2
+    pht = mat['tool_size'] * 0.8
+    ht = mat['tool_size'] * 0.5
+    hy = dy / 2
+    doc = mat['pass_depth']
+    dz_hill = -xy_circle(dy/2, r_hill)
+
+    def rough():
+        d = 0
+
+        while True:
+            y = math.sqrt(r_hill * r_hill - pow(d - doc, 2)) - mat['tool_size']
+            if y < 0:
+                return
+
+            if y > dy / 2:
+                y = dy / 2
+
+            g.move(z=-doc)
+            d = d - doc
+            g.move(y=-y)
+            flat(g, mat, dx, y * 2)
+            g.move(y=y)
+
+    with GContext(g):
+        g.comment('valley')
+        g.spindle('CW', mat['spindle_speed'])
+        g.relative()
+
+        # rough()
+
+        base_step_size = 0.5
+        steps = int(dy / base_step_size) + 1
+        step_size = dy / (steps-1)
+
+        g.move(y=-dy/2)
+        lowX = True
+        z = 0
+        dz = math.sqrt(r_hill*r_hill - dy*dy/4)
+
+        for i in range(0, steps):
+            new_z = z_tool_valley_ball(-dy/2 + i * step_size, ht, r_hill, dz) 
+            g.move(z=z - new_z)
+            z = new_z
+
+            if lowX is True:
+                g.move(x=dx)
+            else:
+                g.move(x=-dx)
+            lowX = not lowX
+            if (i < steps - 1):
+                g.move(y=step_size)
+        
+        if lowX is False:
+            g.move(x=-dx)
+        g.move(y=-dy/2)
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Cut out the cylinder body for a part ot attach to.')
+        description='Cut out a cylinder or valley. Very carefully accounts for tool geometry.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
-    parser.add_argument('diameter', help='diameter of the cylinder the part abuts to.', type=float)
-    parser.add_argument('dx', help='width of cut', type=float)
-    parser.add_argument('dy', help='length of the cut', type=float)
+    parser.add_argument('diameter', help='diameter of the cylinder.', type=float)
+    parser.add_argument('dx', help='dx of the cut, flat over the x direction', type=float)
+    parser.add_argument('dy', help='dy of the cut, curves over the y direction', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)
+    parser.add_argument('-v', '--valley', help='cut a valley instead of a hill', action='store_true')
+    # parser.add_argument('-t', '--tool', help='"ball" (default) or flat')
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     mat = init_material(args.material)
     nomad_header(g, mat)
 
-    # covertec(g, mat, args.diameter, args.dy, args.dy, args.overlap)
-    hill(g, mat, args.diameter, args.dx, args.dy, True)
+    if args.valley is True:
+        valley(g, mat, args.diameter, args.dx, args.dy)
+    else:
+        hill(g, mat, args.diameter, args.dx, args.dy)
 
 
 if __name__ == "__main__":
