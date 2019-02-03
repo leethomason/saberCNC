@@ -19,7 +19,7 @@ def z_tool_hill_ball(dx, r_ball, r_hill):
 def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
     zf = math.sqrt(math.pow(r_hill - r_ball, 2) - dx * dx)
     zhc = zf + r_ball - z_hill
-    return zhc
+    return -zhc
 
 def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
@@ -111,13 +111,13 @@ def valley(g, mat, diameter, dx, dy):
 
         g.move(y=-dy/2)
         lowX = True
-        z = 0
+
         dz = math.sqrt(r_hill*r_hill - dy*dy/4)
+        origin_z = g.current_position['z']
 
         for i in range(0, steps):
-            new_z = z_tool_valley_ball(-dy/2 + i * step_size, ht, r_hill, dz) 
-            g.move(z=z - new_z)
-            z = new_z
+            z = origin_z + z_tool_valley_ball(-dy/2 + i * step_size, ht, r_hill, dz) 
+            g.abs_move(z=z)
 
             if lowX is True:
                 g.move(x=dx)
