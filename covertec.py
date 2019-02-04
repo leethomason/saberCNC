@@ -110,11 +110,17 @@ def valley(g, mat, diameter, dx, dy):
         g.move(y=-cut_y/2)
 
         for i in range(0, steps):
-            if i > 0:
-                g.move(y=step_size)
-
             z = origin_z + z_tool_valley_ball(-cut_y/2 + i * step_size, ht, r_hill, dz) 
-            g.abs_move(z=z)
+
+            if i * step_size < 0:
+                if i > 0:
+                    # move y THEN z
+                    g.move(y=step_size)
+                    g.abs_move(z=z)
+                else:
+                    # z THEN y
+                    g.abs_move(z=z)
+                    g.move(y=step_size)
 
             if low_x is True:
                 g.move(x=dx)
