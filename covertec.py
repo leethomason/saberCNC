@@ -97,7 +97,6 @@ def valley(g, mat, diameter, dx, dy):
     pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
 
-    origin_x = g.current_position['x']
     origin_y = g.current_position['y']
     origin_z = g.current_position['z']
 
