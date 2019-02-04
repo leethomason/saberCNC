@@ -96,6 +96,9 @@ def valley(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
     pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
+
+    origin_x = g.current_position['x']
+    origin_y = g.current_position['y']
     origin_z = g.current_position['z']
 
     def cut(cut_y, base_step_size):
@@ -110,23 +113,14 @@ def valley(g, mat, diameter, dx, dy):
         g.move(y=-cut_y/2)
 
         for i in range(0, steps):
-            z = origin_z + z_tool_valley_ball(-cut_y/2 + i * step_size, ht, r_hill, dz) 
-
-            if i * step_size < 0:
-                if i > 0:
-                    # move y THEN z
-                    g.move(y=step_size)
-                    g.abs_move(z=z)
-                else:
-                    # z THEN y
-                    g.abs_move(z=z)
-                    g.move(y=step_size)
-
             if low_x is True:
                 g.move(x=dx)
             else:
                 g.move(x=-dx)
             low_x = not low_x
+
+            z = origin_z + z_tool_valley_ball(-cut_y/2 + i * step_size, ht, r_hill, dz) 
+            g.abs_move(y=origin_y + -cut_y/2 + i*step_size, z=z)
         
         if low_x is False:
             g.move(x=-dx)
