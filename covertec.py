@@ -96,40 +96,53 @@ def valley(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
     pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
-    hy = dy / 2
-    doc = mat['pass_depth']
-    dz_hill = -xy_circle(dy/2, r_hill)
+    origin_z = g.current_position['z']
+
+    def cut(cut_y, base_step_size):
+        steps = int(cut_y / base_step_size) + 1
+        step_size = cut_y / (steps-1)
+
+        low_x = True
+        dz = math.sqrt(r_hill*r_hill - cut_y * cut_y / 4)
+        
+        z = origin_z + z_tool_valley_ball(-cut_y/2, ht, r_hill, dz) 
+        g.abs_move(z=z)
+        g.move(y=-cut_y/2)
+
+        for i in range(0, steps):
+            if i > 0:
+                g.move(y=step_size)
+
+            z = origin_z + z_tool_valley_ball(-cut_y/2 + i * step_size, ht, r_hill, dz) 
+            g.abs_move(z=z)
+
+            if low_x is True:
+                g.move(x=dx)
+            else:
+                g.move(x=-dx)
+            low_x = not low_x
+        
+        if low_x is False:
+            g.move(x=-dx)
+
+        g.move(y=-cut_y/2)
+        g.abs_move(origin_z)
 
     with GContext(g):
         g.comment('valley')
         g.spindle('CW', mat['spindle_speed'])
         g.relative()
 
-        base_step_size = 0.5
-        steps = int(dy / base_step_size) + 1
-        step_size = dy / (steps-1)
+        rough_cut = mat['tool_size']
+        i = 0
+        while rough_cut < dy:
+            g.comment("Rough {0} dy={1}".format(i, rough_cut))
+            cut(rough_cut, pht)
+            rough_cut += mat['tool_size']
+            i += 1
 
-        g.move(y=-dy/2)
-        lowX = True
-
-        dz = math.sqrt(r_hill*r_hill - dy*dy/4)
-        origin_z = g.current_position['z']
-
-        for i in range(0, steps):
-            z = origin_z + z_tool_valley_ball(-dy/2 + i * step_size, ht, r_hill, dz) 
-            g.abs_move(z=z)
-
-            if lowX is True:
-                g.move(x=dx)
-            else:
-                g.move(x=-dx)
-            lowX = not lowX
-            if (i < steps - 1):
-                g.move(y=step_size)
-        
-        if lowX is False:
-            g.move(x=-dx)
-        g.move(y=-dy/2)
+        g.comment("Smooth")
+        cut(dy, 0.5)
 
 def main():
     parser = argparse.ArgumentParser(
