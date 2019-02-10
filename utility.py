@@ -6,9 +6,11 @@ CNC_TRAVEL_Z = 3.0
 
 def nomad_header(g, mat, z_start):
     g.absolute()
-    g.absolute()
     g.feed(mat['feed_rate'])
     g.move(x=0, y=0, z=z_start)
+
+def tool_change(g, name: int):
+    g.write("M6 {0}".format(name))
 
 
 # Calculates relative moves to get to a final goal.
@@ -34,7 +36,7 @@ def calc_steps(goal, step):
     return list(map(lambda x: round(x * bias, 5), steps))
 
 
-def run_3_stages(path, g, steps):
+def run_3_stages(path, g, steps, need_final_pass=True):
     g.comment("initial pass")
     path(g, 0)
 
@@ -48,7 +50,8 @@ def run_3_stages(path, g, steps):
         path(g, d)
 
     g.comment('final pass')
-    path(g, 0)
+    if need_final_pass:
+        path(g, 0)
     g.comment('complete')
 
 

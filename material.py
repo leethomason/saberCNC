@@ -25,7 +25,7 @@ materials = [
              "tool_size": 3.175,
              "pass_depth": 0.76,
              "spindle_speed": 4500,
-             "feed_rate": 1828,
+             "feed_rate": 2100,
              "plunge_rate": 812},
 
             {"name": "pine",

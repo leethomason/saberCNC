@@ -16,12 +16,18 @@ def flat(g, mat, dx, dy, overlap_fraction=0.8):
             line_step = dy / (num_lines - 1)
 
         g.comment("Flat")
+        is_out = False
         for i in range(0, num_lines):
-            g.move(x=dx)
-            g.move(x=-dx)
+            if is_out:
+                g.move(x=-dx)
+            else:
+                g.move(x=dx)
+            is_out = not is_out
             if i < num_lines - 1:
                 g.move(y=line_step)
 
+        if is_out:
+            g.move(x=-dx)
         g.move(y=-dy)
         g.comment("...flat done")
 
@@ -44,7 +50,7 @@ def plane(g, mat, depth, dx, dy, overlap_fraction=0.8):
             # now the business of cutting.
             flat(g, mat, dx, dy, overlap_fraction)
 
-        run_3_stages(path, g, calc_steps(depth, -mat['pass_depth']))
+        run_3_stages(path, g, calc_steps(depth, -mat['pass_depth']), False)
         g.move(z=-depth)
 
 

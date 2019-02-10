@@ -94,7 +94,8 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Cut a capsule of rectangle width ard swing-radius. Accounts for tool size! Origin is at the center of the rectangle.')
+        description='Cut a capsule of rectangle width ard swing-radius. Accounts for tool size! ' +
+                    'Origin is at the center of the rectangle.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('x', help='size of rectangle for x cut', type=float)
