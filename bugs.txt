@@ -1,6 +1,6 @@
 - deploy nomad_init to various tools
 - pocket / inside / outside / middle support
-- speed up the hill cuts 2x
 
 fixed:
 x plane double cuts the final z
+x speed up the hill cuts 2x

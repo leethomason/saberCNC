@@ -11,6 +11,10 @@ def xy_circle(x, r):
     xy = math.sqrt(r * r - x * x)
     return xy
 
+'''
+This was great! Until the smooth end of the ball doesn't really cut,
+it just burns the wood. Need a proper cutting edge for this to work.
+Glad I didn't test on aluminum.
 
 def z_tool_hill_ball(dx, r_ball, r_hill):
     zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
@@ -20,13 +24,32 @@ def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
     zf = math.sqrt(math.pow(r_hill - r_ball, 2) - dx * dx)
     zhc = zf + r_ball - z_hill
     return -zhc
+'''
+
+def z_tool_hill(dx, r_tool, r_hill):
+    if dx <= r_tool:
+        # hits the bottom of the tool
+        return 0
+    
+    # else hits the edge. Probably not great for the tool.
+    return math.sqrt(math.pow(r_hill, 2) - math.pow(dx - r_tool, 2)) - r_hill
+
+def z_tool_valley(dx, r_tool, r):
+    # in a valley, always hits one edge or the other.
+    x0 = dx - r_tool
+    x1 = dx + r_tool
+
+    x = min(abs(x0), abs(x1))
+
+    return r - math.sqrt(r * r - x * x)
+
 
 def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
     pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
-    doc = mat['pass_depth']
+    doc = mat['pass_depth']   
 
     def rough(bias):
         g.move(y=hy * bias)
@@ -44,10 +67,9 @@ def hill(g, mat, diameter, dx, dy):
             d = d - doc
             g.move(x=dx, z=-doc / 2)
             g.move(x=-dx, z=-doc / 2)
-            flat(g, mat, dx, -cut_y * bias)
+            flat(g, mat, dx, -cut_y * bias) 
 
-    def smooth(bias):
-        base_step = 0.8
+    def smooth(bias, step):
         y = 0
         d = 0
         lowX = True
@@ -59,16 +81,16 @@ def hill(g, mat, diameter, dx, dy):
                 g.move(x=-dx)
             lowX = not lowX
 
-            step = (1 - y / r_hill) * base_step
             if y + step > hy:
                 step = hy - y
                 y = hy
             else:
                 y += step
 
+            #z = z_tool_hill(y, ht, r_hill)
             g.move(y=step * bias)
 
-            zt = z_tool_hill_ball(y, ht, r_hill)
+            zt = z_tool_hill(y, ht, r_hill)
             g.move(z=zt - d)
             d = zt
 
@@ -84,9 +106,8 @@ def hill(g, mat, diameter, dx, dy):
 
         rough(1)
         rough(-1)
-
-        smooth(1)
-        smooth(-1)
+        smooth(1, 0.5)
+        smooth(-1, 0.5)
 
         g.move(z=CNC_TRAVEL_Z)
         g.spindle()
@@ -104,12 +125,13 @@ def valley(g, mat, diameter, dx, dy):
         steps = int(cut_y / base_step_size) + 1
         step_size = cut_y / (steps-1)
 
-        low_x = True
-        dz = math.sqrt(r_hill*r_hill - cut_y * cut_y / 4)
-        
-        z = origin_z + z_tool_valley_ball(-cut_y/2, ht, r_hill, dz) 
+        #dz = r_hill - math.sqrt(r_hill*r_hill - dy*dy/4)
+        dz = z_tool_valley(cut_y/2, ht, r_hill)
+
+        low_x = True        
+        z = origin_z + z_tool_valley(-cut_y/2, ht, r_hill) - dz
+        g.abs_move(y=origin_y -cut_y/2)
         g.abs_move(z=z)
-        g.move(y=-cut_y/2)
 
         for i in range(0, steps):
             if low_x is True:
@@ -118,11 +140,12 @@ def valley(g, mat, diameter, dx, dy):
                 g.move(x=-dx)
             low_x = not low_x
 
-            z = origin_z + z_tool_valley_ball(-cut_y/2 + i * step_size, ht, r_hill, dz) 
+            z = origin_z + z_tool_valley(-cut_y/2 + i * step_size, ht, r_hill) - dz 
             g.abs_move(y=origin_y + -cut_y/2 + i*step_size, z=z)
         
         if low_x is False:
             g.move(x=-dx)
+
 
         g.move(y=-cut_y/2)
         g.abs_move(origin_z)
@@ -131,7 +154,7 @@ def valley(g, mat, diameter, dx, dy):
         g.comment('valley')
         g.spindle('CW', mat['spindle_speed'])
         g.relative()
-
+        
         rough_cut = mat['tool_size']
         i = 0
         while rough_cut < dy:
@@ -157,7 +180,9 @@ def main():
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     mat = init_material(args.material)
-    nomad_header(g, mat)
+    
+    nomad_header(g, mat, CNC_TRAVEL_Z)
+    g.move(z=0)
 
     if args.valley is True:
         valley(g, mat, args.diameter, args.dx, args.dy)
