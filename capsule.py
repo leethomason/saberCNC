@@ -5,7 +5,7 @@ from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
 import math
 
-def capsule(g, mat, cut_depth, x, y, d, outer, axis):
+def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
 
     with GContext(g):
         g.relative()
@@ -19,18 +19,28 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
         # Math time: (worked out using the pythagorean theorem)
         # r = (d/2) + y**2 / (8*d)
         # r: radius
-        # d: deflection
         # y: width in y direction
 
         # The edge of the tool is kept at x0, so
         # the deflection doesn't need to account for tool size.
 
-        yo = y - tool_size
-        r = 0
-        if d is not None:
-            r = (d / 2.0) + yo ** 2 / (8.0 * d)
-        if r == 0:
-            r = (y - tool_size) / 2
+        pocket = 0
+
+        if offset == 'inside' or offset == 'pocket':
+            y = y - tool_size
+            x = y - tool_size
+            if offset == 'pocket':
+                pocket = tool_size * 0.75
+
+        elif offset == 'outside':
+            y = y + tool_size
+            x = x + tool_size
+        elif offset == 'middle':
+            pass
+        else:
+            raise RuntimeError("offset not correctly specified")
+
+        r = y / 2
 
         # print("r", r, "d", d, "yo", yo, "y", y)
         if outer:
@@ -47,21 +57,36 @@ def capsule(g, mat, cut_depth, x, y, d, outer, axis):
             g.do_simple_transform(True)
 
         def path(g, plunge):
-            g.arc2(x=0, y=-(y - tool_size), i=0, j=-(y - tool_size)/2, direction='CCW')
-            g.move(x=(x - tool_size), z=plunge / 2)
-            g.arc2(x=0, y=(y - tool_size), i=0, j=(y - tool_size)/2, direction='CCW')
-            g.move(x=-(x - tool_size), z=plunge / 2)
+            y_prime = y
+            plunge_prime = plunge
+            y_fix = 0
 
-        g.move(x=-x / 2 + half_tool)
-        g.move(y=y / 2 - half_tool)
+            while y_prime > 0:
+                g.arc2(x=0, y=-y_prime, i=0, j=-y_prime/2, direction='CCW')
+                g.move(x=x, z=plunge_prime / 2)
+                g.arc2(x=0, y=y_prime, i=0, j=y_prime/2, direction='CCW')
+                g.move(x=-x, z=plunge_prime / 2)
+
+                if pocket == 0:
+                    break
+
+                plunge_prime = 0
+                y_prime -= pocket
+                y_fix += pocket
+                g.move(y=-pocket/2)
+
+            g.move(y=y_fix/2)
+
+        g.move(x=-x / 2)
+        g.move(y=y / 2)
         g.move(z=-CNC_TRAVEL_Z)
         steps = calc_steps(cut_depth, -mat['pass_depth'])
         run_3_stages(path, g, steps)
 
         g.move(z=-cut_depth)  # up to the starting point
         g.move(z=CNC_TRAVEL_Z)
-        g.move(y=-(y / 2 - half_tool))
-        g.move(x=x / 2 - half_tool)
+        g.move(y=-(y / 2))
+        g.move(x=x / 2)
 
         if axis == 'y':
             g.do_simple_transform(False)
@@ -74,15 +99,16 @@ def main():
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('x', help='size of rectangle for x cut', type=float)
     parser.add_argument('y', help='size of rectangle for y cut', type=float)
-    parser.add_argument('-d', '--deflection', help='deflection in x axis at center of arc', type=float, default=None)
-    parser.add_argument('-o', '--outer', help="x, y are the outer dimensions.", action="store_true", default=False)
+    parser.add_argument('offset', help='inside, outside, middle', type=str)
+    parser.add_argument('-o', '--outer', help="if set, x is interpreted as outer dimension, and will be reduced by the radius", 
+                        action="store_true", default=False)
     parser.add_argument('-a', '--axis', help="axis for the capsule.", type=str, default='x')
 
     args = parser.parse_args()
 
     mat = init_material(args.material)
     g = GMatrix(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    capsule(g, mat, args.depth, args.x, args.y, args.deflection, args.outer, args.axis)
+    capsule(g, mat, args.depth, args.x, args.y, args.offset, args.outer, args.axis)
     g.spindle()
 
 
