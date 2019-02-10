@@ -4,12 +4,12 @@ from material import init_material
 from utility import *
 
 
-# assume we are at (x, y, CNC_TRAVEL_Z)
+# assume we are at (x, y)
 def drill(g, mat, cut_depth):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
 
-    with GContext(g, z=CNC_TRAVEL_Z):
+    with GContext(g):
         g.absolute()
 
         num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
@@ -31,12 +31,6 @@ def drill(g, mat, cut_depth):
         g.move(z=0)
         g.dwell(0.250)
 
-        # switch back to feed_rate *before* going up, so we don't see the bit
-        # rise in slowwww motionnnn
-        g.feed(mat['travel_plunge'])
-        g.move(z=CNC_TRAVEL_Z)
-
-
 def drill_points(g, mat, cut_depth, points):
     with GContext(g):
         g.absolute()
@@ -44,12 +38,13 @@ def drill_points(g, mat, cut_depth, points):
 
         for p in points:
             g.feed(mat['travel_feed'])
+            g.move(z=CNC_TRAVEL_Z)
             g.move(x=p['x'], y=p['y'])
             drill(g, mat, cut_depth)
 
         # Leaves the head at CNC_TRAVEL_Z)
+        g.move(z=CNC_TRAVEL_Z)
         g.move(x=0, y=0)
-
 
 def main():
     try:
@@ -73,6 +68,7 @@ def main():
     cut_depth = float(sys.argv[2])
     points = []
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
+    nomad_header(g)
 
     if not is_number_pairs:
         filename = sys.argv[3]

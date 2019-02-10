@@ -4,11 +4,13 @@ import re
 
 CNC_TRAVEL_Z = 3.0
 
-def nomad_header(g, mat):
+def nomad_header(g):
     g.absolute()
-    g.absolute()
-    g.feed(mat['feed_rate'])
-    g.move(x=0, y=0, z=0)
+    g.feed(500)
+    g.move(x=0, y=0, z=20)
+
+def tool_change(g, name):
+    g.write("M6 " + name)
 
 
 # Calculates relative moves to get to a final goal.
