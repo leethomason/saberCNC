@@ -3,7 +3,7 @@ from material import init_material
 from utility import CNC_TRAVEL_Z, GContext, nomad_header
 import argparse
 import math
-from plane import plane, flat
+from plane import plane, square
 from hole import hole
 
 
@@ -67,7 +67,7 @@ def hill(g, mat, diameter, dx, dy):
             d = d - doc
             g.move(x=dx, z=-doc / 2)
             g.move(x=-dx, z=-doc / 2)
-            flat(g, mat, dx, -cut_y * bias) 
+            square(g, mat, dx, -cut_y * bias, True) 
 
     def smooth(bias, step):
         y = 0
@@ -175,7 +175,6 @@ def main():
     parser.add_argument('dy', help='dy of the cut, curves over the y direction', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)
     parser.add_argument('-v', '--valley', help='cut a valley instead of a hill', action='store_true')
-    # parser.add_argument('-t', '--tool', help='"ball" (default) or flat')
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)

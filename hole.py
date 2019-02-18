@@ -7,7 +7,7 @@ import argparse
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
 # accounts for tool size
-def hole(g, mat, cut_depth, radius, offset):
+def hole(g, mat, cut_depth, radius, offset='inside'):
     tool_size = mat['tool_size']
     half_tool = tool_size / 2
 
