@@ -7,21 +7,25 @@ import argparse
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
 # accounts for tool size
-def hole(g, mat, cut_depth, radius):
-    radius_inner = radius - mat['tool_size'] / 2
+def hole(g, mat, cut_depth, radius, offset):
+    tool_size = mat['tool_size']
+    half_tool = tool_size / 2
 
-    if radius_inner < 0.1:
+    if offset == 'inside':
+        radius_inner = radius - half_tool
+    elif offset == 'outside':
+        radius_inner = radius + half_tool
+    elif offset == 'middle':
+        radius_inner = radius
+    else:
+        raise RuntimeError("offset not correctly specified")
+
+    if radius_inner < 0.2:
         raise RuntimeError("Radius too small. Consider a drill.")
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
-
-    circumference = 2.0 * radius_inner * math.pi
-    STEPS = 16
-    smooth = math.floor(circumference)  # set to 1mm is "smooth" - could add a factor
-    if smooth > STEPS:
-        STEPS = smooth
 
     with GContext(g, z=CNC_TRAVEL_Z):
         g.relative()
@@ -33,7 +37,6 @@ def hole(g, mat, cut_depth, radius):
         g.comment("pass depth=" + str(mat['pass_depth']))
         g.comment("feed rate=" + str(mat['feed_rate']))
         g.comment("plunge rate=" + str(mat['plunge_rate']))
-        g.comment("steps for linear approx=" + str(STEPS))
 
         # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
         # Approaches below.
@@ -75,19 +78,6 @@ def hole(g, mat, cut_depth, radius):
             g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
 
-            # prev_x = radius_inner
-            # prev_y = 0
-
-            # for i in range(0, STEPS):
-            #     idx = float(i + 1)
-            #     ax = math.cos(2.0 * math.pi * idx / STEPS) * radius_inner
-            #     ay = math.sin(2.0 * math.pi * idx / STEPS) * radius_inner
-            #     x = ax - prev_x
-            #     y = ay - prev_y
-            #     prev_x = ax
-            #     prev_y = ay
-            #     g.move(x=x, y=y, z=plunge / STEPS)
-
         steps = calc_steps(cut_depth, -depth_of_cut)
         run_3_stages(path, g, steps)
 
@@ -103,7 +93,7 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
         g.feed(mat['travel_feed'])
         g.move(z=CNC_TRAVEL_Z)
         g.move(x=x, y=y)
-        hole(g, mat, cut_depth, radius)
+        hole(g, mat, cut_depth, radius, "inside")
         g.absolute()
 
 
@@ -113,7 +103,7 @@ def hole_or_drill(g, mat, cut_depth, radius):
         return "mark"
     elif mat['tool_size'] + 0.1 < radius * 2:
         if g:
-            hole(g, mat, cut_depth, radius)
+            hole(g, mat, cut_depth, radius, "inside")
         return "hole"
     else:
         if g:
@@ -124,8 +114,7 @@ def hole_or_drill(g, mat, cut_depth, radius):
 def main():
     parser = argparse.ArgumentParser(
         description='Cut a hole at given radius and depth. Implemented with helical arcs,' +
-                    'and avoids plunging. (BUG: currently using linear approximation due' +
-                    'to Carbide Motion throwing a validation error.)')
+                    'and avoids plunging.')
     parser.add_argument('material', help='The material to cut in standard machine-material-size format.', type=str)
     parser.add_argument('depth', help='Depth of the cut. Must be negative.', type=float)
     parser.add_argument('radius', help='Radius of the hole.', type=float)
@@ -134,7 +123,7 @@ def main():
     mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     g.move(z=CNC_TRAVEL_Z)
-    hole(g, mat, args.depth, args.radius)
+    hole(g, mat, args.depth, args.radius, "inside")
     g.spindle()
 
 

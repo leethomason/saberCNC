@@ -5,36 +5,41 @@ from material import init_material
 from utility import *
 import argparse
 
-def flat(g, mat, dx, dy, overlap_fraction=0.8):
+OVERLAP = 0.80
+
+def square(g, mat, dx, dy, fill : bool):
     with GContext(g):
         g.relative()
 
-        num_lines = int(math.ceil(abs(dy) / (mat['tool_size'] * overlap_fraction))) + 1
-        
-        line_step = 0
-        if num_lines > 1:
-            line_step = dy / (num_lines - 1)
+        if fill:
+            num_lines = int(math.ceil(abs(dy) / (mat['tool_size'] * OVERLAP))) + 1
+            
+            line_step = 0
+            if num_lines > 1:
+                line_step = dy / (num_lines - 1)
 
-        g.comment("Flat")
-        is_out = False
-        for i in range(0, num_lines):
+            g.comment("Square fill={0}".format(fill))
+            is_out = False
+            for i in range(0, num_lines):
+                if is_out:
+                    g.move(x=-dx)
+                else:
+                    g.move(x=dx)
+                is_out = not is_out
+                if i < num_lines - 1:
+                    g.move(y=line_step)
+
             if is_out:
                 g.move(x=-dx)
-            else:
-                g.move(x=dx)
-            is_out = not is_out
-            if i < num_lines - 1:
-                g.move(y=line_step)
+            g.move(y=-dy)
 
-        if is_out:
+        else:
+            g.move(x=dx)
+            g.move(y=dy)
             g.move(x=-dx)
-        g.move(y=-dy)
-        g.comment("...flat done")
+            g.move(y=-dy)
 
-def plane(g, mat, depth, dx, dy, overlap_fraction=0.8):
-    if overlap_fraction <= 0.1 or overlap_fraction >= 1:
-        raise RuntimeError("step must be between 0 and 1 exclusive")
- 
+def plane(g, mat, depth, dx, dy):
     with GContext(g):
         g.comment("Plane depth = {} size = {}, {}".format(depth, dx, dy))
         g.relative()
@@ -48,7 +53,7 @@ def plane(g, mat, depth, dx, dy, overlap_fraction=0.8):
             g.move(x=-dx, z=dz/2)
 
             # now the business of cutting.
-            flat(g, mat, dx, dy, overlap_fraction)
+            square(g, mat, dx, dy, True)
 
         run_3_stages(path, g, calc_steps(depth, -mat['pass_depth']), False)
         g.move(z=-depth)
