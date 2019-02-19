@@ -3,7 +3,7 @@ from material import init_material
 from utility import CNC_TRAVEL_Z, GContext, nomad_header
 import argparse
 import math
-from plane import plane, flat
+from plane import plane, square
 from hole import hole
 
 
@@ -50,26 +50,9 @@ def hill(g, mat, diameter, dx, dy):
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
     doc = mat['pass_depth']   
+    edge_z = z_tool_hill(hy, ht, r_hill)
 
-    def rough(bias):
-        g.move(y=hy * bias)
-        d = 0
-
-        while (True):
-            x = math.sqrt(r_hill * r_hill - math.pow(r_hill - (doc - d), 2.0))
-            cut_y = hy - x - pht
-
-            if cut_y < 0:
-                g.move(z=-d)
-                g.move(y=-hy * bias)
-                return
-
-            d = d - doc
-            g.move(x=dx, z=-doc / 2)
-            g.move(x=-dx, z=-doc / 2)
-            flat(g, mat, dx, -cut_y * bias) 
-
-    def smooth(bias, step):
+    def smooth(bias, step, min_z):
         y = 0
         d = 0
         lowX = True
@@ -82,35 +65,42 @@ def hill(g, mat, diameter, dx, dy):
             lowX = not lowX
 
             if y + step > hy:
-                step = hy - y
                 y = hy
             else:
-                y += step
+                y += step * (1 - y / r_hill)
 
-            #z = z_tool_hill(y, ht, r_hill)
-            g.move(y=step * bias)
+            g.abs_move(y=y * bias)
 
             zt = z_tool_hill(y, ht, r_hill)
-            g.move(z=zt - d)
-            d = zt
+            z_prime = max(zt, min_z)
+            g.move(z=z_prime - d)
+            d = z_prime
 
         g.move(z=-d)
         if lowX is False:
             g.move(x=-dx)
         g.move(y=-y * bias)
 
+    def oneSide(bias):
+        z_min = -doc
+        step = pht
+
+        while(z_min > edge_z):
+            smooth(bias, step, z_min)
+            z_min -= doc
+            step *= 0.7
+
+        smooth(bias, 0.5, -r_hill)
+
     with GContext(g):
         g.comment('hill')
-        g.spindle('CW', mat['spindle_speed'])
         g.relative()
+        g.spindle('CW', mat['spindle_speed'])
 
-        rough(1)
-        rough(-1)
-        smooth(1, 0.5)
-        smooth(-1, 0.5)
+        oneSide(1)
+        oneSide(-1)
 
         g.move(z=CNC_TRAVEL_Z)
-        g.spindle()
 
 
 def valley(g, mat, diameter, dx, dy):
@@ -188,7 +178,7 @@ def main():
         valley(g, mat, args.diameter, args.dx, args.dy)
     else:
         hill(g, mat, args.diameter, args.dx, args.dy)
-
+    g.spindle()
 
 if __name__ == "__main__":
     main()
