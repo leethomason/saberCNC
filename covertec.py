@@ -44,17 +44,10 @@ def hill(g, mat, diameter, dx, dy):
     origin_y = g.current_position['y']
     origin_z = g.current_position['z']
 
-<<<<<<< HEAD
     def arc(bias, step_rad, fill):
         num_steps = math.ceil(max_angle / step_rad) + 1
         step = max_angle / (num_steps - 1)
         low_x = True
-=======
-            d = d - doc
-            g.move(x=dx, z=-doc / 2)
-            g.move(x=-dx, z=-doc / 2)
-            square(g, mat, dx, -cut_y * bias, True) 
->>>>>>> 4f1e5395e4a9f0b1e58339fba983e11a1c667e6d
 
         for i in range(0, num_steps):
             theta = i * step
