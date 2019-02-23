@@ -7,10 +7,6 @@ from plane import plane, square
 from hole import hole
 
 
-def xy_circle(x, r):
-    xy = math.sqrt(r * r - x * x)
-    return xy
-
 '''
 This was great! Until the smooth end of the ball doesn't really cut,
 it just burns the wood. Need a proper cutting edge for this to work.
@@ -26,79 +22,69 @@ def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
     return -zhc
 '''
 
-def z_tool_hill(dx, r_tool, r_hill):
-    if dx <= r_tool:
-        # hits the bottom of the tool
-        return 0
-    
-    # else hits the edge. Probably not great for the tool.
-    return math.sqrt(math.pow(r_hill, 2) - math.pow(dx - r_tool, 2)) - r_hill
-
 def z_tool_valley(dx, r_tool, r):
     # in a valley, always hits one edge or the other.
     x0 = dx - r_tool
     x1 = dx + r_tool
 
-    x = min(abs(x0), abs(x1))
-
-    return r - math.sqrt(r * r - x * x)
+    z0 = r - math.sqrt(r * r - x0 * x0)
+    z1 = r - math.sqrt(r * r - x1 * x1)
+    return max(z0, z1)
 
 
 def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
-    pht = mat['tool_size'] * 0.8
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
     doc = mat['pass_depth']   
-    edge_z = z_tool_hill(hy, ht, r_hill)
 
-    def smooth(bias, step, min_z):
-        y = 0
-        d = 0
-        lowX = True
+    mm_per_rad = r_hill
+    max_angle = math.asin(hy / r_hill)
 
-        while y != hy:
-            if lowX is True:
-                g.move(x=dx)
+    origin_y = g.current_position['y']
+    origin_z = g.current_position['z']
+
+    def arc(bias, step_rad, fill):
+        num_steps = math.ceil(max_angle / step_rad) + 1
+        step = max_angle / (num_steps - 1)
+        low_x = True
+
+        for i in range(0, num_steps):
+            theta = i * step
+
+            # out then down
+            y = math.sin(theta) * r_hill
+            head_y = y + ht
+            g.abs_move(y=origin_y + head_y * bias)
+            g.abs_move(z=origin_z - r_hill * (1.0 - math.cos(theta)))
+
+            if fill:
+                if hy + ht - head_y > 0:
+                    square(g, mat, dx, (hy + ht - head_y) * bias, True)
             else:
-                g.move(x=-dx)
-            lowX = not lowX
+                if low_x is True:
+                    g.move(x=dx)
+                    low_x = False
+                else:
+                    g.move(x=-dx)
+                    low_x = True
 
-            if y + step > hy:
-                y = hy
-            else:
-                y += step * (1 - y / r_hill)
-
-            g.abs_move(y=y * bias)
-
-            zt = z_tool_hill(y, ht, r_hill)
-            z_prime = max(zt, min_z)
-            g.move(z=z_prime - d)
-            d = z_prime
-
-        g.move(z=-d)
-        if lowX is False:
+        if low_x is False:
             g.move(x=-dx)
-        g.move(y=-y * bias)
-
-    def oneSide(bias):
-        z_min = -doc
-        step = pht
-
-        while(z_min > edge_z):
-            smooth(bias, step, z_min)
-            z_min -= doc
-            step *= 0.7
-
-        smooth(bias, 0.5, -r_hill)
+        g.abs_move(z=origin_z)
+        g.abs_move(y=origin_y)
 
     with GContext(g):
         g.comment('hill')
         g.relative()
         g.spindle('CW', mat['spindle_speed'])
 
-        oneSide(1)
-        oneSide(-1)
+        # Would only hit DoC at the extreme; conservative value.
+        arc(1, doc / mm_per_rad, True)
+        arc(1, 0.3 / mm_per_rad, False)
+
+        arc(-1, doc / mm_per_rad, True)
+        arc(-1, 0.3 / mm_per_rad, False)
 
         g.move(z=CNC_TRAVEL_Z)
 
@@ -115,7 +101,6 @@ def valley(g, mat, diameter, dx, dy):
         steps = int(cut_y / base_step_size) + 1
         step_size = cut_y / (steps-1)
 
-        #dz = r_hill - math.sqrt(r_hill*r_hill - dy*dy/4)
         dz = z_tool_valley(cut_y/2, ht, r_hill)
 
         low_x = True        
@@ -154,7 +139,7 @@ def valley(g, mat, diameter, dx, dy):
             i += 1
 
         g.comment("Smooth")
-        cut(dy, 0.5)
+        cut(dy, 0.1)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -175,7 +160,8 @@ def main():
     g.move(z=0)
 
     if args.valley is True:
-        valley(g, mat, args.diameter, args.dx, args.dy)
+        # valley(g, mat, args.diameter, args.dx, args.dy)
+        print("Need to fix valley to be smooth, if warped.")
     else:
         hill(g, mat, args.diameter, args.dx, args.dy)
     g.spindle()

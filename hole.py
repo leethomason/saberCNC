@@ -7,7 +7,7 @@ import argparse
 
 # assume we are at (x, y, CNC_TRAVEL_Z)
 # accounts for tool size
-def hole(g, mat, cut_depth, radius, offset):
+def hole(g, mat, cut_depth, radius, offset='inside'):
     tool_size = mat['tool_size']
     half_tool = tool_size / 2
 
@@ -122,7 +122,8 @@ def main():
 
     mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    g.move(z=CNC_TRAVEL_Z)
+
+    nomad_header(g, mat, CNC_TRAVEL_Z)
     hole(g, mat, args.depth, args.radius, "inside")
     g.spindle()
 
