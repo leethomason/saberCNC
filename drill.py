@@ -64,11 +64,11 @@ def main():
         print('  Travel Z={}'.format(CNC_TRAVEL_Z))
         sys.exit(1)
 
-    param = init_material(sys.argv[1])
+    mat = init_material(sys.argv[1])
     cut_depth = float(sys.argv[2])
     points = []
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    nomad_header(g)
+    nomad_header(g, mat, CNC_TRAVEL_Z)
 
     if not is_number_pairs:
         filename = sys.argv[3]
@@ -85,7 +85,7 @@ def main():
             for i in range(3, len(sys.argv), 2):
                 points.append({'x': float(sys.argv[i + 0]), 'y': float(sys.argv[i + 1])})
 
-    drill_points(g, param, cut_depth, points)
+    drill_points(g, mat, cut_depth, points)
     g.spindle()
 
 

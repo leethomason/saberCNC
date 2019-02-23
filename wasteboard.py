@@ -25,6 +25,10 @@ def board(g, mat, stock_height):
         bolt(g, mat, stock_height, 7.5,  7.5)
         bolt(g, mat, stock_height, 4.75, 4.0)
 
+        # get back to the origin, assuming the next step is a plane
+        g.move(x=0, y=0)
+        g.move(z=0)
+
 def main():
     parser = argparse.ArgumentParser(
         description='Flatten and cut holes for wasteboard. Assumes bit at lower left of plate.')
