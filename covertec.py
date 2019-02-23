@@ -44,10 +44,17 @@ def hill(g, mat, diameter, dx, dy):
     origin_y = g.current_position['y']
     origin_z = g.current_position['z']
 
+<<<<<<< HEAD
     def arc(bias, step_rad, fill):
         num_steps = math.ceil(max_angle / step_rad) + 1
         step = max_angle / (num_steps - 1)
         low_x = True
+=======
+            d = d - doc
+            g.move(x=dx, z=-doc / 2)
+            g.move(x=-dx, z=-doc / 2)
+            square(g, mat, dx, -cut_y * bias, True) 
+>>>>>>> 4f1e5395e4a9f0b1e58339fba983e11a1c667e6d
 
         for i in range(0, num_steps):
             theta = i * step
@@ -150,7 +157,6 @@ def main():
     parser.add_argument('dy', help='dy of the cut, curves over the y direction', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)
     parser.add_argument('-v', '--valley', help='cut a valley instead of a hill', action='store_true')
-    # parser.add_argument('-t', '--tool', help='"ball" (default) or flat')
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
