@@ -4,16 +4,16 @@ from hole import hole
 from utility import nomad_header, CNC_TRAVEL_Z, GContext
 import argparse
 
-BASE_OF_HEAD = 5.0      # FIXME
-D_OF_HEAD = 8.0         # FIXME
-D_OF_BOLT = 5.2         # FIXME
+BASE_OF_HEAD = 6.0      # FIXME
+D_OF_HEAD = 10.5         # FIXME
+D_OF_BOLT = 6.2         # FIXME
 IN_TO_MM = 25.4
 
 def bolt(g, mat, stock_height, x, y):
     g.feed(mat['travel_feed'])
     g.move(x=x*IN_TO_MM, y=y*IN_TO_MM)
-    hole(g, mat, -(stock_height - BASE_OF_HEAD), D_OF_HEAD)
-    hole(g, mat, -(stock_height - BASE_OF_HEAD) - 2.0, D_OF_BOLT)
+    hole(g, mat, -(stock_height - BASE_OF_HEAD), D_OF_HEAD/2)
+    hole(g, mat, -(stock_height - BASE_OF_HEAD) - 2.0, D_OF_BOLT/2)
 
 def board(g, mat, stock_height):
     with GContext(g):

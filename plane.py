@@ -48,7 +48,15 @@ def plane(g, mat, depth, dx, dy):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
-        def path(g, dz):
+        z = 0
+        while(z > depth):
+            dz = -mat['pass_depth']
+            if z + dz < depth:
+                dz = depth - z
+                z = depth
+            else:
+                z = z + dz
+
             # first line to distribute depth cut.
             g.move(x=dx, z=dz/2)
             g.move(x=-dx, z=dz/2)
@@ -56,7 +64,6 @@ def plane(g, mat, depth, dx, dy):
             # now the business of cutting.
             square(g, mat, dx, dy, True)
 
-        run_3_stages(path, g, calc_steps(depth, -mat['pass_depth']), False)
         g.move(z=-depth)
 
 
@@ -73,8 +80,15 @@ def main():
 
     mat = init_material(args.material)
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    plane(g, mat, args.depth, args.dx, args.dy)
 
+    nomad_header(g, mat, CNC_TRAVEL_Z)
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
+    g.move(z=0)
+
+    plane(g, mat, args.depth, args.dx, args.dy)
+    g.abs_move(z=CNC_TRAVEL_Z)
+    g.spindle()
 
 if __name__ == "__main__":
     main()
