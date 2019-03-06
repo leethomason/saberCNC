@@ -50,6 +50,7 @@ def hill(g, mat, diameter, dx, dy):
         num_steps = math.ceil(max_angle / step_rad) + 1
         step = max_angle / (num_steps - 1)
         low_x = True
+        last_doc = origin_z
 
         for i in range(0, num_steps):
             theta = i * step
@@ -57,10 +58,17 @@ def hill(g, mat, diameter, dx, dy):
             # out then down
             y = math.sin(theta) * r_hill
             head_y = y + ht
-            g.abs_move(y=origin_y + head_y * bias)
-            g.abs_move(z=origin_z - r_hill * (1.0 - math.cos(theta)))
+            this_z = origin_z - r_hill * (1.0 - math.cos(theta))
+            next_z = origin_z - r_hill * (1.0 - math.cos(theta + step))
 
-            if fill:
+            g.abs_move(y=origin_y + head_y * bias)
+            g.feed(mat['plunge_rate'])
+            g.abs_move(z=this_z)
+            g.feed(mat['feed_rate'])
+
+
+            if fill and (last_doc - next_z) > doc:
+                last_doc = this_z
                 if hy + ht - head_y > 0:
                     square(g, mat, dx, (hy + ht - head_y) * bias, True)
             else:
@@ -82,14 +90,14 @@ def hill(g, mat, diameter, dx, dy):
         g.spindle('CW', mat['spindle_speed'])
 
         # Would only hit DoC at the extreme; conservative value.
-        arc(1, doc / mm_per_rad, True)
+        arc(1, 1.0 / mm_per_rad, True)
         arc(1, 0.3 / mm_per_rad, False)
 
         g.spindle()
         g.dwell(0.5)
         g.spindle('CCW', mat['spindle_speed'])
 
-        arc(-1, doc / mm_per_rad, True)
+        arc(-1, 1.0 / mm_per_rad, True)
         arc(-1, 0.3 / mm_per_rad, False)
 
         g.spindle()
