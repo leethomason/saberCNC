@@ -9,8 +9,35 @@ def nomad_header(g, mat, z_start):
     g.feed(mat['feed_rate'])
     g.move(x=0, y=0, z=z_start)
 
+    g.spindle('CW', mat['spindle_speed'])
+    g.feed(mat['feed_rate'])
+
+
 def tool_change(g, name: int):
     g.write("M6 {0}".format(name))
+
+
+class Rectangle:
+    def __init__(self, x0: float = 0, y0: float = 0, x1: float = 0, y1: float = 0):
+        self.x0 = min(x0, x1)
+        self.y0 = min(y0, y1)
+        self.x1 = max(x0, x1)
+        self.y1 = max(y0, y1)
+        self.dx = self.x1 - self.x0
+        self.dy = self.y1 - self.y0
+
+
+class Bounds:
+    def __init__(self, tool_size :float, center :Rectangle):
+        ht = tool_size / 2
+        self.center = center
+        self.outer = Rectangle(center.x0 - ht, center.y0 - ht, center.x1 + ht, center.y1 + ht)
+        self.inner = None
+        self.cx = (center.x0 + center.x1) / 2
+        self.cy = (center.y0 + center.y1) / 2
+
+        if center.x0 + ht < center.x1 - ht and center.y0 + ht < center.y1 + ht:
+            self.inner = Rectangle(center.x0 + ht, center.y0 + ht, center.x1 - ht, center.y1 - ht)
 
 
 # Calculates relative moves to get to a final goal.
@@ -191,7 +218,32 @@ class GContext:
             self.g.absolute()
 
 
-if __name__ == "__main__":
-    result = read_DRL_2("test.drl")
-    for h in result:
-        print("size={} x={} y={}".format(h['size'], h['x'], h['y']))
+# moves the head up, over, down
+def travel(g, mat, **kwargs):
+    if g.is_relative:
+        g.move(z=CNC_TRAVEL_Z)
+ 
+        g.feed(mat['travel_feed'])
+        if 'x' in kwargs and 'y' in kwargs:
+            g.move(x=kwargs['x'], y=kwargs['y'])
+        elif 'x' in kwargs:
+            g.move(x=kwargs['x'])
+        elif 'y' in kwargs:
+            g.move(y=kwargs['y'])
+ 
+        g.feed(mat['feed_rate'])
+        g.move(z=-CNC_TRAVEL_Z)
+    else:
+        z = g.current_position['z']
+        g.move(z=z + CNC_TRAVEL_Z)
+ 
+        g.feed(mat['travel_feed'])
+        if 'x' in kwargs and 'y' in kwargs:
+            g.move(x=kwargs['x'], y=kwargs['y'])
+        elif 'x' in kwargs:
+            g.move(x=kwargs['x'])
+        elif 'y' in kwargs:
+            g.move(y=kwargs['y'])
+ 
+        g.feed(mat['feed_rate'])
+        g.move(z=z)

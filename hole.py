@@ -5,9 +5,19 @@ from drill import drill
 import argparse
 
 
-# assume we are at (x, y, CNC_TRAVEL_Z)
+# assume we are at (x, y, 0)
 # accounts for tool size
-def hole(g, mat, cut_depth, radius, offset='inside'):
+def hole(g, mat, cut_depth, **kwargs):
+    radius = 0
+    offset = "inside"
+
+    if 'r' in kwargs:
+        radius = kwargs['r']
+    if 'd' in kwargs:
+        radius = kwargs['d'] / 2
+    if 'offset' in kwargs:
+        offset = kwargs['offset']
+
     tool_size = mat['tool_size']
     half_tool = tool_size / 2
 
@@ -27,7 +37,7 @@ def hole(g, mat, cut_depth, radius, offset='inside'):
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
 
-    with GContext(g, z=CNC_TRAVEL_Z):
+    with GContext(g):
         g.relative()
 
         g.comment("hole")
@@ -64,7 +74,6 @@ def hole(g, mat, cut_depth, radius, offset='inside'):
         g.feed(mat['travel_plunge'])
 
         g.move(x=radius_inner)
-        g.move(z=-CNC_TRAVEL_Z)
 
         g.feed(feed_rate)
 
@@ -83,7 +92,6 @@ def hole(g, mat, cut_depth, radius, offset='inside'):
 
         g.move(z=-cut_depth)  # up to the starting point
         g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
-        g.move(z=CNC_TRAVEL_Z)  # up to the starting point
         g.move(x=-radius_inner)  # back to center of the circle
 
 

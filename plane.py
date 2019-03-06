@@ -40,13 +40,22 @@ def square(g, mat, dx, dy, fill : bool):
             g.move(y=-dy)
 
 
-def plane(g, mat, depth, dx, dy):
+# def plane(g, mat, depth, dx, dy):
+#     plane(g, mat, depth, 0, 0, dx, dy)
+
+def plane(g, mat, depth, x0, y0, x1, y1):
+    dx = x1 - x0
+    dy = y1 - y0
+
+    # print("plane", dx, dy)
+
     with GContext(g):
         g.comment("Plane depth = {} size = {}, {}".format(depth, dx, dy))
         g.relative()
 
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
+        g.move(x=x0, y=y0)
 
         z = 0
         while(z > depth):
@@ -65,7 +74,7 @@ def plane(g, mat, depth, dx, dy):
             square(g, mat, dx, dy, True)
 
         g.move(z=-depth)
-
+        g.move(x=-x0, y=-y0)
 
 def main():
     parser = argparse.ArgumentParser(

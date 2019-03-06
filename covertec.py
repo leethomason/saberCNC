@@ -38,6 +38,8 @@ def hill(g, mat, diameter, dx, dy):
     hy = dy / 2
     doc = mat['pass_depth']   
 
+    # print("hill", dx, dy)
+
     mm_per_rad = r_hill
     max_angle = math.asin(hy / r_hill)
 
@@ -83,10 +85,14 @@ def hill(g, mat, diameter, dx, dy):
         arc(1, doc / mm_per_rad, True)
         arc(1, 0.3 / mm_per_rad, False)
 
+        g.spindle()
+        g.dwell(0.5)
+        g.spindle('CCW', mat['spindle_speed'])
+
         arc(-1, doc / mm_per_rad, True)
         arc(-1, 0.3 / mm_per_rad, False)
 
-        g.move(z=CNC_TRAVEL_Z)
+        g.spindle()
 
 
 def valley(g, mat, diameter, dx, dy):
