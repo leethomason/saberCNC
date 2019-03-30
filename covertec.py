@@ -66,10 +66,12 @@ def hill(g, mat, diameter, dx, dy):
             g.abs_move(z=this_z)
             g.feed(mat['feed_rate'])
 
-
             if fill and (last_doc - next_z) > doc:
                 last_doc = this_z
                 if hy + ht - head_y > 0:
+                    if low_x is False:
+                        g.move(x=-dx)
+                        low_x = True
                     square(g, mat, dx, (hy + ht - head_y) * bias, True)
             else:
                 if low_x is True:
