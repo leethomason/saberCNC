@@ -5,7 +5,22 @@ from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
 import math
 
-def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
+def tab_x_line(g, tab_w, tab_h, tool_rad, x, dz, tab_size = 0):
+    bias = 1
+    if x < 0: bias = -1
+
+    bridge = tab_w + tool_rad * 2    
+
+    g.move(z=tab_h)
+    g.move(x=bridge*bias)
+    g.move(z=-tab_h)
+    g.move(x=x - bridge*bias*2, z=dz)
+    g.move(z=tab_h)
+    g.move(x=bridge*bias)
+    g.move(z=-tab_h)
+
+
+def capsule(g, mat, cut_depth, x, y, offset, outer, axis, tab_size):
 
     with GContext(g):
         g.relative()
@@ -15,14 +30,6 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
 
         if cut_depth >= 0:
             raise RuntimeError("cut depth must be less than 0")
-
-        # Math time: (worked out using the pythagorean theorem)
-        # r = (d/2) + y**2 / (8*d)
-        # r: radius
-        # y: width in y direction
-
-        # The edge of the tool is kept at x0, so
-        # the deflection doesn't need to account for tool size.
 
         pocket = 0
 
@@ -56,6 +63,32 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
         if axis == 'y':
             g.do_simple_transform(True)
 
+        tab_w = tab_size*2
+        tab_h = tab_size
+
+        def tab_path(g, plunge):
+            y_prime = y
+            plunge_prime = plunge
+            y_fix = 0
+
+            while y_prime > 0:
+                g.arc2(x=0, y=-y_prime, i=0, j=-y_prime/2, direction='CCW')
+                tab_x_line(g, tab_w, tab_h, half_tool, x, plunge/2)
+
+                g.arc2(x=0, y=y_prime, i=0, j=y_prime/2, direction='CCW')
+                tab_x_line(g, tab_w, tab_h, half_tool, -x, plunge/2)
+
+                if pocket == 0:
+                    break
+
+                plunge_prime = 0
+                y_prime -= pocket
+                y_fix += pocket
+                g.move(y=-pocket/2)
+
+            g.move(y=y_fix/2)
+
+
         def path(g, plunge):
             y_prime = y
             plunge_prime = plunge
@@ -80,8 +113,12 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis):
         g.move(x=-x / 2)
         g.move(y=y / 2)
         g.move(z=-CNC_TRAVEL_Z)
-        steps = calc_steps(cut_depth, -mat['pass_depth'])
+
+        steps = calc_steps(cut_depth + tab_h, -mat['pass_depth'])
         run_3_stages(path, g, steps)
+        if tab_h > 0:
+            steps = calc_steps(-tab_h, -mat['pass_depth'])
+            run_3_stages(tab_path, g, steps)
 
         g.move(z=-cut_depth)  # up to the starting point
         g.move(z=CNC_TRAVEL_Z)
@@ -104,12 +141,13 @@ def main():
     parser.add_argument('-o', '--outer', help="if set, x is interpreted as outer dimension, and will be reduced by the radius", 
                         action="store_true", default=False)
     parser.add_argument('-a', '--axis', help="axis for the capsule.", type=str, default='x')
+    parser.add_argument('-t', '--tab', help="height of tabs to leave to hold part.", type=float, default=0)
 
     args = parser.parse_args()
 
     mat = init_material(args.material)
     g = GMatrix(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    capsule(g, mat, args.depth, args.x, args.y, args.offset, args.outer, args.axis)
+    capsule(g, mat, args.depth, args.x, args.y, args.offset, args.outer, args.axis, args.tab)
     g.spindle()
 
 

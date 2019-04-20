@@ -3,7 +3,6 @@ from material import init_material
 from utility import *
 import argparse
 
-
 # cut a line at current x,y assuming z=CNC_TRAVEL_Z
 def line(g, mat, cut_depth, x0, y0, x1, y1):
 
