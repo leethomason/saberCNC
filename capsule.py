@@ -77,10 +77,10 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis, tab_size):
 
             while y_prime > 0:
                 g.arc2(x=0, y=-y_prime, i=0, j=-y_prime/2, direction='CCW')
-                tab_x_line(g, tab_w, tab_h, half_tool, x, plunge/2)
+                tab_x_line(g, mat, tab_w, tab_h, half_tool, x, plunge/2)
 
                 g.arc2(x=0, y=y_prime, i=0, j=y_prime/2, direction='CCW')
-                tab_x_line(g, tab_w, tab_h, half_tool, -x, plunge/2)
+                tab_x_line(g, mat, tab_w, tab_h, half_tool, -x, plunge/2)
 
                 if pocket == 0:
                     break
