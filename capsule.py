@@ -5,7 +5,7 @@ from utility import CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 import argparse
 import math
 
-def tab_x_line(g, tab_w, tab_h, tool_rad, x, dz, tab_size = 0):
+def tab_x_line(g, mat, tab_w, tab_h, tool_rad, x, dz, tab_size = 0):
     bias = 1
     if x < 0: bias = -1
 
@@ -13,11 +13,15 @@ def tab_x_line(g, tab_w, tab_h, tool_rad, x, dz, tab_size = 0):
 
     g.move(z=tab_h)
     g.move(x=bridge*bias)
+    g.feed(mat['plunge_rate'])
     g.move(z=-tab_h)
+    g.feed(mat['feed_rate'])
     g.move(x=x - bridge*bias*2, z=dz)
     g.move(z=tab_h)
     g.move(x=bridge*bias)
+    g.feed(mat['plunge_rate'])
     g.move(z=-tab_h)
+    g.feed(mat['feed_rate'])
 
 
 def capsule(g, mat, cut_depth, x, y, offset, outer, axis, tab_size):
@@ -73,10 +77,10 @@ def capsule(g, mat, cut_depth, x, y, offset, outer, axis, tab_size):
 
             while y_prime > 0:
                 g.arc2(x=0, y=-y_prime, i=0, j=-y_prime/2, direction='CCW')
-                tab_x_line(g, tab_w, tab_h, half_tool, x, plunge/2)
+                tab_x_line(g, mat, tab_w, tab_h, half_tool, x, plunge/2)
 
                 g.arc2(x=0, y=y_prime, i=0, j=y_prime/2, direction='CCW')
-                tab_x_line(g, tab_w, tab_h, half_tool, -x, plunge/2)
+                tab_x_line(g, mat, tab_w, tab_h, half_tool, -x, plunge/2)
 
                 if pocket == 0:
                     break
