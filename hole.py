@@ -7,6 +7,9 @@ import argparse
 
 # assume we are at (x, y, 0)
 # accounts for tool size
+# 'r' radius
+# 'd' diameter
+# 'offset' = 'inside', 'outside', 'middle'
 def hole(g, mat, cut_depth, **kwargs):
     radius = 0
     offset = "inside"
@@ -101,7 +104,7 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
         g.feed(mat['travel_feed'])
         g.move(z=CNC_TRAVEL_Z)
         g.move(x=x, y=y)
-        hole(g, mat, cut_depth, radius, "inside")
+        hole(g, mat, cut_depth, r=radius)
         g.absolute()
 
 
@@ -111,7 +114,7 @@ def hole_or_drill(g, mat, cut_depth, radius):
         return "mark"
     elif mat['tool_size'] + 0.1 < radius * 2:
         if g:
-            hole(g, mat, cut_depth, radius, "inside")
+            hole(g, mat, cut_depth, r=radius)
         return "hole"
     else:
         if g:
