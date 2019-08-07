@@ -414,6 +414,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             g.feed(mat["travel_feed"])
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=hole["x"], y=hole["y"])
+            g.move(z=0)
             hole_or_drill(g, mat, drill_depth, diameter / 2)
             g.move(z=CNC_TRAVEL_Z)
 
