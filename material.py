@@ -8,8 +8,8 @@ materials = [
     {
         "id": "np883",
         "machine": "Nomad Pro 883",
-        "travel_feed": 1000,        # was 2000 / 400, but SO fast
-        "travel_plunge": 200,
+        "travel_feed": 2500,        
+        "travel_plunge": 400,
 
         "materials": [
             {"name": "polycarb",
@@ -26,7 +26,7 @@ materials = [
              "pass_depth": 0.76,
              "spindle_speed": 4500,
              "feed_rate": 2100,
-             "plunge_rate": 812},
+             "plunge_rate": 500},
 
             {"name": "pine",
              "quality": "Test run (success after broken bit)",
