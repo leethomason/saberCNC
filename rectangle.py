@@ -13,7 +13,7 @@ def set_feed(g, mat, x, z):
 
 # from current location
 # no accounting for tool size
-def rectangle(g, mat, cut_depth, dx, dy, fillet):
+def rectangle(g, mat, cut_depth, dx, dy, fillet, singlePass=False, at_travel_z=False):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if dx == 0 and dy == 0:
@@ -40,7 +40,8 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet):
         fraction_h = abs(dy) / (abs(dx) + abs(dy))
 
         if fillet > 0:
-            g.move(z=CNC_TRAVEL_Z)
+            if not at_travel_z:
+                g.move(z=CNC_TRAVEL_Z)
             g.move(x=fillet * x_sign)
             g.move(z=-CNC_TRAVEL_Z)
 
@@ -74,13 +75,18 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet):
             if fillet > 0:
                 g.arc2(x=x_fillet, y=-y_fillet, i=x_fillet, j=0, direction=dir)
 
-        steps = calc_steps(cut_depth, -mat['pass_depth'])
-        run_3_stages(path, g, steps)
+        if singlePass:
+            path(g, cut_depth)
+        else:
+            steps = calc_steps(cut_depth, -mat['pass_depth'])
+            run_3_stages(path, g, steps)
+
         #path(g, 0)
 
         g.move(z=-cut_depth + CNC_TRAVEL_Z)
         g.move(x=-fillet * x_sign)
-        g.move(z=-CNC_TRAVEL_Z)
+        if not at_travel_z:
+            g.move(z=-CNC_TRAVEL_Z)
 
 
 def main():
