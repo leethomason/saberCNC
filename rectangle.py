@@ -11,10 +11,10 @@ def set_feed(g, mat, x, z):
     else:
         g.feed(mat['feed_rate'])
 
-def move_plunge(dx, dy, fillet, total_plunge):
+def calc_move_plunge(dx, dy, fillet, pass_plunge):
     x_move = (dx - fillet * 2) / 2
     y_move = (dy - fillet * 2) / 2
-    plunge = total_plunge / 4
+    plunge = pass_plunge / 4
 
     if (x_move + y_move > 1):
         x_plunge = plunge * x_move / (x_move + y_move)
@@ -24,46 +24,92 @@ def move_plunge(dx, dy, fillet, total_plunge):
 
     return x_move, y_move, x_plunge, y_plunge
 
+def calc_tab(dx, dy, tab_width):
+    if tab_width == 0:
+        return "none"
+    if dx >= dy:
+        return "x"
+    else:
+        return "y"
 
-def lower_left(g, mat, dx, dy, fillet, total_plunge):
-    x_move, y_move, x_plunge, y_plunge = move_plunge(dx, dy, fillet, total_plunge)
+def tab_path(g, mat, axis, move, tab_width):
+    g.feed(mat['plunge_rate'])
+    tool_size = mat['tool_size']
+    if abs(move) - tab_width - tool_size < 0:
+        raise RuntimeError('tabs too big for geometry')
+    tab_z = tab_width / 2
+
+    sign = 1.0 if move >= 0 else -1.0
+
+    g.move(z=tab_z)
+    if axis == "x":
+        g.move(x=sign*(tab_width + tool_size))
+    else:
+        g.move(y=sign*(tab_width + tool_size))
+    g.move(z=-tab_z)
+    if axis == "x":
+        g.move(x=move - sign*(tab_width + tool_size))
+    else:
+        g.move(y=move - sign*(tab_width + tool_size))
+
+def x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width):
+    tab_z = tab_width / 2
+    if tab_axis == "x" and total_plunge < cut_depth + tab_z:
+        tab_path(g, mat, "x", x_move, tab_width)
+    else:
+        set_feed(g, mat, x_move, x_plunge) 
+        g.move(x=x_move, z=x_plunge)
+
+def y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width):
+    tab_z = tab_width / 2
+    if tab_axis == "y" and total_plunge < cut_depth + tab_z:
+        tab_path(g, mat, "y", y_move, tab_width)
+    else:
+        set_feed(g, mat, y_move, y_plunge) 
+        g.move(y=y_move, z=y_plunge)
+
+def lower_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, fillet)
     
-    set_feed(g, mat, x_move, x_plunge) 
-    g.move(y=-y_move,  z=y_plunge)
+    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
     if fillet > 0:
         g.arc2(x=fillet, y=-fillet, i=fillet, j=0, direction="CCW")
-    g.move(x=x_move, z=x_plunge)
+    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
 
-def lower_right(g, mat, dx, dy, fillet, total_plunge):
-    x_move, y_move, x_plunge, y_plunge = move_plunge(dx, dy, fillet, total_plunge)
+def lower_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
     
-    set_feed(g, mat, x_move, x_plunge) 
-    g.move(x=x_move,  z=x_plunge)
+    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+        
     if fillet > 0:
         g.arc2(x=fillet, y=fillet, i=0, j=fillet, direction="CCW")
-    g.move(y=y_move, z=y_plunge)
-
-def upper_right(g, mat, dx, dy, fillet, total_plunge):
-    x_move, y_move, x_plunge, y_plunge = move_plunge(dx, dy, fillet, total_plunge)
     
-    set_feed(g, mat, x_move, x_plunge) 
-    g.move(y=y_move,  z=y_plunge)
+    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+
+def upper_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
+
+    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
     if fillet > 0:
         g.arc2(x=-fillet, y=fillet, i=-fillet, j=0, direction="CCW")
-    g.move(x=-x_move, z=x_plunge)
+    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
 
-def upper_left(g, mat, dx, dy, fillet, total_plunge):
-    x_move, y_move, x_plunge, y_plunge = move_plunge(dx, dy, fillet, total_plunge)
+def upper_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
     
-    set_feed(g, mat, x_move, x_plunge) 
-    g.move(x=-x_move, z=x_plunge)
+    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
     if fillet > 0:
         g.arc2(x=-fillet, y=-fillet, i=0, j=-fillet, direction="CCW")
-    g.move(y=-y_move, z=y_plunge)
+    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
 
 # from current location
 # no accounting for tool size
-def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
+def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width, single_pass=False):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if dx == 0 and dy == 0:
@@ -106,14 +152,14 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
-        def path(g, plunge):
-            corners[0](g, mat, dx, dy, fillet, plunge)
-            corners[1](g, mat, dx, dy, fillet, plunge)
-            corners[2](g, mat, dx, dy, fillet, plunge)
-            corners[3](g, mat, dx, dy, fillet, plunge)
+        def path(g, plunge, total_plunge):
+            corners[0](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[1](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[2](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[3](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
 
         if single_pass:
-            path(g, cut_depth)
+            path(g, cut_depth, cut_depth)
         else:
             steps = calc_steps(cut_depth, -mat['pass_depth'])
             run_3_stages(path, g, steps)
@@ -132,13 +178,14 @@ def main():
     parser.add_argument('dx', help='x width of the cut.', type=float)
     parser.add_argument('dy', help='y width of the cut.', type=float)
     parser.add_argument('-f', '--fillet', help='fillet radius', type=float, default=0)
-    parser.add_argument('-o', '--origin', help="origin, can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
+    parser.add_argument('-o', '--origin', help="origin. can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
+    parser.add_argument('-t', '--tab', help="tab width. leave tabs at the bottom of cut. height is half of width.", type=float, default=0)
 
     args = parser.parse_args()
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin)
+    rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.tab)
     g.spindle()
 
 

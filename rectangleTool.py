@@ -5,7 +5,10 @@ from material import init_material
 from utility import *
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill, tab_width):
+
+    if tab_width > 0 and fill:
+        raise RuntimeError("Can't use both tabs and fill.")
 
     g.feed(mat['travel_feed'])
     tool_size = mat['tool_size']
@@ -35,17 +38,18 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill):
         dx += tool_size
         dy += tool_size
 
-    if fill == False:
+    if abs(x) or abs(y):
+        g.move(z=CNC_TRAVEL_Z)
         g.move(x=x, y=y)
-        rectangle(g, mat, cut_depth, dx, dy, fillet, origin)
-        g.move(x=-x, y=-y)
+        g.move(z=-CNC_TRAVEL_Z)
+
+    if fill == False:
+        rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width)
 
     else:
-        g.move(x=x, y=y)
         z_depth = 0
         z_step = mat['pass_depth']
         single_pass = True
-        g.move(x=x, y=y)                
 
         # the outer loop walks downward.
         while z_depth > cut_depth:
@@ -59,12 +63,10 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill):
                 this_cut = -z_step
                 z_depth -= z_step
 
-            x0 = x
-            y0 = y
             dx0 = dx
             dy0 = dy
             fillet0 = fillet
-            overlap = 0.8
+            overlap = 0.7
             step = tool_size * overlap
 
             first = True
@@ -78,7 +80,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill):
                     g.move(x=step * x_sign, y=step * y_sign)
                     total_step += step
                     
-                rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass)
+                rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, tab_width, single_pass)
 
                 dx0 -= step * 2
                 dy0 -= step * 2
@@ -88,8 +90,11 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill):
 
             g.move(x=-total_step * x_sign, y=-total_step * y_sign)
             g.move(z=this_cut)
-
+        g.move(z=-cut_depth)
+    if abs(x) or abs(y):
+        g.move(z=CNC_TRAVEL_Z)
         g.move(x=-x, y=-y)
+        g.move(z=-CNC_TRAVEL_Z)
 
 
 def main():
@@ -101,14 +106,15 @@ def main():
     parser.add_argument('dy', help='y width of the cut.', type=float)
     parser.add_argument('-f', '--fillet', help='fillet radius', type=float, default=0)
     parser.add_argument('-a', '--align', help="'center', 'inner', 'outer'", type=str, default='center')
-    parser.add_argument('-i', '--insideFill', help="fill inside area", action='store_true')
+    parser.add_argument('-i', '--inside_fill', help="fill inside area", action='store_true')
     parser.add_argument('-o', '--origin', help="origin, can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
+    parser.add_argument('-t', '--tab', help="tab width. leave tabs at the bottom of cut. height is half of width.", type=float, default=0)
 
     args = parser.parse_args()
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.insideFill)
+    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill, args.tab)
     g.spindle()
 
 

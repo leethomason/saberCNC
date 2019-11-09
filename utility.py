@@ -63,23 +63,23 @@ def calc_steps(goal, step):
     return list(map(lambda x: round(x * bias, 5), steps))
 
 
-def run_3_stages(path, g, steps, need_final_pass=True):
-    g.comment("initial pass")
-    path(g, 0)
+def run_3_stages(path, g, steps):
+    g.comment("Path: initial pass")
+    total_d = 0
+    path(g, 0, total_d)
 
     for d in steps:
         if d > 0:
             raise RuntimeError("Positive value for step: " + str(d))
         if d > -0.0000001:
             d = 0
+        total_d += d
+        g.comment('Path: depth={} total_depth={}'.format(d, total_d))
+        path(g, d, total_d)
 
-        g.comment('pass: depth={}'.format(d))
-        path(g, d)
-
-    g.comment('final pass')
-    if need_final_pass:
-        path(g, 0)
-    g.comment('complete')
+    g.comment('Path: final pass')
+    path(g, 0, total_d)
+    g.comment('Path: complete')
 
 
 def run_3_stages_abs(path, g, steps):
