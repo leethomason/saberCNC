@@ -80,7 +80,7 @@ def hole(g, mat, cut_depth, **kwargs):
 
         g.feed(feed_rate)
 
-        def path(g, plunge):
+        def path(g, plunge, total_plunge):
             g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0,  direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
             g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',

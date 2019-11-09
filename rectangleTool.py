@@ -5,96 +5,100 @@ from material import init_material
 from utility import *
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill, tab_width):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, tab_width=0.0):
 
-    if tab_width > 0 and fill:
-        raise RuntimeError("Can't use both tabs and fill.")
+    with GContext(g):
+        g.relative()
+        if tab_width > 0 and fill:
+            raise RuntimeError("Can't use both tabs and fill.")
 
-    g.feed(mat['travel_feed'])
-    tool_size = mat['tool_size']
-    half_tool = tool_size / 2
-    x = 0
-    y = 0
-    x_sign = 0
-    y_sign = 0
+        g.feed(mat['travel_feed'])
+        tool_size = mat['tool_size']
+        half_tool = tool_size / 2
+        x = 0
+        y = 0
+        x_sign = 0
+        y_sign = 0
 
-    if origin == "left":
-        x_sign = 1
-    elif origin == "bottom":
-        y_sign = 1
-    elif origin == "right":
-        x_sign = -1
-    elif origin == "top":
-        y_sign = -1
+        if origin == "left":
+            x_sign = 1
+        elif origin == "bottom":
+            y_sign = 1
+        elif origin == "right":
+            x_sign = -1
+        elif origin == "top":
+            y_sign = -1
 
-    if align == 'inner':
-        x = half_tool * x_sign
-        y = half_tool * y_sign
-        dx -= tool_size
-        dy -= tool_size
-    elif align == 'outer':
-        x = -half_tool * x_sign
-        y = -half_tool * y_sign
-        dx += tool_size
-        dy += tool_size
+        if align == 'inner':
+            x = half_tool * x_sign
+            y = half_tool * y_sign
+            dx -= tool_size
+            dy -= tool_size
+            fillet -= half_tool
+        elif align == 'outer':
+            x = -half_tool * x_sign
+            y = -half_tool * y_sign
+            dx += tool_size
+            dy += tool_size
+            fillet += half_tool
 
-    if abs(x) or abs(y):
-        g.move(z=CNC_TRAVEL_Z)
-        g.move(x=x, y=y)
-        g.move(z=-CNC_TRAVEL_Z)
+        if abs(x) or abs(y):
+            g.move(z=CNC_TRAVEL_Z)
+            g.move(x=x, y=y)
+            g.move(z=-CNC_TRAVEL_Z)
 
-    if fill == False:
-        rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width)
+        if fill == False:
+            rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width)
 
-    else:
-        z_depth = 0
-        z_step = mat['pass_depth']
-        single_pass = True
+        else:
+            z_depth = 0
+            z_step = mat['pass_depth']
+            single_pass = True
 
-        # the outer loop walks downward.
-        while z_depth > cut_depth:
-            this_cut = 0
+            # the outer loop walks downward.
+            while z_depth > cut_depth:
+                this_cut = 0
 
-            if z_depth - z_step <= cut_depth:
-                this_cut = cut_depth - z_depth
-                single_pass = False
-                z_depth = cut_depth
-            else:
-                this_cut = -z_step
-                z_depth -= z_step
-
-            dx0 = dx
-            dy0 = dy
-            fillet0 = fillet
-            overlap = 0.7
-            step = tool_size * overlap
-
-            first = True
-            total_step = 0
-
-            # the inner loop walks inward
-            while dx0 > 0 and dy0  > 0:                
-                if first:
-                    first = False
+                if z_depth - z_step <= cut_depth:
+                    this_cut = cut_depth - z_depth
+                    single_pass = False
+                    z_depth = cut_depth
                 else:
-                    g.move(x=step * x_sign, y=step * y_sign)
-                    total_step += step
-                    
-                rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, tab_width, single_pass)
+                    this_cut = -z_step
+                    z_depth -= z_step
 
-                dx0 -= step * 2
-                dy0 -= step * 2
-                fillet0 -= step
-                if fillet0 < 0:
-                    fillet0 = 0
+                dx0 = dx
+                dy0 = dy
+                fillet0 = fillet
+                overlap = 0.7
+                step = tool_size * overlap
 
-            g.move(x=-total_step * x_sign, y=-total_step * y_sign)
-            g.move(z=this_cut)
-        g.move(z=-cut_depth)
-    if abs(x) or abs(y):
-        g.move(z=CNC_TRAVEL_Z)
-        g.move(x=-x, y=-y)
-        g.move(z=-CNC_TRAVEL_Z)
+                first = True
+                total_step = 0
+
+                # the inner loop walks inward
+                while dx0 > 0 and dy0  > 0:                
+                    if first:
+                        first = False
+                    else:
+                        g.move(x=step * x_sign, y=step * y_sign)
+                        total_step += step
+                        
+                    rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, tab_width, single_pass)
+
+                    dx0 -= step * 2
+                    dy0 -= step * 2
+                    fillet0 -= step
+                    if fillet0 < 0:
+                        fillet0 = 0
+
+                g.move(x=-total_step * x_sign, y=-total_step * y_sign)
+                g.move(z=this_cut)
+            g.move(z=-cut_depth)
+        if abs(x) or abs(y):
+            g.move(z=CNC_TRAVEL_Z)
+            g.move(x=-x, y=-y)
+            g.move(z=-CNC_TRAVEL_Z)
 
 
 def main():

@@ -1,38 +1,17 @@
 from mecode import G
 from material import init_material
-from utility import CNC_TRAVEL_Z, GContext, nomad_header
+from utility import CNC_TRAVEL_Z, GContext, nomad_header, tool_change
 import argparse
 import math
 from plane import plane, square
 from hole import hole
 
 
-'''
-This was great! Until the smooth end of the ball doesn't really cut,
-it just burns the wood. Need a proper cutting edge for this to work.
-Glad I didn't test on aluminum.
-
 def z_tool_hill_ball(dx, r_ball, r_hill):
     zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
     return zhc - r_hill
 
-def z_tool_valley_ball(dx, r_ball, r_hill, z_hill):
-    zf = math.sqrt(math.pow(r_hill - r_ball, 2) - dx * dx)
-    zhc = zf + r_ball - z_hill
-    return -zhc
-'''
-
-def z_tool_valley(dx, r_tool, r):
-    # in a valley, always hits one edge or the other.
-    x0 = dx - r_tool
-    x1 = dx + r_tool
-
-    z0 = r - math.sqrt(r * r - x0 * x0)
-    z1 = r - math.sqrt(r * r - x1 * x1)
-    return max(z0, z1)
-
-
-def hill(g, mat, diameter, dx, dy):
+def hill(g, mat, diameter, dx, dy, ball):
     r_hill = diameter / 2
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
@@ -44,7 +23,35 @@ def hill(g, mat, diameter, dx, dy):
     max_angle = math.asin(hy / r_hill)
 
     origin_y = g.current_position['y']
-    origin_z = g.current_position['z']
+
+    def ball_arc(bias, step):
+        y = 0
+        low_x = True
+
+        while y < hy:
+            if y + step > hy:
+                g.move(y = (hy - y) * bias)
+                y = hy
+            else:
+                y += step
+                g.move(y = step * bias)
+
+            dz = z_tool_hill_ball(y, ht, r_hill)
+            g.feed(mat['plunge_rate'])
+            g.abs_move(z=origin_z + dz)
+            g.feed(mat['feed_rate'])
+
+            if low_x is True:
+                g.move(x=dx)
+                low_x = False
+            else:
+                g.move(x=-dx)
+                low_x = True
+
+        if low_x is False:
+            g.move(x = -dx)
+        g.abs_move(z=origin_z)
+        g.move(y=-hy*bias)
 
     def arc(bias, step_rad, fill):
         num_steps = math.ceil(max_angle / step_rad) + 1
@@ -89,73 +96,50 @@ def hill(g, mat, diameter, dx, dy):
     with GContext(g):
         g.comment('hill')
         g.relative()
-        g.spindle('CW', mat['spindle_speed'])
+        offset = 0.05
 
-        # Would only hit DoC at the extreme; conservative value.
+        # rough pass; slightly biased up.
+        origin_z = g.current_position['z']
+        g.move(z=offset)
+    
+        g.spindle('CW', mat['spindle_speed'])
         arc(1, 1.0 / mm_per_rad, True)
-        arc(1, 0.3 / mm_per_rad, False)
 
         g.spindle()
         g.dwell(0.5)
         g.spindle('CCW', mat['spindle_speed'])
 
         arc(-1, 1.0 / mm_per_rad, True)
-        arc(-1, 0.3 / mm_per_rad, False)
+        g.move(z=-offset)
 
+        # smooth pass
+        if ball:
+            g.spindle()
+            tool_change(g, 2)
+
+        origin_z = g.current_position['z']
         g.spindle()
-
-
-def valley(g, mat, diameter, dx, dy):
-    r_hill = diameter / 2
-    pht = mat['tool_size'] * 0.8
-    ht = mat['tool_size'] * 0.5
-
-    origin_y = g.current_position['y']
-    origin_z = g.current_position['z']
-
-    def cut(cut_y, base_step_size):
-        steps = int(cut_y / base_step_size) + 1
-        step_size = cut_y / (steps-1)
-
-        dz = z_tool_valley(cut_y/2, ht, r_hill)
-
-        low_x = True        
-        z = origin_z + z_tool_valley(-cut_y/2, ht, r_hill) - dz
-        g.abs_move(y=origin_y -cut_y/2)
-        g.abs_move(z=z)
-
-        for i in range(0, steps):
-            if low_x is True:
-                g.move(x=dx)
-            else:
-                g.move(x=-dx)
-            low_x = not low_x
-
-            z = origin_z + z_tool_valley(-cut_y/2 + i * step_size, ht, r_hill) - dz 
-            g.abs_move(y=origin_y + -cut_y/2 + i*step_size, z=z)
-        
-        if low_x is False:
-            g.move(x=-dx)
-
-
-        g.move(y=-cut_y/2)
-        g.abs_move(origin_z)
-
-    with GContext(g):
-        g.comment('valley')
+        g.dwell(0.5)
         g.spindle('CW', mat['spindle_speed'])
-        g.relative()
         
-        rough_cut = mat['tool_size']
-        i = 0
-        while rough_cut < dy:
-            g.comment("Rough {0} dy={1}".format(i, rough_cut))
-            cut(rough_cut, pht)
-            rough_cut += mat['tool_size']
-            i += 1
-
-        g.comment("Smooth")
-        cut(dy, 0.1)
+        if ball:
+            ball_arc(1, ht / 4)
+        else:
+            arc(1, 0.3 / mm_per_rad, False)
+        
+        g.spindle()
+        g.dwell(0.5)
+        g.spindle('CCW', mat['spindle_speed'])
+        
+        if ball:
+            ball_arc(-1, ht / 4)
+        else:
+            arc(-1, 0.3 / mm_per_rad, False)
+        
+        g.spindle()
+        if ball:
+            g.spindle()
+            tool_change(g, 1)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -165,7 +149,7 @@ def main():
     parser.add_argument('dx', help='dx of the cut, flat over the x direction', type=float)
     parser.add_argument('dy', help='dy of the cut, curves over the y direction', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)
-    parser.add_argument('-v', '--valley', help='cut a valley instead of a hill', action='store_true')
+    parser.add_argument('-b', '--ball', help="do pass with ball", action="store_true")
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
@@ -173,12 +157,7 @@ def main():
     
     nomad_header(g, mat, CNC_TRAVEL_Z)
     g.move(z=0)
-
-    if args.valley is True:
-        # valley(g, mat, args.diameter, args.dx, args.dy)
-        print("Need to fix valley to be smooth, if warped.")
-    else:
-        hill(g, mat, args.diameter, args.dx, args.dy)
+    hill(g, mat, args.diameter, args.dx, args.dy, args.ball)
     g.spindle()
 
 if __name__ == "__main__":
