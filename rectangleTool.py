@@ -28,6 +28,8 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
             x_sign = -1
         elif origin == "top":
             y_sign = -1
+        else:
+            raise RuntimeError("unrecognized origin")
 
         if align == 'inner':
             x = half_tool * x_sign
@@ -41,6 +43,11 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
             dx += tool_size
             dy += tool_size
             fillet += half_tool
+        elif align == "center":
+            pass
+        else:
+            raise RuntimeError("unrecognized align")
+
 
         if abs(x) or abs(y):
             g.move(z=CNC_TRAVEL_Z)

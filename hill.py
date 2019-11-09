@@ -27,11 +27,12 @@ def hill(g, mat, diameter, dx, dy, ball):
     def ball_arc(bias, step):
         y = 0
         low_x = True
+        end = hy + ht
 
         while y < hy:
-            if y + step > hy:
-                g.move(y = (hy - y) * bias)
-                y = hy
+            if y + step > end:
+                g.move(y = (end - y) * bias)
+                y = end
             else:
                 y += step
                 g.move(y = step * bias)
@@ -51,7 +52,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         if low_x is False:
             g.move(x = -dx)
         g.abs_move(z=origin_z)
-        g.move(y=-hy*bias)
+        g.move(y=-end*bias)
 
     def arc(bias, step_rad, fill):
         num_steps = math.ceil(max_angle / step_rad) + 1
@@ -97,6 +98,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.comment('hill')
         g.relative()
         offset = 0.05
+        ball_mult = 0.5
 
         # rough pass; slightly biased up.
         origin_z = g.current_position['z']
@@ -123,7 +125,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.spindle('CW', mat['spindle_speed'])
         
         if ball:
-            ball_arc(1, ht / 4)
+            ball_arc(1, ht * ball_mult)
         else:
             arc(1, 0.3 / mm_per_rad, False)
         
@@ -132,7 +134,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.spindle('CCW', mat['spindle_speed'])
         
         if ball:
-            ball_arc(-1, ht / 4)
+            ball_arc(-1, ht * ball_mult)
         else:
             arc(-1, 0.3 / mm_per_rad, False)
         
