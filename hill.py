@@ -117,7 +117,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         # smooth pass
         if ball:
             g.spindle()
-            tool_change(g, 2)
+            tool_change(g, mat, 2)
 
         origin_z = g.current_position['z']
         g.spindle()
@@ -141,7 +141,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.spindle()
         if ball:
             g.spindle()
-            tool_change(g, 1)
+            tool_change(g, mat, 1)
 
 def main():
     parser = argparse.ArgumentParser(
