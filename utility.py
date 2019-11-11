@@ -6,16 +6,26 @@ CNC_TRAVEL_Z = 3.0
 
 def nomad_header(g, mat, z_start):
     g.absolute()
-    g.feed(mat['feed_rate'])
-    g.move(x=0, y=0, z=z_start)
-
+    g.rapid(x=0, y=0, z=z_start)
     g.spindle('CW', mat['spindle_speed'])
     g.feed(mat['feed_rate'])
 
 
-def tool_change(g, name: int):
-    g.write("M6 {0}".format(name))
-
+def tool_change(g, mat, name: int):
+    # this isn't as seamless as I would hope; need to save and
+    # restore the absolute position. (spindle as well, but needing
+    # to set the spindle again is a little more obvious)
+    with GContext(g):
+        g.absolute()
+        x = g.current_position[0]
+        y = g.current_position[1]
+        z = g.current_position[2]
+        g.write("M6 {0}".format(name))
+        g.feed(mat['travel_feed'])
+        g.rapid(x=x, y=y)
+        g.rapid(z=z + CNC_TRAVEL_Z)
+        g.spindle('CCW', mat['spindle_speed'])
+        g.move(z=z)
 
 class Rectangle:
     def __init__(self, x0: float = 0, y0: float = 0, x1: float = 0, y1: float = 0):
@@ -63,23 +73,23 @@ def calc_steps(goal, step):
     return list(map(lambda x: round(x * bias, 5), steps))
 
 
-def run_3_stages(path, g, steps, need_final_pass=True):
-    g.comment("initial pass")
-    path(g, 0)
+def run_3_stages(path, g, steps):
+    g.comment("Path: initial pass")
+    total_d = 0
+    path(g, 0, total_d)
 
     for d in steps:
         if d > 0:
             raise RuntimeError("Positive value for step: " + str(d))
         if d > -0.0000001:
             d = 0
+        total_d += d
+        g.comment('Path: depth={} total_depth={}'.format(d, total_d))
+        path(g, d, total_d)
 
-        g.comment('pass: depth={}'.format(d))
-        path(g, d)
-
-    g.comment('final pass')
-    if need_final_pass:
-        path(g, 0)
-    g.comment('complete')
+    g.comment('Path: final pass')
+    path(g, 0, total_d)
+    g.comment('Path: complete')
 
 
 def run_3_stages_abs(path, g, steps):

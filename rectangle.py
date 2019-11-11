@@ -5,15 +5,145 @@ from material import init_material
 from utility import *
 
 
+def set_feed(g, mat, x, z):
+    if abs(x) < 0.1 or (abs(z) > 0.01  and abs(z) / abs(x) > 1.0):
+        g.feed(mat['plunge_rate'])
+    else:
+        g.feed(mat['feed_rate'])
+
+def calc_move_plunge(dx, dy, fillet, pass_plunge):
+    x_move = (dx - fillet * 2) / 2
+    y_move = (dy - fillet * 2) / 2
+    plunge = pass_plunge / 4
+
+    if (x_move + y_move > 1):
+        x_plunge = plunge * x_move / (x_move + y_move)
+        y_plunge = plunge * y_move / (x_move + y_move)
+    else:
+        x_plunge = y_plunge = plunge / 2
+
+    return x_move, y_move, x_plunge, y_plunge
+
+def calc_tab(dx, dy, tab_width):
+    if tab_width == 0:
+        return "none"
+    if dx >= dy:
+        return "x"
+    else:
+        return "y"
+
+def tab_path(g, mat, axis, move, tab_width):
+    g.feed(mat['plunge_rate'])
+    tool_size = mat['tool_size']
+    if abs(move) - tab_width - tool_size < 0:
+        raise RuntimeError('tabs too big for geometry')
+    tab_z = tab_width / 2
+
+    sign = 1.0 if move >= 0 else -1.0
+
+    g.move(z=tab_z)
+    if axis == "x":
+        g.move(x=sign*(tab_width + tool_size))
+    else:
+        g.move(y=sign*(tab_width + tool_size))
+    g.move(z=-tab_z)
+    if axis == "x":
+        g.move(x=move - sign*(tab_width + tool_size))
+    else:
+        g.move(y=move - sign*(tab_width + tool_size))
+
+def x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width):
+    tab_z = tab_width / 2
+    if tab_axis == "x" and total_plunge < cut_depth + tab_z:
+        tab_path(g, mat, "x", x_move, tab_width)
+    else:
+        set_feed(g, mat, x_move, x_plunge) 
+        g.move(x=x_move, z=x_plunge)
+
+def y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width):
+    tab_z = tab_width / 2
+    if tab_axis == "y" and total_plunge < cut_depth + tab_z:
+        tab_path(g, mat, "y", y_move, tab_width)
+    else:
+        set_feed(g, mat, y_move, y_plunge) 
+        g.move(y=y_move, z=y_plunge)
+
+def lower_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, fillet)
+    
+    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+    if fillet > 0:
+        g.arc2(x=fillet, y=-fillet, i=fillet, j=0, direction="CCW")
+    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+
+def lower_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
+    
+    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+        
+    if fillet > 0:
+        g.arc2(x=fillet, y=fillet, i=0, j=fillet, direction="CCW")
+    
+    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+
+def upper_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
+
+    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+    if fillet > 0:
+        g.arc2(x=-fillet, y=fillet, i=-fillet, j=0, direction="CCW")
+    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+
+def upper_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth, tab_width):
+    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
+    tab_axis = calc_tab(dx, dy, tab_width)
+    
+    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+    if fillet > 0:
+        g.arc2(x=-fillet, y=-fillet, i=0, j=-fillet, direction="CCW")
+    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge, tab_axis, tab_width)
+
 # from current location
 # no accounting for tool size
-def rectangle(g, mat, cut_depth, dx, dy):
+def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width, single_pass=False):
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
-    if dx < 0 or dy < 0:
-        raise RuntimeError('dx and dy must be zero or greater')
     if dx == 0 and dy == 0:
         raise RuntimeError('dx and dy may not both be zero')
+    if dx < 0 or dy < 0:
+        raise RuntimeError('dx and dy must be positive')
+
+    if fillet < 0 or fillet*2 > dx or fillet*2 > dy:
+        raise RuntimeError("Invalid fillet. dx=" + str(dx) + " dy= " + str(dy) + " fillet=" + str(fillet))
+
+    corners = []
+
+    if origin == "left":
+        corners.append(lower_left)
+        corners.append(lower_right) 
+        corners.append(upper_right)
+        corners.append(upper_left)
+    elif origin == "bottom":
+        corners.append(lower_right)
+        corners.append(upper_right)
+        corners.append(upper_left)
+        corners.append(lower_left)
+    elif origin == "right":
+        corners.append(upper_right)
+        corners.append(upper_left)
+        corners.append(lower_left)
+        corners.append(lower_right)
+    elif origin == "top":
+        corners.append(upper_left)
+        corners.append(lower_left)
+        corners.append(lower_right)
+        corners.append(upper_right)
+    else:
+        raise RuntimeError("Origin isn't valid.")
 
     with GContext(g):
         g.comment("Rectangular cut")
@@ -22,36 +152,40 @@ def rectangle(g, mat, cut_depth, dx, dy):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
-        # Spread the plunge out over all 4 sides of the motion.
-        fraction_w = dx / (dx + dy)
-        fraction_h = 1 - fraction_w
+        def path(g, plunge, total_plunge):
+            corners[0](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[1](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[2](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
+            corners[3](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth, tab_width)
 
-        def path(g, plunge):
-            g.move(x=dx,  z=plunge * fraction_w / 2)
-            g.move(y=dy,  z=plunge * fraction_h / 2)
-            g.move(x=-dx, z=plunge * fraction_w / 2)
-            g.move(y=-dy, z=plunge * fraction_h / 2)
+        if single_pass:
+            path(g, cut_depth, cut_depth)
+        else:
+            steps = calc_steps(cut_depth, -mat['pass_depth'])
+            run_3_stages(path, g, steps)
 
-        steps = calc_steps(cut_depth, -mat['pass_depth'])
-        run_3_stages(path, g, steps)
+        #path(g, 0)
 
         g.move(z=-cut_depth)
 
-
 def main():
     parser = argparse.ArgumentParser(
-        description='Cut a rectangle. Careful to return to original position so it can be used in other' +
-                    'calls. No account for tool size. Can also cut an axis aligned line.')
+        description='Cut a rectangle. Careful to return to original position so it can be used in other ' +
+                    'calls. Can also cut an axis aligned line. Does not account for tool size. Also ' +
+                    'careful to not travel where it does not cut.')
     parser.add_argument('material', help='the material to cut (wood, aluminum, etc.)')
     parser.add_argument('depth', help='depth of the cut. must be negative.', type=float)
     parser.add_argument('dx', help='x width of the cut.', type=float)
     parser.add_argument('dy', help='y width of the cut.', type=float)
+    parser.add_argument('-f', '--fillet', help='fillet radius', type=float, default=0)
+    parser.add_argument('-o', '--origin', help="origin. can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
+    parser.add_argument('-t', '--tab', help="tab width. leave tabs at the bottom of cut. height is half of width.", type=float, default=0)
 
     args = parser.parse_args()
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangle(g, mat, args.depth, args.dx, args.dy)
+    rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.tab)
     g.spindle()
 
 
