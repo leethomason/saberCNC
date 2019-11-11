@@ -28,8 +28,6 @@ def hill(g, mat, diameter, dx, dy, ball):
         y = 0
         end = hy + ht
         height_func = z_tool_hill_flat
-        if ball:
-            height_func = z_tool_hill_ball
         last_plane = 0
         step = ht / 4
 
@@ -52,7 +50,9 @@ def hill(g, mat, diameter, dx, dy, ball):
 
             if do_plane:
                 z = height_func(y, ht, r_hill)
-                rectangleTool(g, mat, z - last_plane, dx, end - y, 0.0, "bottom" if bias > 0 else "top", "inner", True)
+                rectangleTool(g, mat, z - last_plane, 
+                              dx, end - y, 0.0, "bottom" if bias > 0 else "top", "center", True)
+                g.move(z=z - last_plane)
                 last_plane = z
 
         g.move(-dx/2)            

@@ -6,9 +6,9 @@ CNC_TRAVEL_Z = 3.0
 
 def nomad_header(g, mat, z_start):
     g.absolute()
+    g.feed(mat['feed_rate'])
     g.rapid(x=0, y=0, z=z_start)
     g.spindle('CW', mat['spindle_speed'])
-    g.feed(mat['feed_rate'])
 
 
 def tool_change(g, mat, name: int):

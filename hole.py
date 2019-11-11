@@ -90,6 +90,21 @@ def hole(g, mat, cut_depth, **kwargs):
             g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
 
+            if radius_inner - tool_size > 0:
+                r = radius_inner
+                dr = 0
+                while r - half_tool > 0:
+                    step = tool_size * 0.8
+                    dr += step
+                    g.move(x=-step)
+                    r -= step
+                    g.arc2(x=-r, y=r, i=-r, j=0,  direction='CCW')
+                    g.arc2(x=-r, y=-r, i=0, j=-r, direction='CCW')
+                    g.arc2(x=r, y=-r, i=r, j=0,   direction='CCW')
+                    g.arc2(x=r, y=r, i=0, j=r,    direction='CCW')
+                g.move(x=dr)
+
+
         steps = calc_steps(cut_depth, -depth_of_cut)
         run_3_stages(path, g, steps)
 
@@ -135,7 +150,9 @@ def main():
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     nomad_header(g, mat, CNC_TRAVEL_Z)
-    hole(g, mat, args.depth, args.radius, "inside")
+    g.spindle('CW', mat['spindle_speed'])
+    g.move(z=0)
+    hole(g, mat, args.depth, r=args.radius, offset="inside")
     g.spindle()
 
 
