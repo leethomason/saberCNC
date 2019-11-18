@@ -6,6 +6,10 @@ import math
 from rectangleTool import rectangleTool
 from hole import hole
 
+# bug: plunge on tabs :(
+# bug: drag cut across top when cutting hill
+# bug: rough pass has ugly plunge at end
+# bug: hole cutting still leaves column in some cases
 
 def z_tool_hill_ball(dx, r_ball, r_hill):
     zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
@@ -99,25 +103,27 @@ def hill(g, mat, diameter, dx, dy, ball):
         mult = 0.2
 
         # rough pass; slightly biased up.
-        origin_z = g.current_position['z']
         g.move(z=offset)
-    
+        origin_z = g.current_position['z']
+
+        g.spindle()
+        g.dwell(0.5)
         g.spindle('CW', mat['spindle_speed'])
         rough_arc(1)
 
         g.spindle()
         g.dwell(0.5)
         g.spindle('CCW', mat['spindle_speed'])
-
         rough_arc(-1)
+
         g.move(z=-offset)
+        origin_z = g.current_position['z']
 
         # smooth pass
         if ball:
             g.spindle()
             tool_change(g, mat, 2)
 
-        origin_z = g.current_position['z']
         g.spindle()
         g.dwell(0.5)
         g.spindle('CW', mat['spindle_speed'])

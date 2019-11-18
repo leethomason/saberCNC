@@ -90,7 +90,7 @@ materials = [
             {"name": "aluminum",
              "quality": "Carbide3D test",
              "tool_size": 3.175,
-             "pass_depth": 0.25,
+             "pass_depth": 0.25,        # try 0.30?
              "spindle_speed": 9200,
              "feed_rate": 200,
              "plunge_rate": 25},
