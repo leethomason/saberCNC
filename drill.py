@@ -1,8 +1,7 @@
 import sys
 from mecode import G
 from material import init_material
-from utility import *
-
+from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z, nomad_header, read_DRL, sort_shortest_path
 
 # assume we are at (x, y)
 def drill(g, mat, cut_depth):

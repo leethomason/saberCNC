@@ -103,11 +103,9 @@ def hill(g, mat, diameter, dx, dy, ball):
     with GContext(g):
         g.comment('hill')
         g.relative()
-        #offset = 0.05
         mult = 0.2
 
-        # rough pass; slightly biased up.
-        #g.move(z=offset)
+        # rough pass
         origin_z = g.current_position['z']
 
         g.spindle()
@@ -120,12 +118,8 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.spindle('CCW', mat['spindle_speed'])
         rough_arc(-1)
 
-        #g.move(z=-offset)
-        #origin_z = g.current_position['z']
-
         # smooth pass
         g.spindle()
-        #tool_change(g, mat, 2)
 
         g.spindle()
         g.dwell(0.5)
@@ -141,7 +135,7 @@ def hill(g, mat, diameter, dx, dy, ball):
         
         g.spindle()
         g.spindle()
-        #tool_change(g, mat, 1)
+
 
 def main():
     parser = argparse.ArgumentParser(

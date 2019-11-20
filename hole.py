@@ -1,8 +1,9 @@
 from mecode import G
 from material import init_material
-from utility import *
+from utility import nomad_header, CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
 from drill import drill
 import argparse
+import math
 
 
 # assume we are at (x, y, 0)

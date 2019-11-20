@@ -2,7 +2,7 @@ import math
 import sys
 from mecode import G
 from material import init_material
-from utility import *
+from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z, nomad_header
 import argparse
 
 OVERLAP = 0.80
@@ -95,7 +95,7 @@ def main():
     g.feed(mat['feed_rate'])
     g.move(z=0)
 
-    plane(g, mat, args.depth, args.dx, args.dy)
+    plane(g, mat, args.depth, 0, 0, args.dx, args.dy)
     g.abs_move(z=CNC_TRAVEL_Z)
     g.spindle()
 

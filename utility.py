@@ -1,4 +1,3 @@
-# assortment of utility functions
 import math
 import re
 
@@ -26,6 +25,7 @@ def tool_change(g, mat, name: int):
         g.rapid(z=z + CNC_TRAVEL_Z)
         g.spindle('CCW', mat['spindle_speed'])
         g.move(z=z)
+
 
 class Rectangle:
     def __init__(self, x0: float = 0, y0: float = 0, x1: float = 0, y1: float = 0):
@@ -145,7 +145,6 @@ def read_DRL(fname):
     holes: list of {x, y, d} holes to cut
 '''
 
-
 def read_DRL_2(fname):
     tool = {}
     current = 1
@@ -233,27 +232,24 @@ def travel(g, mat, **kwargs):
     if g.is_relative:
         g.move(z=CNC_TRAVEL_Z)
  
-        g.feed(mat['travel_feed'])
         if 'x' in kwargs and 'y' in kwargs:
-            g.move(x=kwargs['x'], y=kwargs['y'])
+            g.rapid(x=kwargs['x'], y=kwargs['y'])
         elif 'x' in kwargs:
-            g.move(x=kwargs['x'])
+            g.rapid(x=kwargs['x'])
         elif 'y' in kwargs:
-            g.move(y=kwargs['y'])
+            g.rapid(y=kwargs['y'])
  
-        g.feed(mat['feed_rate'])
         g.move(z=-CNC_TRAVEL_Z)
+
     else:
         z = g.current_position['z']
         g.move(z=z + CNC_TRAVEL_Z)
  
-        g.feed(mat['travel_feed'])
         if 'x' in kwargs and 'y' in kwargs:
-            g.move(x=kwargs['x'], y=kwargs['y'])
+            g.rapid(x=kwargs['x'], y=kwargs['y'])
         elif 'x' in kwargs:
-            g.move(x=kwargs['x'])
+            g.rapid(x=kwargs['x'])
         elif 'y' in kwargs:
-            g.move(y=kwargs['y'])
+            g.rapid(y=kwargs['y'])
  
-        g.feed(mat['feed_rate'])
         g.move(z=z)
