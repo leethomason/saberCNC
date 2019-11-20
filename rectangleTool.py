@@ -2,15 +2,16 @@ import argparse
 import sys
 from mecode import G
 from material import init_material
-from utility import *
+from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, tab_width=0.0):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False):
+
+    if cut_depth >= 0:
+        raise RuntimeError('Cut depth must be less than zero.')
 
     with GContext(g):
         g.relative()
-        if tab_width > 0 and fill:
-            raise RuntimeError("Can't use both tabs and fill.")
 
         g.feed(mat['travel_feed'])
         tool_size = mat['tool_size']
@@ -51,14 +52,18 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
         else:
             raise RuntimeError("unrecognized align")
 
+        if dx == 0 and dy == 0:
+            raise RuntimeError('dx and dy may not both be zero')
+        if dx < 0 or dy < 0:
+            raise RuntimeError('dx and dy must be positive')
 
         if abs(x) or abs(y):
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=x, y=y)
             g.move(z=-CNC_TRAVEL_Z)
 
-        if fill == False:
-            rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab_width)
+        if fill == False or dx == 0 or dy == 0:
+            rectangle(g, mat, cut_depth, dx, dy, fillet, origin)
 
         else:
             z_depth = 0
@@ -80,21 +85,25 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                 dx0 = dx
                 dy0 = dy
                 fillet0 = fillet
-                overlap = 0.7
-                step = tool_size * overlap
+                step = tool_size * 0.7
 
                 first = True
                 total_step = 0
 
-                # the inner loop walks inward
-                while dx0 > 0 and dy0  > 0:                
+                #print("dx={} dy={}".format(dx, dy))
+
+                # the inner loop walks inward.
+                # note that the cut hasn't happened at the top of the loop;
+                # so only abort when they cross
+                while dx0 > 0 and dy0  > 0: 
+                    #print("  dx={} dy={} step={}".format(dx0, dy0, step));               
                     if first:
                         first = False
                     else:
                         g.move(x=step * x_sign, y=step * y_sign)
                         total_step += step
                         
-                    rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, tab_width, single_pass)
+                    rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass)
 
                     dx0 -= step * 2
                     dy0 -= step * 2
@@ -105,6 +114,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                 g.move(x=-total_step * x_sign, y=-total_step * y_sign)
                 g.move(z=this_cut)
             g.move(z=-cut_depth)
+
         if abs(x) or abs(y):
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=-x, y=-y)
@@ -128,9 +138,8 @@ def main():
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill, args.tab)
+    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill)
     g.spindle()
-
 
 if __name__ == "__main__":
     main()

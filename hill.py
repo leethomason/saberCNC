@@ -6,10 +6,10 @@ import math
 from rectangleTool import rectangleTool
 from hole import hole
 
-# bug: plunge on tabs :(
-# bug: drag cut across top when cutting hill
-# bug: rough pass has ugly plunge at end
-# bug: hole cutting still leaves column in some cases
+# remove tabs: plunge on tabs :(
+# fixed: drag cut across top when cutting hill
+# fixed: rough pass has ugly plunge at end
+# fixed: hole cutting still leaves column in some cases
 
 def z_tool_hill_ball(dx, r_ball, r_hill):
     zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
@@ -27,38 +27,45 @@ def hill(g, mat, diameter, dx, dy, ball):
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
     doc = mat['pass_depth']   
+    height_func = z_tool_hill_ball if ball else z_tool_hill_flat
 
     def rough_arc(bias):
         y = 0
         end = hy + ht
-        height_func = z_tool_hill_flat
         last_plane = 0
+        last_y = 0
         step = ht / 4
 
-        g.move(x=dx/2)
+        g.move(x=dx)
+        g.move(x=-dx/2)
 
         while y < end:
             do_plane = False
-            if y + step > end:
-                g.move(y = (end - y) * bias)
-                y = end
+
+            y += step
+            if y >= end:
                 do_plane = True
-            else:
-                y += step
-                g.move(y = step * bias)
-
-            if not do_plane:
-                next_dz = height_func(y+step, ht, r_hill)
-                if last_plane - next_dz >= doc:
-                    do_plane = True
-
+                y = end
+            if last_plane - height_func(y + step, ht, r_hill) >= doc:
+                do_plane = True
+            
             if do_plane:
-                z = height_func(y, ht, r_hill)
-                rectangleTool(g, mat, z - last_plane, 
-                              dx, end - y, 0.0, "bottom" if bias > 0 else "top", "center", True)
-                g.move(z=z - last_plane)
-                last_plane = z
+                # move to the beginning of the plane
+                g.move(y = bias * (y - last_y))
 
+                # cut the plane
+                z = height_func(y, ht, r_hill)
+                dz = z - last_plane
+                g.comment("Cutting plane. y={} z={} dx={} dy={} dz={}".format(y, z, dx, end - y, dz))
+                rectangleTool(g, mat, dz, dx, end - y, 0.0, "bottom" if bias > 0 else "top", "center", True)
+
+                # move to the bottom of the plane we just cut
+                g.move(z=dz)
+                g.comment("Cutting plane done.")
+
+                last_y = y
+                last_plane += dz
+ 
         g.move(-dx/2)            
         g.abs_move(z=origin_z)
         g.move(y=-end*bias)
@@ -67,9 +74,6 @@ def hill(g, mat, diameter, dx, dy, ball):
         y = 0
         low_x = True
         end = hy + ht
-        height_func = z_tool_hill_flat
-        if ball:
-            height_func = z_tool_hill_ball
 
         while y < end:
             if y + step > end:
@@ -99,11 +103,11 @@ def hill(g, mat, diameter, dx, dy, ball):
     with GContext(g):
         g.comment('hill')
         g.relative()
-        offset = 0.05
+        #offset = 0.05
         mult = 0.2
 
         # rough pass; slightly biased up.
-        g.move(z=offset)
+        #g.move(z=offset)
         origin_z = g.current_position['z']
 
         g.spindle()
@@ -116,13 +120,12 @@ def hill(g, mat, diameter, dx, dy, ball):
         g.spindle('CCW', mat['spindle_speed'])
         rough_arc(-1)
 
-        g.move(z=-offset)
-        origin_z = g.current_position['z']
+        #g.move(z=-offset)
+        #origin_z = g.current_position['z']
 
         # smooth pass
-        if ball:
-            g.spindle()
-            tool_change(g, mat, 2)
+        g.spindle()
+        #tool_change(g, mat, 2)
 
         g.spindle()
         g.dwell(0.5)
@@ -137,9 +140,8 @@ def hill(g, mat, diameter, dx, dy, ball):
         arc(-1, mult*ht)        
         
         g.spindle()
-        if ball:
-            g.spindle()
-            tool_change(g, mat, 1)
+        g.spindle()
+        #tool_change(g, mat, 1)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -149,7 +151,7 @@ def main():
     parser.add_argument('dx', help='dx of the cut, flat over the x direction', type=float)
     parser.add_argument('dy', help='dy of the cut, curves over the y direction', type=float)
     parser.add_argument('-o', '--overlap', help='overlap between each cut', type=float, default=0.5)
-    parser.add_argument('-b', '--ball', help="do pass with ball", action="store_true")
+    parser.add_argument('-b', '--ball', help="use ball cutter", action="store_true")
 
     args = parser.parse_args()
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)

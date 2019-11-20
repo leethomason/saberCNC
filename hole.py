@@ -90,14 +90,20 @@ def hole(g, mat, cut_depth, **kwargs):
             g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
 
-            if radius_inner - tool_size > 0:
+            if radius_inner - half_tool > 0:
                 r = radius_inner
                 dr = 0
-                while r - half_tool > 0:
-                    step = tool_size * 0.8
+                step = tool_size * 0.8
+
+                while r > half_tool:
+                    if r - step < 0.1:
+                        step = r - 0.1
+                    r -= step
+
+                    #print("r={} step={}".format(r, step))
+
                     dr += step
                     g.move(x=-step)
-                    r -= step
                     g.arc2(x=-r, y=r, i=-r, j=0,  direction='CCW')
                     g.arc2(x=-r, y=-r, i=0, j=-r, direction='CCW')
                     g.arc2(x=r, y=-r, i=r, j=0,   direction='CCW')
