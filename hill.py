@@ -6,6 +6,7 @@ import math
 from rectangleTool import rectangleTool
 from hole import hole
 
+# bug: hole smallest rad should be half tool
 # remove tabs: plunge on tabs :(
 # fixed: drag cut across top when cutting hill
 # fixed: rough pass has ugly plunge at end
