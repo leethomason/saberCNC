@@ -132,7 +132,6 @@ def main():
     parser.add_argument('-a', '--align', help="'center', 'inner', 'outer'", type=str, default='center')
     parser.add_argument('-i', '--inside_fill', help="fill inside area", action='store_true')
     parser.add_argument('-o', '--origin', help="origin, can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
-    parser.add_argument('-t', '--tab', help="tab width. leave tabs at the bottom of cut. height is half of width.", type=float, default=0)
 
     args = parser.parse_args()
     mat = init_material(args.material)
