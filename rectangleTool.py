@@ -37,16 +37,16 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False):
             y = half_tool * y_sign
             dx -= tool_size
             dy -= tool_size
-            fillet -= half_tool
-            if fillet < 0:
-                fillet = 0
+            #fillet -= half_tool
+            #if fillet < 0:
+            #    fillet = 0
         elif align == 'outer':
             x = -half_tool * x_sign
             y = -half_tool * y_sign
             dx += tool_size
             dy += tool_size
-            if fillet > 0:
-                fillet += half_tool
+            #if fillet > 0:
+            #    fillet += half_tool
         elif align == "center":
             pass
         else:

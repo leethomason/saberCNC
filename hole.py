@@ -112,7 +112,6 @@ def hole(g, mat, cut_depth, **kwargs):
                     g.arc2(x=r, y=r, i=0, j=r,    direction='CCW')
                 g.move(x=dr)
 
-
         steps = calc_steps(cut_depth, -depth_of_cut)
         run_3_stages(path, g, steps)
 
