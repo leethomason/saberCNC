@@ -220,8 +220,10 @@ def print_to_console(pcb, mat, n_cols, n_rows, drill_ascii, cut_path_on_center, 
 
         if d_north < 1 or d_south < 1 or d_east < 1 or d_west < 1:
             warning = "Warning: hole within 1mm of edge."
-        print("Hole ({}): d = {}  pos = {}, {}  {}".format(
-            cut_type, diameter, pos_x, pos_y, warning))
+        print("Hole ({}): d = {}  pos = {}, {}  pos(no tool) = {}, {}  {}".format(
+            cut_type, diameter, pos_x, pos_y, 
+            round(h["x"], 3), round(h["y"], 3),
+            warning))
 
     print('Number of drill holes = {}'.format(len(drill_ascii)))
     print('Rows/Cols = {} x {}'.format(n_cols, n_rows))
@@ -421,7 +423,9 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     if do_cutting:
         g.move(x=cut_path_on_center.x0, y=cut_path_on_center.y0)
         g.move(z=0)
-        rectangle(g, mat, drill_depth, cut_path_on_center.dx(), cut_path_on_center.dy())
+        g.move(x=cut_path_on_center.dx()/2)
+        rectangle(g, mat, drill_depth, cut_path_on_center.dx(), cut_path_on_center.dy(), 1.0, "bottom")
+        g.move(x=-cut_path_on_center.dx()/2)
         g.move(z=CNC_TRAVEL_Z)
 
     g.move(z=CNC_TRAVEL_Z)
