@@ -6,12 +6,6 @@ import math
 from rectangleTool import rectangleTool
 from hole import hole
 
-# bug: hole smallest rad should be half tool
-# remove tabs: plunge on tabs :(
-# fixed: drag cut across top when cutting hill
-# fixed: rough pass has ugly plunge at end
-# fixed: hole cutting still leaves column in some cases
-
 def z_tool_hill_ball(dx, r_ball, r_hill):
     zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
     return zhc - r_hill
@@ -134,7 +128,6 @@ def hill(g, mat, diameter, dx, dy, ball):
         
         arc(-1, mult*ht)        
         
-        g.spindle()
         g.spindle()
 
 
