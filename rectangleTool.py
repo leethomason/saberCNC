@@ -5,7 +5,7 @@ from material import init_material
 from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False):
 
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
@@ -37,16 +37,18 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False):
             y = half_tool * y_sign
             dx -= tool_size
             dy -= tool_size
-            #fillet -= half_tool
-            #if fillet < 0:
-            #    fillet = 0
+            if adjust_trim:
+                fillet -= half_tool
+                if fillet < 0:
+                    fillet = 0
         elif align == 'outer':
             x = -half_tool * x_sign
             y = -half_tool * y_sign
             dx += tool_size
             dy += tool_size
-            #if fillet > 0:
-            #    fillet += half_tool
+            if adjust_trim:
+                if fillet > 0:
+                    fillet += half_tool
         elif align == "center":
             pass
         else:

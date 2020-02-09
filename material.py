@@ -60,6 +60,15 @@ materials = [
              "feed_rate": 1828,
              "plunge_rate": 812},
 
+            {"name": "copper",
+             "quality": "guess from brass.",
+             "tool_size": 3.175,
+             "pass_depth": 0.30,
+             "spindle_speed": 9200,
+             "feed_rate": 250,
+             "plunge_rate": 25,
+             "comment": "copper"},
+
             {"name": "brass230",
              "quality": "Guess from 260.",
              "tool_size": 3.175,
