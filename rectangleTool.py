@@ -107,8 +107,15 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                         
                     rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass)
 
-                    dx0 -= step * 2
-                    dy0 -= step * 2
+                    # subtle the last cut doesn't overlap itself.
+                    # probably a better algorithm for this
+                    if dx0 - step * 2 < 0 or dy0 - step * 2 < 0:
+                        dx0 -= step
+                        dy0 -= step
+                    else:
+                        dx0 -= step * 2
+                        dy0 -= step * 2
+
                     fillet0 -= step
                     if fillet0 < 0:
                         fillet0 = 0
