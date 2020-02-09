@@ -95,7 +95,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False):
                 # the inner loop walks inward.
                 # note that the cut hasn't happened at the top of the loop;
                 # so only abort when they cross
-                while dx0 > 0 and dy0  > 0: 
+                while dx0 > 0 and dy0 > 0: 
                     #print("  dx={} dy={} step={}".format(dx0, dy0, step));               
                     if first:
                         first = False
