@@ -11,9 +11,11 @@ import math
 # 'r' radius
 # 'd' diameter
 # 'offset' = 'inside', 'outside', 'middle'
+# 'fill' = True
 def hole(g, mat, cut_depth, **kwargs):
     radius = 0
     offset = "inside"
+    fill = True
 
     if 'r' in kwargs:
         radius = kwargs['r']
@@ -21,6 +23,8 @@ def hole(g, mat, cut_depth, **kwargs):
         radius = kwargs['d'] / 2
     if 'offset' in kwargs:
         offset = kwargs['offset']
+    if 'fill' in kwargs:
+        fill = kwargs['fill']
 
     tool_size = mat['tool_size']
     half_tool = tool_size / 2
@@ -91,7 +95,7 @@ def hole(g, mat, cut_depth, **kwargs):
             g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
 
-            if radius_inner > half_tool:
+            if fill and radius_inner > half_tool:
                 r = radius_inner
                 dr = 0
                 step = tool_size * 0.8
