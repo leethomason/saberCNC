@@ -39,10 +39,6 @@ def square(g, mat, dx, dy, fill : bool):
             g.move(x=-dx)
             g.move(y=-dy)
 
-
-# def plane(g, mat, depth, dx, dy):
-#     plane(g, mat, depth, 0, 0, dx, dy)
-
 def plane(g, mat, depth, x0, y0, x1, y1):
     dx = x1 - x0
     dy = y1 - y0
