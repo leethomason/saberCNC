@@ -6,12 +6,14 @@ import argparse
 import math
 
 
-# assume we are at (x, y, 0)
-# accounts for tool size
+# Assume we are at (x, y, 0)
+# Accounts for tool size
 # 'r' radius
 # 'd' diameter
 # 'offset' = 'inside', 'outside', 'middle'
 # 'fill' = True
+# 'z' if specified, the z move to issue before cutting
+#
 def hole(g, mat, cut_depth, **kwargs):
     radius = 0
     offset = "inside"
@@ -44,6 +46,8 @@ def hole(g, mat, cut_depth, **kwargs):
         raise RuntimeError('Cut depth must be less than zero.')
     if mat["tool_size"] < 0:
         raise RuntimeError('Tool size must be zero or greater.')
+
+    was_relative = g.is_relative
 
     with GContext(g):
         g.relative()
@@ -82,6 +86,11 @@ def hole(g, mat, cut_depth, **kwargs):
         g.feed(mat['travel_plunge'])
 
         g.move(x=radius_inner)
+        if 'z' in kwargs:
+            if was_relative:
+                g.move(z=kwargs['z'])
+            else:
+                g.abs_move(z=kwargs['z'])
 
         g.feed(feed_rate)
 

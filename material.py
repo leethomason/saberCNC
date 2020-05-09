@@ -27,7 +27,7 @@ materials = [
              "spindle_speed": 6250,
              "feed_rate": 2000,
              "plunge_rate": 500},
-
+          
             {"name": "polycarb",
              "quality": "Carbide3D test",
              "tool_size": 3.175,
@@ -75,6 +75,14 @@ materials = [
              "spindle_speed": 4500,
              "feed_rate": 1828,
              "plunge_rate": 812},
+
+            {"name": "hdpe",
+             "quality": "Carbide3D test",
+             "tool_size": 3.175,
+             "pass_depth": 0.50,
+             "spindle_speed": 6250,
+             "feed_rate": 2000,
+             "plunge_rate": 530},
 
             {"name": "copper",
              "quality": "guess from brass.",
@@ -241,9 +249,11 @@ def preprocess_material(m, machine, tool_size):
     m['travel_feed'] = machine["travel_feed"]
     m['travel_plunge'] = machine["travel_plunge"]
     m['tool_size'] = tool_size
+
     for key, value in m.items():
         if type(value) is float:
             m[key] = round(value, 5)
+
     return m
 
 
