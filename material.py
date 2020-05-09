@@ -12,6 +12,22 @@ materials = [
         "travel_plunge": 400,
 
         "materials": [
+            {"name": "acrylic",
+             "quality": "Carbide3D test",
+             "tool_size": 3.175,
+             "pass_depth": 0.49,
+             "spindle_speed": 9000,
+             "feed_rate": 1100,
+             "plunge_rate": 355},
+
+            {"name": "hdpe",
+             "quality": "Carbide3D test",
+             "tool_size": 3.175,
+             "pass_depth": 0.51,
+             "spindle_speed": 6250,
+             "feed_rate": 2000,
+             "plunge_rate": 500},
+
             {"name": "polycarb",
              "quality": "Carbide3D test",
              "tool_size": 3.175,
