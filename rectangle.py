@@ -10,33 +10,8 @@ def move(g, mat, axis, d, dz=None):
     else:
         g.move(y=d, z=dz)
 
-def tab_move(g, mat, axis, d, tab, dz=None):
-    tab_d = tab + mat['tool_size']
-    inner_d = d - tab_d * 2.0
 
-    # up and over the tab
-    g.move(z=tab)
-    move(g, mat, axis, tab_d, 0)
-
-    # cut out back out
-    depth = dz * 2.0
-    g.move(z=-tab - dz)
-
-    move(g, mat, axis, inner_d, depth / 2.0)
-    move(g, mat, axis, -inner_d, depth / 2.0)
-    move(g, mat, axis, inner_d, 0)
-
-    g.move(z=tab)
-    move(g, mat, axis, tab_d, 0)
-    g.move
-
-
-    if axis == 'x':
-        g.move(x=d, z=dz)
-    else:
-        g.move(y=d, z=dz)
-
-def segment(g, mat, axis, d, bias, segment_plunge, flatten):
+def segment(g, mat, axis, d, segment_plunge):
     if flatten or segment_plunge > mat['pass_depth']:
         z = 0
         dz = mat['pass_depth'] # positive
@@ -49,15 +24,14 @@ def segment(g, mat, axis, d, bias, segment_plunge, flatten):
             else:
                 z -= dz
 
-            lower_bias = bias if start else -bias
             move(g, mat, axis, d * lower_bias, -dz)
             start = False
 
         if start == False:
             # then we have reached out outer edge, but may not have a flat bottom.
-            move(g, mat, axis, d * bias, 0)
+            move(g, mat, axis, d, 0)
 
-        move(g, mat, axis, d * bias, 0)
+        move(g, mat, axis, d, 0)
 
     else:
         move(g, mat, axis, d * bias, -dz)
