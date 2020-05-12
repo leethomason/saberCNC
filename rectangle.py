@@ -4,68 +4,37 @@ from mecode import G
 from material import init_material
 from utility import calc_steps, run_3_stages, GContext
 
-
-def set_feed(g, mat, x, z):
-    if abs(x) < 0.1 or (abs(z) > 0.01  and abs(z) / abs(x) > 1.0):
-        g.feed(mat['plunge_rate'])
+def move(g, mat, axis, d, dz):
+    if axis == 'x':
+        g.move(x=d)
     else:
-        g.feed(mat['feed_rate'])
+        g.move(y=d)
 
-def calc_move_plunge(dx, dy, fillet, pass_plunge):
-    x_move = (dx - fillet * 2) / 2
-    y_move = (dy - fillet * 2) / 2
-    plunge = pass_plunge / 4
+def segment(g, mat, axis, d, bias, segment_plunge, flatten):
+    if flatten or segment_plunge > mat['pass_depth']:
+        z = 0
+        dz = mat['pass_depth'] # positive
+        start = True
 
-    if (x_move + y_move > 1):
-        x_plunge = plunge * x_move / (x_move + y_move)
-        y_plunge = plunge * y_move / (x_move + y_move)
+        while z > segment_plunge:
+            if z - dz < segment_plunge:
+                dz = z - segment_plunge
+                z = segment_plunge
+            else:
+                z -= dz
+
+            lower_bias = bias if start else -bias
+            move(g, mat, axis, d * lower_bias, -dz)
+            start = False
+
+        if start == False:
+            # then we have reached out outer edge, but may not have a flat bottom.
+            move(g, mat, axis, d * bias, 0)
+
+        move(g, mat, axis, d * bias, 0)
+
     else:
-        x_plunge = y_plunge = plunge / 2
-
-    return x_move, y_move, x_plunge, y_plunge
-
-def x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge):
-    set_feed(g, mat, x_move, x_plunge) 
-    g.move(x=x_move, z=x_plunge)
-
-def y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge):
-    set_feed(g, mat, y_move, y_plunge) 
-    g.move(y=y_move, z=y_plunge)
-
-def lower_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth):
-
-    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
-    
-    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge)
-    if fillet > 0:
-        g.arc2(x=fillet, y=-fillet, i=fillet, j=0, direction="CCW")
-    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge)
-
-def lower_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth):
-    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
-    
-    x_segment(g, mat, x_move, x_plunge, cut_depth, total_plunge)
-        
-    if fillet > 0:
-        g.arc2(x=fillet, y=fillet, i=0, j=fillet, direction="CCW")
-    
-    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge)
-
-def upper_right(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth):
-    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
-
-    y_segment(g, mat, y_move, y_plunge, cut_depth, total_plunge)
-    if fillet > 0:
-        g.arc2(x=-fillet, y=fillet, i=-fillet, j=0, direction="CCW")
-    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge)
-
-def upper_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth):
-    x_move, y_move, x_plunge, y_plunge = calc_move_plunge(dx, dy, fillet, pass_plunge)
-    
-    x_segment(g, mat, -x_move, x_plunge, cut_depth, total_plunge)
-    if fillet > 0:
-        g.arc2(x=-fillet, y=-fillet, i=0, j=-fillet, direction="CCW")
-    y_segment(g, mat, -y_move, y_plunge, cut_depth, total_plunge)
+        move(g, mat, axis, d * bias, -dz)
 
 # from current location
 # no accounting for tool size
@@ -82,30 +51,30 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
 
     corners = []
 
-    if origin == "left":
-        corners.append(lower_left)
-        corners.append(lower_right) 
-        corners.append(upper_right)
-        corners.append(upper_left)
-    elif origin == "bottom":
-        corners.append(lower_right)
-        corners.append(upper_right)
-        corners.append(upper_left)
-        corners.append(lower_left)
-    elif origin == "right":
-        corners.append(upper_right)
-        corners.append(upper_left)
-        corners.append(lower_left)
-        corners.append(lower_right)
-    elif origin == "top":
-        corners.append(upper_left)
-        corners.append(lower_left)
-        corners.append(lower_right)
-        corners.append(upper_right)
-    else:
-        raise RuntimeError("Origin isn't valid.")
-
     with GContext(g):
+        if origin == "left":
+            corners.append(lower_left)
+            corners.append(lower_right) 
+            corners.append(upper_right)
+            corners.append(upper_left)
+        elif origin == "bottom":
+            corners.append(lower_right)
+            corners.append(upper_right)
+            corners.append(upper_left)
+            corners.append(lower_left)
+        elif origin == "right":
+            corners.append(upper_right)
+            corners.append(upper_left)
+            corners.append(lower_left)
+            corners.append(lower_right)
+        elif origin == "top":
+            corners.append(upper_left)
+            corners.append(lower_left)
+            corners.append(lower_right)
+            corners.append(upper_right)
+        else:
+            raise RuntimeError("Origin isn't valid.")
+
         g.comment("Rectangular cut")
         g.relative()
 
