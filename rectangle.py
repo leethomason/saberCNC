@@ -4,11 +4,11 @@ from mecode import G
 from material import init_material
 from utility import calc_steps, run_3_stages, GContext
 
-def move(g, mat, axis, d, dz):
+def move(g, mat, axis, d, dz=None):
     if axis == 'x':
-        g.move(x=d)
+        g.move(x=d, z=dz)
     else:
-        g.move(y=d)
+        g.move(y=d, z=dz)
 
 def segment(g, mat, axis, d, bias, segment_plunge, flatten):
     if flatten or segment_plunge > mat['pass_depth']:
@@ -49,29 +49,42 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
     if fillet < 0 or fillet*2 > dx or fillet*2 > dy:
         raise RuntimeError("Invalid fillet. dx=" + str(dx) + " dy= " + str(dy) + " fillet=" + str(fillet))
 
-    corners = []
+    mainAxis = 'x'
+    mainBias = 'y'
+    mainBias = 1
+    altBias = 1
+    mainX = dx
+    altX = dy
 
     with GContext(g):
         if origin == "left":
-            corners.append(lower_left)
-            corners.append(lower_right) 
-            corners.append(upper_right)
-            corners.append(upper_left)
+            mainAxis = 'y'
+            mainBias = -1
+            mainX = dy
+            altAxis = 'x'
+            altBias = 1
+            altX = dx
         elif origin == "bottom":
-            corners.append(lower_right)
-            corners.append(upper_right)
-            corners.append(upper_left)
-            corners.append(lower_left)
+            mainAxis = 'x'
+            mainBias = 1
+            mainX = dx
+            altAxis = 'y'
+            altBias = 1
+            altX = dy
         elif origin == "right":
-            corners.append(upper_right)
-            corners.append(upper_left)
-            corners.append(lower_left)
-            corners.append(lower_right)
+            mainAxis = 'y'
+            mainBias = 1
+            mainX = dy
+            altAxis = 'x'
+            altBias = -1
+            altX = dx
         elif origin == "top":
-            corners.append(upper_left)
-            corners.append(lower_left)
-            corners.append(lower_right)
-            corners.append(upper_right)
+            mainAxis = 'x'
+            mainBias = -1
+            mainX = dx
+            altAxis = 'y'
+            altBias = -1
+            altX = dy
         else:
             raise RuntimeError("Origin isn't valid.")
 
@@ -81,11 +94,17 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
-        def path(g, plunge, total_plunge):
-            corners[0](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth)
-            corners[1](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth)
-            corners[2](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth)
-            corners[3](g, mat, dx, dy, fillet, plunge, total_plunge, cut_depth)
+        length = dx * 2 + dy * 2
+        mainPlunge = mainX / length
+        altPlunge = altX / length 
+
+        move(g, mat, mainAxis, -mainX/2 * mainBias, 0)        
+
+        def path(g, plunge, total_plunge):            
+            move(g, mat, mainAxis, mainX * mainBias, mainPlunge * plunge)
+            move(g, mat, altAxis, altX * altBias, altPlunge * plunge)
+            move(g, mat, mainAxis, -mainX * mainBias, mainPlunge * plunge)
+            move(g, mat, altAxis, -altX * altBias, altPlunge * plunge)
 
         if single_pass:
             path(g, cut_depth, cut_depth)
@@ -93,8 +112,8 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
             steps = calc_steps(cut_depth, -mat['pass_depth'])
             run_3_stages(path, g, steps)
 
-        #path(g, 0)
-
+        move(g, mat, mainAxis, mainX/2 * mainBias, 0)
+        
         g.move(z=-cut_depth)
 
 def main():

@@ -5,7 +5,7 @@ from material import init_material
 from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False, tab_height=None):
 
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
@@ -104,7 +104,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                     else:
                         g.move(x=step * x_sign, y=step * y_sign)
                         total_step += step
-                        
+                    
                     rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass)
 
                     # subtle the last cut doesn't overlap itself.
