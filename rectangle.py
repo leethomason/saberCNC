@@ -10,31 +10,45 @@ def move(g, mat, axis, d, dz=None):
     else:
         g.move(y=d, z=dz)
 
+def segment_tab(g, mat, axis, d, depth, tab, useTab):
+    bias = 1 if d >= 0 else -1
+    tab_d = tab + mat['tool_size']
+    inner_d = (d * bias) - tab_d * 2.0
 
-def segment(g, mat, axis, d, segment_plunge):
-    if flatten or segment_plunge > mat['pass_depth']:
-        z = 0
-        dz = mat['pass_depth'] # positive
-        start = True
-
-        while z > segment_plunge:
-            if z - dz < segment_plunge:
-                dz = z - segment_plunge
-                z = segment_plunge
-            else:
-                z -= dz
-
-            move(g, mat, axis, d * lower_bias, -dz)
-            start = False
-
-        if start == False:
-            # then we have reached out outer edge, but may not have a flat bottom.
-            move(g, mat, axis, d, 0)
-
-        move(g, mat, axis, d, 0)
-
+    if useTab:
+        move(g, mat, axis, tab_d * bias, 0)
+        segment(g, mat, axis, inner_d * bias, depth)
+        move(g, mat, axis, tab_d * bias, 0)
     else:
-        move(g, mat, axis, d * bias, -dz)
+        segment(g, mat, axis, d, depth)
+
+
+def segment(g, mat, axis, d, depth):
+    z = 0
+    dz = mat['pass_depth'] * 0.5
+    start = True
+
+    while z > depth:
+        if z - dz < depth:
+            dz = z - depth
+            z = depth
+        else:
+            z -= dz
+
+        if start:
+            move(g, mat, axis, d, -dz)
+        else:
+            move(g, mat, axis, -d, -dz)
+        start = not start
+
+    if start is True:
+        # then we have reached out outer edge, but may not have a flat bottom.
+        move(g, mat, axis, d, 0)
+    move(g, mat, axis, -d, 0)
+
+    g.move(z=-depth)
+    move(g, mat, axis, d, 0)
+
 
 # from current location
 # no accounting for tool size
@@ -94,6 +108,7 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, tab=
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
+        mainAxisLong = mainAxis >= altAxis
         length = dx * 2 + dy * 2
         mainPlunge = mainX / length
         altPlunge = altX / length 
@@ -118,20 +133,10 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, tab=
                 run_3_stages(path, g, steps)
 
                 # then do tabs
-                tab_d = tab + mat['tool_size']
-                inner_d = d - tab_d * 2.0
-
-                move(g, mat, mainAxis, tab_d * mainBias, 0)
-                segment(g, mat, mainAxis, inner_d * mainBias, -tab) 
-                move(g, mat, mainAxis, tab_d * mainBias, 0)
-
-                segment(g, mat, altAxis, altX * altBias, -tab)
-
-                move(g, mat, mainAxis, -tab_d * mainBias, 0)
-                segment(g, mat, mainAxis, -inner_d * mainBias, -tab) 
-                move(g, mat, mainAxis, -tab_d * mainBias, 0)
-
-                segment(g, mat, altAxis, -altX * altBias, -tab)
+                segment_tab(g, mat, mainAxis, mainX, -tab, tab, mainAxisLong)
+                segment_tab(g, mat, altAxis, altX, -tab, tab, not mainAxisLong)
+                segment_tab(g, mat, mainAxis, -mainX, -tab, tab, mainAxisLong)
+                segment_tab(g, mat, altAxis, -altX, -tab, tab, not mainAxisLong)
 
         move(g, mat, mainAxis, mainX/2 * mainBias, 0)
         
@@ -154,7 +159,9 @@ def main():
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.tab)
+
+    rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin,
+              single_pass=False, tab=args.tab)
     g.spindle()
 
 
