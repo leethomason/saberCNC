@@ -1,19 +1,77 @@
 import argparse
 import sys
+import math
 from mecode import G
 from material import init_material
 from utility import calc_steps, run_3_stages, GContext
 
-def move(g, mat, axis, d, dz=None):
+
+def move(g, mat, axis, d, dz):
     if axis == 'x':
         g.move(x=d, z=dz)
     else:
         g.move(y=d, z=dz)
 
+
+def arc90(g, mat, axis, bias, r, dz):
+    if r == 0.0:
+        return
+    if axis == 'x':
+        g.arc2(x=r * bias, y=r * bias, i=0, j=r * bias, direction="CCW",
+               helix_dim='z', helix_len=dz)
+    else:
+        g.arc2(x=-r * bias, y=r * bias, i=-r * bias, j=0, direction="CCW",
+               helix_dim='z', helix_len=dz)
+
+
+def arcN90(g, mat, axis, bias, r, dz):
+    if r == 0.0:
+        return
+    if axis == 'x':
+        g.arc2(x=-r * bias, y=-r * bias, i=-r * bias, j=0, direction="CW",
+               helix_dim='z', helix_len=dz)
+    else:
+        g.arc2(x=r * bias, y=-r * bias, i=0, j=-r * bias, direction="CW",
+               helix_dim='z', helix_len=dz)
+
+
+def segment_arc90(g, mat, axis, bias, depth, r):
+    if r == 0:
+        return
+
+    z = 0
+    dz = mat['pass_depth'] * 0.3  # slow down from 0.5
+    start = True
+
+    while z > depth:
+        if z - dz < depth:
+            dz = z - depth
+            z = depth
+        else:
+            z -= dz
+
+        if start:
+            arc90(g, mat, axis, bias, r, -dz)
+        else:
+            arcN90(g, mat, axis, bias, r, -dz)
+        start = not start
+
+    if start is True:
+        # then we have reached out outer edge, but may not have a flat bottom.
+        arc90(g, mat, axis, bias, r, 0)
+    arcN90(g, mat, axis, bias, r, 0)
+
+    g.move(z=-depth)
+    arc90(g, mat, axis, bias, r, 0)
+
+
 def segment_tab(g, mat, axis, d, depth, tab, useTab):
     bias = 1 if d >= 0 else -1
     tab_d = tab + mat['tool_size']
     inner_d = (d * bias) - tab_d * 2.0
+
+    if depth >= 0: raise RuntimeError("depth must be < 0")
+    if inner_d <= 0: raise RuntimeError("tabs don't fit")
 
     if useTab:
         move(g, mat, axis, tab_d * bias, 0)
@@ -25,7 +83,7 @@ def segment_tab(g, mat, axis, d, depth, tab, useTab):
 
 def segment(g, mat, axis, d, depth):
     z = 0
-    dz = mat['pass_depth'] * 0.5
+    dz = mat['pass_depth'] * 0.4 # slow down from 0.5
     start = True
 
     while z > depth:
@@ -102,6 +160,9 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, tab=
         else:
             raise RuntimeError("Origin isn't valid.")
 
+        mainSubX = mainX - fillet * 2
+        altSubX = altX - fillet * 2
+
         g.comment("Rectangular cut")
         g.relative()
 
@@ -109,17 +170,31 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, tab=
         g.feed(mat['feed_rate'])
 
         mainAxisLong = mainAxis >= altAxis
-        length = dx * 2 + dy * 2
-        mainPlunge = mainX / length
-        altPlunge = altX / length 
 
-        move(g, mat, mainAxis, -mainX/2 * mainBias, 0)
+        arc_len = math.pi * fillet / 2
+        # print("arc_len", arc_len)
+        length = (dx - fillet * 2) * 2 + (dy - fillet * 2) * 2 + arc_len * 4
+        # print("length", length, mainX - fillet * 2, altX - fillet * 2, arc_len)
+
+        mainPlunge = (mainX - fillet * 2) / length
+        altPlunge = (altX - fillet * 2) / length
+        arcPlunge = arc_len / length
+        # print("plunge", mainPlunge, altPlunge, arcPlunge, mainPlunge + altPlunge + arcPlunge * 2)
+
+        move(g, mat, mainAxis, -mainSubX/2 * mainBias, 0)
 
         def path(g, plunge, total_plunge):            
-            move(g, mat, mainAxis, mainX * mainBias, mainPlunge * plunge)
-            move(g, mat, altAxis, altX * altBias, altPlunge * plunge)
-            move(g, mat, mainAxis, -mainX * mainBias, mainPlunge * plunge)
-            move(g, mat, altAxis, -altX * altBias, altPlunge * plunge)
+            move(g, mat, mainAxis, mainSubX * mainBias, mainPlunge * plunge)
+            arc90(g, mat, mainAxis, mainBias, fillet, arcPlunge * plunge)
+
+            move(g, mat, altAxis, altSubX * altBias, altPlunge * plunge)
+            arc90(g, mat, altAxis, altBias, fillet, arcPlunge * plunge)
+
+            move(g, mat, mainAxis, -mainSubX * mainBias, mainPlunge * plunge)
+            arc90(g, mat, mainAxis, -mainBias, fillet, arcPlunge * plunge)
+
+            move(g, mat, altAxis, -altSubX * altBias, altPlunge * plunge)
+            arc90(g, mat, altAxis, -altBias, fillet, arcPlunge * plunge)
 
         if single_pass:
             path(g, cut_depth, cut_depth)
@@ -127,20 +202,37 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, tab=
             if tab is None:
                 steps = calc_steps(cut_depth, -mat['pass_depth'])
                 run_3_stages(path, g, steps)
+                g.move(z=-cut_depth)
             else:
                 # flatten to tab depth
                 steps = calc_steps(cut_depth + tab, -mat['pass_depth'])
                 run_3_stages(path, g, steps)
 
                 # then do tabs
-                segment_tab(g, mat, mainAxis, mainX, -tab, tab, mainAxisLong)
-                segment_tab(g, mat, altAxis, altX, -tab, tab, not mainAxisLong)
-                segment_tab(g, mat, mainAxis, -mainX, -tab, tab, mainAxisLong)
-                segment_tab(g, mat, altAxis, -altX, -tab, tab, not mainAxisLong)
+                g.comment("tabs")
+                if mainSubX > 0:
+                    g.comment("tab 0")
+                    segment_tab(g, mat, mainAxis, mainSubX, -tab, tab, mainAxisLong)
+                g.comment("arc 0")
+                segment_arc90(g, mat, mainAxis, mainBias, -tab, fillet)
+                if altSubX > 0:
+                    g.comment("tab 1")
+                    segment_tab(g, mat, altAxis, altSubX, -tab, tab, not mainAxisLong)
+                g.comment("arc 1")
+                segment_arc90(g, mat, altAxis, altBias, -tab, fillet)
+                if mainSubX > 0:
+                    g.comment("tab 2")
+                    segment_tab(g, mat, mainAxis, -mainSubX, -tab, tab, mainAxisLong)
+                g.comment("arc 2")
+                segment_arc90(g, mat, mainAxis, -mainBias, -tab, fillet)
+                if altSubX > 0:
+                    g.comment("tab 3")
+                    segment_tab(g, mat, altAxis, -altSubX, -tab, tab, not mainAxisLong)
+                g.comment("arc 3")
+                segment_arc90(g, mat, altAxis, -altBias, -tab, fillet)
+                g.move(z=-(cut_depth + tab))
 
-        move(g, mat, mainAxis, mainX/2 * mainBias, 0)
-        
-        g.move(z=-cut_depth)
+        move(g, mat, mainAxis, mainSubX/2 * mainBias, 0)
 
 def main():
     parser = argparse.ArgumentParser(

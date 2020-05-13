@@ -5,10 +5,10 @@ from material import init_material
 from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z
 from rectangle import rectangle
 
-def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False, tab_height=None):
+def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False, tab=None):
 
-    if cut_depth >= 0:
-        raise RuntimeError('Cut depth must be less than zero.')
+    if cut_depth >= 0: raise RuntimeError('Cut depth must be less than zero.')
+    if tab is not None and fill is True: raise RuntimeError("Can't have fill and tabs")
 
     with GContext(g):
         g.relative()
@@ -65,7 +65,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
             g.move(z=-CNC_TRAVEL_Z)
 
         if fill == False or dx == 0 or dy == 0:
-            rectangle(g, mat, cut_depth, dx, dy, fillet, origin)
+            rectangle(g, mat, cut_depth, dx, dy, fillet, origin, tab=tab)
 
         else:
             z_depth = 0
@@ -141,12 +141,14 @@ def main():
     parser.add_argument('-a', '--align', help="'center', 'inner', 'outer'", type=str, default='center')
     parser.add_argument('-i', '--inside_fill', help="fill inside area", action='store_true')
     parser.add_argument('-o', '--origin', help="origin, can be 'left', 'bottom', 'right', or 'top'", type=str, default="left")
+    parser.add_argument('-t', '--tab', help="tab size", type=float, default=None)
 
     args = parser.parse_args()
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill)
+    rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin,
+                  args.align, args.inside_fill, tab=args.tab)
     g.spindle()
 
 if __name__ == "__main__":
