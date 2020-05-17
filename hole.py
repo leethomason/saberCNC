@@ -13,6 +13,7 @@ import math
 # 'offset' = 'inside', 'outside', 'middle'
 # 'fill' = True
 # 'z' if specified, the z move to issue before cutting
+# 'return_center' = True, returns to center at the end
 #
 def hole(g, mat, cut_depth, **kwargs):
     radius = 0
@@ -130,7 +131,15 @@ def hole(g, mat, cut_depth, **kwargs):
 
         g.move(z=-cut_depth)  # up to the starting point
         g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
-        g.move(x=-radius_inner)  # back to center of the circle
+
+        g.move(z=1.0)
+
+        return_center = True
+        if 'return_center' in kwargs:
+            return_center = kwargs['return_center']
+
+        if return_center:
+            g.move(x=-radius_inner)  # back to center of the circle
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):

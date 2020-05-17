@@ -16,7 +16,6 @@ NOT_INIT = 0
 COPPER = 1
 ISOLATE = -1
 
-
 class Point:
     def __init__(self, x: float = 0, y: float = 0):
         self.x = x
@@ -271,7 +270,7 @@ def rc_to_xy_flip(x: float, y: float, n_cols, n_rows):
     return Point((n_cols - 1 - x) * SCALE, (n_rows - 1 - y) * SCALE)
 
 
-def nanopcb(filename, mat, pcb_depth, drill_depth,
+def nanopcb(filename, g, mat, pcb_depth, drill_depth,
             do_cutting, info_mode, do_drilling, 
             flip, openscad):
 
@@ -373,9 +372,6 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
 
-    g = G(outfile='path.nc', aerotech_include=False,
-          header=None, footer=None, print_lines=False)
-
     g.comment("NanoPCB")
 
     g.absolute()
@@ -431,7 +427,7 @@ def nanopcb(filename, mat, pcb_depth, drill_depth,
     g.spindle()
     g.move(x=0, y=0)
 
-    g.teardown()
+    return cut_path_on_center.dx(), cut_path_on_center.dy()
 
 
 def main():
@@ -457,8 +453,9 @@ def main():
 
     args = parser.parse_args()
     mat = init_material(args.material)
+    g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
-    nanopcb(args.filename, mat, args.pcbDepth,
+    nanopcb(args.filename, g, mat, args.pcbDepth,
             args.drillDepth, args.no_cut is False, args.info, args.no_drill is False, args.flip, args.openscad)
 
 
