@@ -66,6 +66,12 @@ def plane(g, mat, depth, x0, y0, x1, y1):
             g.move(x=dx, z=dz/2)
             g.move(x=-dx, z=dz/2)
 
+            # nice edges
+            g.move(x=dx)
+            g.move(y=dy)
+            g.move(x=-dx)
+            g.move(y=-dy)
+
             # now the business of cutting.
             square(g, mat, dx, dy, True)
 
