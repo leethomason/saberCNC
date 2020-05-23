@@ -59,8 +59,8 @@ class PtPair:
         self.y1 += y
 
     def flip(self, w):
-        self.x0 = w - self.x0
-        self.x1 = w - self.x1
+        self.y0 = h - self.y0
+        self.y1 = h - self.y1
 
     def dx(self):
         return abs(self.x1 - self.x0)
@@ -267,7 +267,7 @@ def rc_to_xy_normal(x: float, y: float, n_cols, n_rows):
 
 
 def rc_to_xy_flip(x: float, y: float, n_cols, n_rows):
-    return Point((n_cols - 1 - x) * SCALE, (n_rows - 1 - y) * SCALE)
+    return Point(x * SCALE, y * SCALE)
 
 
 def nanopcb(filename, g, mat, pcb_depth, drill_depth,
@@ -447,7 +447,7 @@ def main():
     parser.add_argument(
         '-d', '--no-drill', help='disable drill holes in the pcb', action='store_true')
     parser.add_argument(
-        '-f', '--flip', help='flip in the x axis for pcb under and mounting over', action='store_true')
+        '-f', '--flip', help='flip in the y axis for pcb under and mounting over', action='store_true')
     parser.add_argument(
         '-o', '--openscad', help='OpenScad printout.', action='store_true')
 
