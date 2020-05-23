@@ -263,11 +263,15 @@ def print_for_openscad(mat, cut_path_on_center, holes):
 
 
 def rc_to_xy_normal(x: float, y: float, n_cols, n_rows):
-    return Point(x * SCALE, (n_rows - 1 - y) * SCALE)
+    dx = (n_cols - 1) * SCALE
+    dy = (n_rows - 1) * SCALE
+    return Point(x * SCALE - dx/2, (n_rows - 1 - y) * SCALE - dy/2)
 
 
 def rc_to_xy_flip(x: float, y: float, n_cols, n_rows):
-    return Point(x * SCALE, y * SCALE)
+    dx = (n_cols - 1) * SCALE
+    dy = (n_rows - 1) * SCALE
+    return Point(x * SCALE - dx/2, y * SCALE - dy/2)
 
 
 def nanopcb(filename, g, mat, pcb_depth, drill_depth,
