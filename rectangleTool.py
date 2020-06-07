@@ -5,6 +5,51 @@ from material import init_material
 from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z
 from rectangle import rectangle
 
+# from lower left. it's an inner cut, with outer dim x,y
+def overCut(g, mat, cut_depth, _dx, _dy):
+    with GContext(g):
+        g.relative()
+
+        tool = mat['tool_size']
+        half = tool / 2
+        dx = _dx - tool
+        dy = _dy - tool
+        length = dx * 2 + dy * 2
+
+        g.move(z=1)
+        g.move(x=half, y=half)
+        g.move(z=-1)
+
+        def path(g, plunge, total_plunge):
+            g.move(x=dx, z=plunge * dx / length)
+            g.move(x=half)
+            g.move(x=-half, y=-half)
+            g.move(y=half)
+
+            g.move(y=dy, z=plunge * dy / length)
+            g.move(y=half)
+            g.move(x=half, y=-half)
+            g.move(x=-half)
+
+            g.move(x=-dx, z=plunge * dx / length)
+            g.move(x=-half)
+            g.move(x=half, y=half)
+            g.move(y=-half)
+
+            g.move(y=-dy, z=plunge * dy / length)
+            g.move(y=-half)
+            g.move(x=-half, y=half)
+            g.move(x=half)
+
+        steps = calc_steps(cut_depth, -mat['pass_depth'])
+        run_3_stages(path, g, steps)
+
+        g.move(z=-cut_depth)
+        g.move(z=1)
+        g.move(x=-half, y=-half)
+        g.move(z=-1)
+
+
 def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, adjust_trim=False):
 
     if cut_depth >= 0:
@@ -14,6 +59,8 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
         g.relative()
 
         g.feed(mat['travel_feed'])
+        g.spindle('CW', mat['spindle_speed'])
+
         tool_size = mat['tool_size']
         half_tool = tool_size / 2
         x = 0

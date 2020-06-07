@@ -23,7 +23,7 @@ def tool_change(g, mat, name: int):
         g.feed(mat['travel_feed'])
         g.rapid(x=x, y=y)
         g.rapid(z=z + CNC_TRAVEL_Z)
-        g.spindle('CCW', mat['spindle_speed'])
+        g.spindle('CW', mat['spindle_speed'])
         g.move(z=z)
 
 

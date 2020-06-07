@@ -82,7 +82,15 @@ materials = [
              "pass_depth": 0.50,
              "spindle_speed": 6250,
              "feed_rate": 2000,
-             "plunge_rate": 530},
+             "plunge_rate": 200},
+
+            {"name": "hdpe",
+             "quality": "Guess - bantam data",
+             "tool_size": 1.0,
+             "pass_depth": 0.30,
+             "spindle_speed": 6250,
+             "feed_rate": 600,
+             "plunge_rate": 100},
 
             {"name": "copper",
              "quality": "guess from brass.",

@@ -9,26 +9,25 @@ def drill(g, mat, cut_depth):
         raise RuntimeError('Cut depth must be less than zero.')
 
     with GContext(g):
-        g.absolute()
+        g.relative()
 
         num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
+        dz = cut_depth / num_plunge
+
         g.comment("Drill depth={} num_taps={}".format(cut_depth, num_plunge))
         g.spindle('CW', mat['spindle_speed'])
-
-        g.feed(mat['travel_plunge'])
-        g.move(z=0)
-        g.dwell(0.250)
         g.feed(mat['plunge_rate'])
 
-        # move up and down in stages.
-        for i in range(0, num_plunge):
-            g.move(z=cut_depth * (i + 1) / num_plunge)  # drill down
-            g.dwell(0.250)
-            g.move(z=cut_depth * i / num_plunge)  # move up to cast out chips
-            g.dwell(0.250)
+        if num_plunge > 1:
+            # move up and down in stages.
+            for i in range(0, num_plunge):
+                g.move(z=dz)
+                g.move(z=-dz)
+                g.move(z=dz)
+        else:
+            g.move(z=cut_depth)
 
-        g.move(z=0)
-        g.dwell(0.250)
+        g.move(z=-cut_depth)
 
 def drill_points(g, mat, cut_depth, points):
     with GContext(g):
