@@ -7,6 +7,9 @@ from rectangle import rectangle
 
 # from lower left. it's an inner cut, with outer dim x,y
 def overCut(g, mat, cut_depth, _dx, _dy):
+    g.feed(mat['travel_feed'])
+    g.spindle('CW', mat['spindle_speed'])
+
     with GContext(g):
         g.relative()
 
@@ -148,11 +151,12 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                     #print("  dx={} dy={} step={}".format(dx0, dy0, step));               
                     if first:
                         first = False
+                        rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass=single_pass, restore_z=False)
+
                     else:
                         g.move(x=step * x_sign, y=step * y_sign)
                         total_step += step
-                        
-                    rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass)
+                        rectangle(g, mat, 0.0, dx0, dy0, fillet0, origin, single_pass=True)                        
 
                     # subtle the last cut doesn't overlap itself.
                     # probably a better algorithm for this
@@ -168,7 +172,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                         fillet0 = 0
 
                 g.move(x=-total_step * x_sign, y=-total_step * y_sign)
-                g.move(z=this_cut)
+                # don't need to move down; z is not restored g.move(z=this_cut)
             g.move(z=-cut_depth)
 
         if abs(x) or abs(y):

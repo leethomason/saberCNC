@@ -69,9 +69,9 @@ def upper_left(g, mat, dx, dy, fillet, pass_plunge, total_plunge, cut_depth):
 
 # from current location
 # no accounting for tool size
-def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
-    if cut_depth >= 0:
-        raise RuntimeError('Cut depth must be less than zero.')
+def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, restore_z=True):
+    if cut_depth > 0:
+        raise RuntimeError('Cut depth must be less than, or equal to, zero.')
     if dx == 0 and dy == 0:
         raise RuntimeError('dx and dy may not both be zero')
     if dx < 0 or dy < 0:
@@ -125,8 +125,8 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False):
             run_3_stages(path, g, steps)
 
         #path(g, 0)
-
-        g.move(z=-cut_depth)
+        if restore_z:
+           g.move(z=-cut_depth)
 
 def main():
     parser = argparse.ArgumentParser(
