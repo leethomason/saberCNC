@@ -70,6 +70,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
         y = 0
         x_sign = 0
         y_sign = 0
+        rect_origin = origin
 
         if origin == "left":
             x_sign = 1
@@ -79,8 +80,14 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
             x_sign = -1
         elif origin == "top":
             y_sign = -1
+        elif origin == "center":
+            x_sign = 1
+            rect_origin = "left"
         else:
             raise RuntimeError("unrecognized origin")
+
+        if origin == "center":
+            g.move(x=-dx/2)
 
         if align == 'inner':
             x = half_tool * x_sign
@@ -115,7 +122,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
             g.move(z=-CNC_TRAVEL_Z)
 
         if fill == False or dx == 0 or dy == 0:
-            rectangle(g, mat, cut_depth, dx, dy, fillet, origin)
+            rectangle(g, mat, cut_depth, dx, dy, fillet, rect_origin)
 
         else:
             z_depth = 0
@@ -151,12 +158,12 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
                     #print("  dx={} dy={} step={}".format(dx0, dy0, step));               
                     if first:
                         first = False
-                        rectangle(g, mat, this_cut, dx0, dy0, fillet0, origin, single_pass=single_pass, restore_z=False)
+                        rectangle(g, mat, this_cut, dx0, dy0, fillet0, rect_origin, single_pass=single_pass, restore_z=False)
 
                     else:
                         g.move(x=step * x_sign, y=step * y_sign)
                         total_step += step
-                        rectangle(g, mat, 0.0, dx0, dy0, fillet0, origin, single_pass=True)                        
+                        rectangle(g, mat, 0.0, dx0, dy0, fillet0, rect_origin, single_pass=True)                        
 
                     # subtle the last cut doesn't overlap itself.
                     # probably a better algorithm for this
@@ -178,6 +185,8 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
         if abs(x) or abs(y):
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=-x, y=-y)
+            if origin == "center":
+                g.move(x=dx/2)
             g.move(z=-CNC_TRAVEL_Z)
 
 
