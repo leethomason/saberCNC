@@ -133,7 +133,7 @@ materials = [
              "tool_size": 3.175,
              "pass_depth": 0.30,        # tried .30 fine with lubricant. aggressive w/o 0.25 more conservative
              "spindle_speed": 9200,
-             "feed_rate": 200,
+             "feed_rate": 120,
              "plunge_rate": 25},
 
             {"name": "aluminum",
@@ -141,7 +141,7 @@ materials = [
              "tool_size": 2.0,
              "pass_depth": 0.25,
              "spindle_speed": 9200,
-             "feed_rate": 200,
+             "feed_rate": 120,
              "plunge_rate": 25},
 
             {"name": "aluminum",
