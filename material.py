@@ -69,12 +69,12 @@ materials = [
              "plunge_rate": 500},       
 
             {"name": "hardwood",
-             "quality": "Carbide3D test",
+             "quality": "Carbide3D test, experiment",
              "tool_size": 3.175,
-             "pass_depth": 0.76,
-             "spindle_speed": 4500,
-             "feed_rate": 1828,
-             "plunge_rate": 812},
+             "pass_depth": 0.40,
+             "spindle_speed": 9200,
+             "feed_rate": 900,
+             "plunge_rate": 300},
 
             {"name": "hdpe",
              "quality": "Carbide3D test",
