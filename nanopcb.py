@@ -421,9 +421,9 @@ def nanopcb(filename, g, mat, pcb_depth, drill_depth,
             g.move(z=CNC_TRAVEL_Z)
 
     if do_cutting:
-        g.move(x=cut_path_on_center.x0, y=cut_path_on_center.y0)
+        g.move(x=0, y=cut_path_on_center.y0)
         g.move(z=0)
-        g.move(x=cut_path_on_center.dx()/2)
+        # g.move(x=cut_path_on_center.dx()/2)
         rectangle(g, mat, drill_depth, cut_path_on_center.dx(), cut_path_on_center.dy(), 1.0, "bottom")
         g.move(z=CNC_TRAVEL_Z)
 

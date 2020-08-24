@@ -38,6 +38,7 @@ def drill_points(g, mat, cut_depth, points):
             g.feed(mat['travel_feed'])
             g.move(z=CNC_TRAVEL_Z)
             g.move(x=p['x'], y=p['y'])
+            g.move(z=0)
             drill(g, mat, cut_depth)
 
         # Leaves the head at CNC_TRAVEL_Z)
