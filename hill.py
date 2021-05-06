@@ -7,7 +7,7 @@ from rectangleTool import rectangleTool
 from hole import hole
 
 def z_tool_hill_ball(dx, r_ball, r_hill):
-    zhc = math.sqrt(math.pow((r_ball + r_hill), 2) - dx * dx) - r_ball
+    zhc = math.sqrt(r_hill * r_hill - dx * dx)
     return zhc - r_hill
 
 def z_tool_hill_flat(dx, ht, r_hill):
@@ -17,12 +17,12 @@ def z_tool_hill_flat(dx, ht, r_hill):
     zhc = math.sqrt(r_hill * r_hill - math.pow((dx - ht), 2.0))
     return zhc - r_hill
 
-def hill(g, mat, diameter, dx, dy, ball):
+def hill(g, mat, diameter, dx, dy):
     r_hill = diameter / 2
     ht = mat['tool_size'] * 0.5
     hy = dy / 2
     doc = mat['pass_depth']   
-    height_func = z_tool_hill_ball if ball else z_tool_hill_flat
+    step = 0.5
 
     def rough_arc(bias):
         y = 0
