@@ -10,6 +10,7 @@ import math
 # Accounts for tool size
 # 'r' radius
 # 'd' diameter
+# 'di' inner diameter to reserve (if fill)
 # 'offset' = 'inside', 'outside', 'middle'
 # 'fill' = True
 # 'z' if specified, the z move to issue before cutting
@@ -19,6 +20,7 @@ def hole(g, mat, cut_depth, **kwargs):
     radius = 0
     offset = "inside"
     fill = True
+    di = None
 
     if 'r' in kwargs:
         radius = kwargs['r']
@@ -28,6 +30,8 @@ def hole(g, mat, cut_depth, **kwargs):
         offset = kwargs['offset']
     if 'fill' in kwargs:
         fill = kwargs['fill']
+    if 'di' in kwargs:
+        di = kwargs['di']
 
     tool_size = mat['tool_size']
     half_tool = tool_size / 2
@@ -110,8 +114,10 @@ def hole(g, mat, cut_depth, **kwargs):
                 dr = 0
                 step = tool_size * 0.8
                 min_rad = half_tool * 0.8
+                if di:
+                    min_rad = di / 2
 
-                while r > half_tool:
+                while r > min_rad:
                     if r - step < min_rad:
                         step = r - min_rad
                     r -= step

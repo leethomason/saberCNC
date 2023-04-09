@@ -206,6 +206,10 @@ def main():
     mat = init_material(args.material)
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
+    g.feed(mat['feed_rate'])
+    g.absolute()
+    g.move(x=0, y=0, z=0)
+    g.relative()
     rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill)
     g.spindle()
 
