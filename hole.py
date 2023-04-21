@@ -179,6 +179,7 @@ def main():
     parser.add_argument('material', help='The material to cut in standard machine-material-size format.', type=str)
     parser.add_argument('depth', help='Depth of the cut. Must be negative.', type=float)
     parser.add_argument('radius', help='Radius of the hole.', type=float)
+    parser.add_argument('offset', help="inside, outside, middle", type=str)
     args = parser.parse_args()
 
     mat = init_material(args.material)
@@ -187,7 +188,7 @@ def main():
     nomad_header(g, mat, CNC_TRAVEL_Z)
     g.spindle('CW', mat['spindle_speed'])
     g.move(z=0)
-    hole(g, mat, args.depth, r=args.radius, offset="inside")
+    hole(g, mat, args.depth, r=args.radius, offset=args.offset)
     g.spindle()
 
 
