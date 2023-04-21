@@ -140,7 +140,7 @@ def scan_file(filename: str):
     holes = {}
     offset_cut = Point(0, 0)
 
-    re_hole_definition = re.compile('\+[a-zA-Z]\s')
+    re_hole_definition = re.compile('[\+\&][a-zA-Z]\s')
     re_number = re.compile('[\d.-]+')
 
     with open(filename, "r") as ins:
@@ -160,7 +160,7 @@ def scan_file(filename: str):
                     digit_index = m.end(0)
                     m = re_number.match(line[digit_index:])
                     diameter = float(m.group())
-                    holes[key] = diameter
+                    holes[key] = {"d":diameter, "break":(m[0] == '+')}
 
                 if offset_x >= 0:
                     offset_cut.x = float(line[offset_x + 10:])
@@ -312,11 +312,12 @@ def nanopcb(filename, g, mat, pcb_depth, drill_depth,
 
                 # Handle cutting holes
                 if c in hole_def:
-                    diameter = hole_def[c]
+                    diameter = hole_def[c]["d"]
                     point = rc_to_xy(x, y, n_cols, n_rows)
                     holes.append(
                         {'diameter': diameter, 'x': point.x, 'y': point.y})
-                    continue
+                    if hole_def[c]["break"]:
+                        continue
 
                 pcb[y][x] = COPPER
                 for dx in range(-1, 2, 1):

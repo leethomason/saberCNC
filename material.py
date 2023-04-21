@@ -284,6 +284,8 @@ def material_data(machine_ID: str, material: str, tool_size: float):
     max_lesser_size = 0
     max_lesser_mat = None
 
+    print("Machine:", machine_ID, "Material:", material, "Size:", tool_size)
+
     for m in machine['materials']:
         if material == m['name']:
             if m['tool_size'] == tool_size:
@@ -297,6 +299,9 @@ def material_data(machine_ID: str, material: str, tool_size: float):
             if m['tool_size'] <= tool_size and m['tool_size'] > max_lesser_size:
                 max_lesser_size = m['tool_size']
                 max_lesser_mat = m
+
+    if (not min_greater_mat) and (not max_lesser_mat):
+        raise RuntimeError("No material found")
 
     if min_greater_mat and max_lesser_mat and (min_greater_size != max_lesser_size):
         # interpolate. cool.

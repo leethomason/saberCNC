@@ -46,7 +46,7 @@ def hole(g, mat, cut_depth, **kwargs):
         raise RuntimeError("offset not correctly specified")
 
     if radius_inner < 0.2:
-        raise RuntimeError("Radius too small. Consider a drill.")
+        raise RuntimeError(f"Radius too small. Consider a drill. Radius={radius} Inner={radius_inner} (must be 0.2 or greater)")
     if cut_depth >= 0:
         raise RuntimeError('Cut depth must be less than zero.')
     if mat["tool_size"] < 0:
