@@ -142,14 +142,10 @@ def hole(g, mat, cut_depth, **kwargs):
         g.move(z=-cut_depth)  # up to the starting point
         g.feed(mat['travel_plunge'])  # go fast again...else. wow. boring.
 
+        # get back to the center without dragging the bit
         g.move(z=1.0)
-
-        return_center = True
-        if 'return_center' in kwargs:
-            return_center = kwargs['return_center']
-
-        if return_center:
-            g.move(x=-radius_inner)  # back to center of the circle
+        g.move(x=-radius_inner)
+        g.move(z=-1.0)
 
 
 def hole_abs(g, mat, cut_depth, radius, x, y):
@@ -167,7 +163,6 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
 #  'r' is the radius of the hole that will be cut, accounting for the tool size.
 #  'd' is the diameter
 #  'fill' = True/False
-#  'z' = z height to move to before cutting
 def hole2(g, mat, cut_depth, **kwargs):
     fill = True
     radius = 0
@@ -181,11 +176,6 @@ def hole2(g, mat, cut_depth, **kwargs):
 
     if 'fill' in kwargs:
         fill = kwargs['fill']
-    if 'z' in kwargs:
-        z = kwargs['z']
-        if z > 0:
-            raise RuntimeError("z move for 'hole_or_drill' must be negative")
-        g.move(z=z)
 
     if radius == 0:
         return "mark"
