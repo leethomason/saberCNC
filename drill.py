@@ -1,7 +1,7 @@
 import sys
 from mecode import G
 from material import init_material
-from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z, nomad_header, read_DRL, sort_shortest_path
+from utility import calc_steps, run_3_stages, GContext, CNC_TRAVEL_Z, nomad_header, read_DRL, sort_shortest_path, spindle, comment
 
 # assume we are at (x, y)
 def drill(g, mat, cut_depth):
@@ -14,8 +14,8 @@ def drill(g, mat, cut_depth):
         num_plunge = 1 + int(-cut_depth / (0.05 * mat['plunge_rate']))
         dz = cut_depth / num_plunge
 
-        g.comment("Drill depth={} num_taps={}".format(cut_depth, num_plunge))
-        g.spindle('CW', mat['spindle_speed'])
+        comment(g, "Drill depth={} num_taps={}".format(cut_depth, num_plunge))
+        spindle(g, 'CW', mat['spindle_speed'])
         g.feed(mat['plunge_rate'])
 
         if num_plunge > 1:
@@ -85,7 +85,7 @@ def main():
                 points.append({'x': float(sys.argv[i + 0]), 'y': float(sys.argv[i + 1])})
 
     drill_points(g, mat, cut_depth, points)
-    g.spindle()
+    spindle(g)
 
 
 if __name__ == "__main__":

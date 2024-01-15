@@ -8,7 +8,7 @@ from rectangle import rectangle
 # from lower left. it's an inner cut, with outer dim x,y
 def overCut(g, mat, cut_depth, _dx, _dy):
     g.feed(mat['travel_feed'])
-    g.spindle('CW', mat['spindle_speed'])
+    spindle(g, 'CW', mat['spindle_speed'])
 
     with GContext(g):
         g.relative()
@@ -62,7 +62,7 @@ def rectangleTool(g, mat, cut_depth, dx, dy, fillet, origin, align, fill=False, 
         g.relative()
 
         g.feed(mat['travel_feed'])
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
 
         tool_size = mat['tool_size']
         half_tool = tool_size / 2
@@ -211,7 +211,7 @@ def main():
     g.move(x=0, y=0, z=0)
     g.relative()
     rectangleTool(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin, args.align, args.inside_fill)
-    g.spindle()
+    spindle(g)
 
 if __name__ == "__main__":
     main()

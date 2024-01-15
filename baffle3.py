@@ -1,6 +1,7 @@
 from hole import *
 from mecode import G
 from material import *
+from utility import comment
 
 FRONT_PLATE = True
 BACK_PLATE = False
@@ -37,8 +38,8 @@ channel_x = -8
 channel_y = 8
 
 g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
-g.comment("Material: " + mat['name'])
-g.comment("Tool Size: " + str(mat['tool_size']))
+comment(g, "Material: " + mat['name'])
+comment(g, "Tool Size: " + str(mat['tool_size']))
 
 
 def x_r(theta, r):
@@ -92,7 +93,7 @@ g.absolute()
 
 g.abs_move(z=CNC_TRAVEL_Z)
 g_move(g, theta0, inner_r)
-g.spindle('CW', mat['spindle_speed'])
+spindle(g, 'CW', mat['spindle_speed'])
 g.abs_move(z=0)
 
 steps = calc_steps(cut_depth, -mat['pass_depth'])

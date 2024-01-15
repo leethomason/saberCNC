@@ -69,5 +69,5 @@ steps = calc_steps(BODY_DEPTH, -mat['pass_depth'])
 run_3_stages(path, g, steps)
 
 g.move(z=-BODY_DEPTH)     # up to the starting point
-g.spindle()
+spindle(g)
 g.abs_move(0, 0, 0)

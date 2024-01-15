@@ -377,13 +377,13 @@ def nanopcb(filename, g, mat, pcb_depth, drill_depth,
             c = PtPair(p0.x, p0.y, p1.x, p1.y)
             isolation_pairs.append(c)
 
-    g.comment("NanoPCB")
+    comment(g, "NanoPCB")
 
     g.absolute()
     g.feed(mat['feed_rate'])
     g.move(z=CNC_TRAVEL_Z)
 
-    g.spindle('CW', mat['spindle_speed'])
+    spindle(g, 'CW', mat['spindle_speed'])
 
     # impossible starting value to force moving to
     # the cut depth on the first point.
@@ -393,7 +393,7 @@ def nanopcb(filename, g, mat, pcb_depth, drill_depth,
     while len(isolation_pairs) > 0:
         cut = pop_closest_pt_pair(c_x, c_y, isolation_pairs)
 
-        g.comment(
+        comment(g, 
             '{},{} -> {},{}'.format(cut.x0, cut.y0, cut.x1, cut.y1))
 
         if cut.x0 != c_x or cut.y0 != c_y:
@@ -429,7 +429,7 @@ def nanopcb(filename, g, mat, pcb_depth, drill_depth,
         g.move(z=CNC_TRAVEL_Z)
 
     g.move(z=CNC_TRAVEL_Z)
-    g.spindle()
+    spindle(g)
     g.move(x=0, y=0)
 
     return cut_path_on_center.dx(), cut_path_on_center.dy()

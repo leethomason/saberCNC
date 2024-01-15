@@ -1,6 +1,6 @@
 from mecode import G
 from material import init_material
-from utility import nomad_header, CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages
+from utility import nomad_header, CNC_TRAVEL_Z, GContext, calc_steps, run_3_stages, comment, spindle, arc2
 from drill import drill
 import argparse
 import math
@@ -59,13 +59,13 @@ def hole(g, mat, cut_depth, **kwargs):
     with GContext(g):
         g.relative()
 
-        g.comment("hole")
-        g.comment("depth=" + str(cut_depth))
-        g.comment("tool size=" + str(mat['tool_size']))
-        g.comment("radius=" + str(radius))
-        g.comment("pass depth=" + str(mat['pass_depth']))
-        g.comment("feed rate=" + str(mat['feed_rate']))
-        g.comment("plunge rate=" + str(mat['plunge_rate']))
+        comment(g, "hole")
+        comment(g, "depth=" + str(cut_depth))
+        comment(g, "tool size=" + str(mat['tool_size']))
+        comment(g, "radius=" + str(radius))
+        comment(g, "pass depth=" + str(mat['pass_depth']))
+        comment(g, "feed rate=" + str(mat['feed_rate']))
+        comment(g, "plunge rate=" + str(mat['plunge_rate']))
 
         # The trick is to neither exceed the plunge or the depth-of-cut/pass_depth.
         # Approaches below.
@@ -86,10 +86,10 @@ def hole(g, mat, cut_depth, **kwargs):
                 factor = 0.3  # slowing down to less than 10% (factor * factor) seems excessive
             depth_of_cut = mat['pass_depth'] * factor
             feed_rate = mat['feed_rate'] * factor
-            g.comment('adjusted pass depth=' + str(depth_of_cut))
-            g.comment('adjusted feed rate =' + str(feed_rate))
+            comment(g, 'adjusted pass depth=' + str(depth_of_cut))
+            comment(g, 'adjusted feed rate =' + str(feed_rate))
 
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         g.feed(mat['travel_plunge'])
 
         g.move(z=1.0)
@@ -104,13 +104,13 @@ def hole(g, mat, cut_depth, **kwargs):
         g.feed(feed_rate)
 
         def path(g, plunge, total_plunge):
-            g.arc2(x=-radius_inner, y=radius_inner, i=-radius_inner, j=0,  direction='CCW', helix_dim='z',
+            arc2(g, x=-radius_inner, y=radius_inner, i=-radius_inner, j=0,  direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
-            g.arc2(x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
+            arc2(g, x=-radius_inner, y=-radius_inner, i=0, j=-radius_inner, direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=-radius_inner, i=radius_inner, j=0,   direction='CCW', helix_dim='z',
+            arc2(g, x=radius_inner, y=-radius_inner, i=radius_inner, j=0,   direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
-            g.arc2(x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
+            arc2(g, x=radius_inner, y=radius_inner, i=0, j=radius_inner,    direction='CCW', helix_dim='z',
                     helix_len=plunge / 4)
 
             if fill and radius_inner > half_tool:
@@ -130,10 +130,10 @@ def hole(g, mat, cut_depth, **kwargs):
 
                     dr += step
                     g.move(x=-step)
-                    g.arc2(x=-r, y=r, i=-r, j=0,  direction='CCW')
-                    g.arc2(x=-r, y=-r, i=0, j=-r, direction='CCW')
-                    g.arc2(x=r, y=-r, i=r, j=0,   direction='CCW')
-                    g.arc2(x=r, y=r, i=0, j=r,    direction='CCW')
+                    arc2(g, x=-r, y=r, i=-r, j=0,  direction='CCW')
+                    arc2(g, x=-r, y=-r, i=0, j=-r, direction='CCW')
+                    arc2(g, x=r, y=-r, i=r, j=0,   direction='CCW')
+                    arc2(g, x=r, y=r, i=0, j=r,    direction='CCW')
                 g.move(x=dr)
 
         steps = calc_steps(cut_depth, -depth_of_cut)
@@ -163,13 +163,22 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
 
 
 # relative to the current position
-# 'radius' is the radius of the hole that will be cut, accounting
-#   for the tool size.
 # optional:
+#  'r' is the radius of the hole that will be cut, accounting for the tool size.
+#  'd' is the diameter
 #  'fill' = True/False
 #  'z' = z height to move to before cutting
-def hole2(g, mat, cut_depth, radius, **kwargs):
+def hole2(g, mat, cut_depth, **kwargs):
     fill = True
+    radius = 0
+
+    if 'r' in kwargs:
+        radius = kwargs['r']
+    elif 'd' in kwargs:
+        radius = kwargs['d'] / 2
+    else:
+        raise RuntimeError("'r' or 'd' must be specified in hole2")
+
     if 'fill' in kwargs:
         fill = kwargs['fill']
     if 'z' in kwargs:
@@ -206,10 +215,10 @@ def main():
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     nomad_header(g, mat, CNC_TRAVEL_Z)
-    g.spindle('CW', mat['spindle_speed'])
+    spindle(g, 'CW', mat['spindle_speed'])
     g.move(z=0)
     hole(g, mat, args.depth, r=args.radius, offset=args.offset)
-    g.spindle()
+    spindle(g)
 
 
 if __name__ == "__main__":

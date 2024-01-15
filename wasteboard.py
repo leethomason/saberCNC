@@ -41,7 +41,7 @@ def main():
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     nomad_header(g, mat, CNC_TRAVEL_Z)
     board(g, mat, args.stock_height)
-    g.spindle()
+    spindle(g)
 
 
 if __name__ == "__main__":

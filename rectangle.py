@@ -2,7 +2,7 @@ import argparse
 import sys
 from mecode import G
 from material import init_material
-from utility import calc_steps, run_3_stages, GContext
+from utility import calc_steps, run_3_stages, GContext, comment, spindle
 
 
 def set_feed(g, mat, x, z):
@@ -106,10 +106,10 @@ def rectangle(g, mat, cut_depth, dx, dy, fillet, origin, single_pass=False, rest
         raise RuntimeError("Origin isn't valid.")
 
     with GContext(g):
-        g.comment("Rectangular cut")
+        comment(g, "Rectangular cut")
         g.relative()
 
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
 
         def path(g, plunge, total_plunge):
@@ -145,7 +145,7 @@ def main():
 
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
     rectangle(g, mat, args.depth, args.dx, args.dy, args.fillet, args.origin)
-    g.spindle()
+    spindle(g)
 
 
 if __name__ == "__main__":

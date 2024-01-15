@@ -7,7 +7,7 @@ def nomad_header(g, mat, z_start):
     g.absolute()
     g.feed(mat['feed_rate'])
     g.rapid(x=0, y=0, z=z_start)
-    g.spindle('CW', mat['spindle_speed'])
+    spindle(g, 'CW', mat['spindle_speed'])
 
 
 def tool_change(g, mat, name: int):
@@ -23,7 +23,7 @@ def tool_change(g, mat, name: int):
         g.feed(mat['travel_feed'])
         g.rapid(x=x, y=y)
         g.rapid(z=z + CNC_TRAVEL_Z)
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         g.move(z=z)
 
 
@@ -74,7 +74,7 @@ def calc_steps(goal, step):
 
 
 def run_3_stages(path, g, steps):
-    g.comment("Path: initial pass")
+    comment(g, "Path: initial pass")
     total_d = 0
     path(g, 0, total_d)
 
@@ -84,16 +84,16 @@ def run_3_stages(path, g, steps):
         if d > -0.0000001:
             d = 0
         total_d += d
-        g.comment('Path: depth={} total_depth={}'.format(d, total_d))
+        comment(g, 'Path: depth={} total_depth={}'.format(d, total_d))
         path(g, d, total_d)
 
-    g.comment('Path: final pass')
+    comment(g, 'Path: final pass')
     path(g, 0, total_d)
-    g.comment('Path: complete')
+    comment(g, 'Path: complete')
 
 
 def run_3_stages_abs(path, g, steps):
-    g.comment("initial pass")
+    comment(g, "initial pass")
     path(g, 0, 0)
     base_z = 0
 
@@ -103,13 +103,13 @@ def run_3_stages_abs(path, g, steps):
         if d > -0.0000001:
             d = 0
 
-        g.comment('pass: depth={}'.format(d))
+        comment(g, 'pass: depth={}'.format(d))
         path(g, base_z, d)
         base_z += d
 
-    g.comment('final pass')
+    comment(g, 'final pass')
     path(g, base_z, 0)
-    g.comment('complete')
+    comment(g, 'complete')
 
 
 # returns a negative value or none
@@ -229,27 +229,112 @@ class GContext:
 
 # moves the head up, over, down
 def travel(g, mat, **kwargs):
-    if g.is_relative:
-        g.move(z=CNC_TRAVEL_Z)
- 
-        if 'x' in kwargs and 'y' in kwargs:
-            g.rapid(x=kwargs['x'], y=kwargs['y'])
-        elif 'x' in kwargs:
-            g.rapid(x=kwargs['x'])
-        elif 'y' in kwargs:
-            g.rapid(y=kwargs['y'])
- 
-        g.move(z=-CNC_TRAVEL_Z)
+    z = g.current_position['z']
+    g.abs_move(z=z + CNC_TRAVEL_Z)
 
+    if 'x' in kwargs and 'y' in kwargs:
+        x = float(kwargs['x'])
+        y = float(kwargs['y'])
+        g.abs_rapid(x=x, y=y)
+    elif 'x' in kwargs:
+        g.abs_rapid(x=kwargs['x'])
+    elif 'y' in kwargs:
+        g.abs_rapid(y=kwargs['y'])
+
+    g.move(z=z)
+
+def spindle(g, mode=None, speed=None):
+    cmd = ''
+    comment = ''
+
+    if mode is not None:
+        if mode == "CW":
+            cmd = 'M3'
+            comment = ' ;spindle CW'
+        elif mode == "CCW":
+            cmd = 'M4'
+            comment = ' ;spindle CCW'
+        else:
+            cmd = 'M5'
+            comment = ' ;spindle off'
+
+    if speed is not None:
+        cmd += ('S {}'.format(speed))
+
+    if mode is None and speed is None:
+        cmd = 'M5'
+        comment = ' ;spindle off'
+
+    g.write(cmd + comment)
+
+
+def comment(g, comment):
+    g.write('(' + comment + ')', False)
+
+
+def arc2(g, x=None, y=None, z=None, 
+            i=None, j=None, k=None,
+            direction='CW',
+            helix_dim=None, helix_len=0, **kwargs):
+
+    if g.speed <= 0:
+        raise RuntimeError("arc2 with 0 feed rate.")
+
+    #x, y, z = g.do_xform(x, y, z)
+    #i, j, k = g.do_xform(i, j, k)
+
+    dims = dict(kwargs)
+    inc = {}
+
+    if x is not None:
+        dims['x'] = x
+        if i is None:
+            raise RuntimeError("x specified but not i")
+        inc['I'] = i
+    if y is not None:
+        dims['y'] = y
+        if j is None:
+            raise RuntimeError('y specified but not j')
+        inc['J'] = j
+    if z is not None:
+        dims['z'] = z
+        if k is None:
+            raise RuntimeError('z specified but not k')
+        inc['K'] = k
+    msg = 'Must specify two of x, y, or z.'
+    if len(dims) != 2:
+        raise RuntimeError(msg)
+
+    dimensions = [k.lower() for k in dims.keys()]
+    if 'x' in dimensions and 'y' in dimensions:
+        plane_selector = 'G17 ;XY plane'  # XY plane
+        axis = helix_dim
+    elif 'x' in dimensions:
+        plane_selector = 'G18 ;XZ plane'  # XZ plane
+        dimensions.remove('x')
+        axis = dimensions[0].upper()
+    elif 'y' in dimensions:
+        plane_selector = 'G19 ;YZ plane'  # YZ plane
+        dimensions.remove('y')
+        axis = dimensions[0].upper()
     else:
-        z = g.current_position['z']
-        g.move(z=z + CNC_TRAVEL_Z)
- 
-        if 'x' in kwargs and 'y' in kwargs:
-            g.rapid(x=kwargs['x'], y=kwargs['y'])
-        elif 'x' in kwargs:
-            g.rapid(x=kwargs['x'])
-        elif 'y' in kwargs:
-            g.rapid(y=kwargs['y'])
- 
-        g.move(z=z)
+        raise RuntimeError(msg)
+
+    if g.z_axis != 'Z':
+        axis = g.z_axis
+
+    if direction == 'CW':
+        command = 'G2'
+    elif direction == 'CCW':
+        command = 'G3'
+
+    g.write(plane_selector)
+    args = g._format_args(**dims)
+    incArgs = g._format_args(**inc)
+    if helix_dim is None:
+        g.write('{0} {1} {2}'.format(command, args, incArgs))
+    else:
+        g.write('{0} {1} {2} {3}{4}'.format(command, args, incArgs, helix_dim.upper(), helix_len))
+        dims[helix_dim] = helix_len
+
+    g._update_current_position(**dims)

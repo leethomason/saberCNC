@@ -51,12 +51,12 @@ def hill(g, mat, diameter, dx, dy):
                 # cut the plane
                 z = height_func(y, ht, r_hill)
                 dz = z - last_plane
-                g.comment("Cutting plane. y={} z={} dx={} dy={} dz={}".format(y, z, dx, end - y, dz))
+                comment(g, "Cutting plane. y={} z={} dx={} dy={} dz={}".format(y, z, dx, end - y, dz))
                 rectangleTool(g, mat, dz, dx, end - y, 0.0, "bottom" if bias > 0 else "top", "center", True)
 
                 # move to the bottom of the plane we just cut
                 g.move(z=dz)
-                g.comment("Cutting plane done.")
+                comment(g, "Cutting plane done.")
 
                 last_y = y
                 last_plane += dz
@@ -96,39 +96,39 @@ def hill(g, mat, diameter, dx, dy):
         g.move(y=-end*bias)
 
     with GContext(g):
-        g.comment('hill')
+        comment(g, 'hill')
         g.relative()
         mult = 0.2
 
         # rough pass
         origin_z = g.current_position['z']
 
-        g.spindle()
+        spindle(c)
         g.dwell(0.5)
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         rough_arc(1)
 
-        g.spindle()
+        spindle(g, )
         g.dwell(0.5)
-        g.spindle('CCW', mat['spindle_speed'])
+        spindle(g, 'CCW', mat['spindle_speed'])
         rough_arc(-1)
 
         # smooth pass
-        g.spindle()
+        spindle(g)
 
-        g.spindle()
+        spindle(g)
         g.dwell(0.5)
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         
         arc(1, mult*ht)
         
-        g.spindle()
+        spindle(g)
         g.dwell(0.5)
-        g.spindle('CCW', mat['spindle_speed'])
+        spindle(g, 'CCW', mat['spindle_speed'])
         
         arc(-1, mult*ht)        
         
-        g.spindle()
+        spindle(g)
 
 
 def main():
@@ -148,7 +148,7 @@ def main():
     nomad_header(g, mat, CNC_TRAVEL_Z)
     g.move(z=0)
     hill(g, mat, args.diameter, args.dx, args.dy, args.ball)
-    g.spindle()
+    spindle(g)
 
 if __name__ == "__main__":
     main()

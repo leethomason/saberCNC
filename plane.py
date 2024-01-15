@@ -18,7 +18,7 @@ def square(g, mat, dx, dy, fill : bool):
             if num_lines > 1:
                 line_step = dy / (num_lines - 1)
 
-            g.comment("Square fill={0}".format(fill))
+            comment(g, "Square fill={0}".format(fill))
             is_out = False
             for i in range(0, num_lines):
                 if is_out:
@@ -46,10 +46,10 @@ def plane(g, mat, depth, x0, y0, x1, y1):
     # print("plane", dx, dy)
 
     with GContext(g):
-        g.comment("Plane depth = {} size = {}, {}".format(depth, dx, dy))
+        comment(g, "Plane depth = {} size = {}, {}".format(depth, dx, dy))
         g.relative()
 
-        g.spindle('CW', mat['spindle_speed'])
+        spindle(g, 'CW', mat['spindle_speed'])
         g.feed(mat['feed_rate'])
         g.move(x=x0, y=y0)
 
@@ -93,13 +93,13 @@ def main():
     g = G(outfile='path.nc', aerotech_include=False, header=None, footer=None, print_lines=False)
 
     nomad_header(g, mat, CNC_TRAVEL_Z)
-    g.spindle('CW', mat['spindle_speed'])
+    spindle(g, 'CW', mat['spindle_speed'])
     g.feed(mat['feed_rate'])
     g.move(z=0)
 
     plane(g, mat, args.depth, 0, 0, args.dx, args.dy)
     g.abs_move(z=CNC_TRAVEL_Z)
-    g.spindle()
+    spindle(g)
 
 if __name__ == "__main__":
     main()
