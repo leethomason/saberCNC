@@ -12,6 +12,8 @@ import math
 # 'd' diameter
 # 'di' inner diameter to reserve (if fill)
 # 'offset' = 'inside', 'outside', 'middle'
+#            'inside' is a smaller hole and generally want you want
+#            'outside' is a larger hole
 # 'fill' = True
 # 'z' if specified, the z move to issue before cutting
 # 'return_center' = True, returns to center at the end
@@ -90,7 +92,9 @@ def hole(g, mat, cut_depth, **kwargs):
         g.spindle('CW', mat['spindle_speed'])
         g.feed(mat['travel_plunge'])
 
+        g.move(z=1.0)
         g.move(x=radius_inner)
+        g.move(z=-1.0)
         if 'z' in kwargs:
             if was_relative:
                 g.move(z=kwargs['z'])
@@ -158,19 +162,35 @@ def hole_abs(g, mat, cut_depth, radius, x, y):
         g.absolute()
 
 
-# assume we are at (x, y, CNC_TRAVEL_Z)
-def hole_or_drill(g, mat, cut_depth, radius):
+# relative to the current position
+# 'radius' is the radius of the hole that will be cut, accounting
+#   for the tool size.
+# optional:
+#  'fill' = True/False
+#  'z' = z height to move to before cutting
+def hole2(g, mat, cut_depth, radius, **kwargs):
+    fill = True
+    if 'fill' in kwargs:
+        fill = kwargs['fill']
+    if 'z' in kwargs:
+        z = kwargs['z']
+        if z > 0:
+            raise RuntimeError("z move for 'hole_or_drill' must be negative")
+        g.move(z=z)
+
     if radius == 0:
         return "mark"
     elif mat['tool_size'] + 0.1 < radius * 2:
         if g:
-            hole(g, mat, cut_depth, r=radius)
+            hole(g, mat, cut_depth, r=radius, fill=fill)
         return "hole"
     else:
         if g:
             drill(g, mat, cut_depth)
         return "drill"
 
+def hole_or_drill(g, mat, cut_depth, radius_inner):
+    return hole2(g, mat, cut_depth, radius_inner)
 
 def main():
     parser = argparse.ArgumentParser(
