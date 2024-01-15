@@ -230,7 +230,7 @@ class GContext:
 # moves the head up, over, down
 def travel(g, mat, **kwargs):
     z = g.current_position['z']
-    g.abs_move(z=z + CNC_TRAVEL_Z)
+    g.abs_move(z=CNC_TRAVEL_Z)
 
     if 'x' in kwargs and 'y' in kwargs:
         x = float(kwargs['x'])
@@ -240,8 +240,6 @@ def travel(g, mat, **kwargs):
         g.abs_rapid(x=kwargs['x'])
     elif 'y' in kwargs:
         g.abs_rapid(y=kwargs['y'])
-
-    g.move(z=z)
 
 def spindle(g, mode=None, speed=None):
     cmd = ''
