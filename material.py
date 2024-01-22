@@ -215,7 +215,7 @@ materials = [
 
             {"name": "aluminum",
              "tool_size": 3.125,
-             "feed_rate": 150,
+             "feed_rate": 220,
              "pass_depth": 0.05,  # woh. slow and easy for aluminum
              "spindle_speed": 1000,
              "plunge_rate": 12},
